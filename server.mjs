@@ -25,7 +25,7 @@ const server = createServer(async (request, response) => {
   response.setHeader('X-Content-Type-Options', 'nosniff');
   response.setHeader('Referrer-Policy', 'no-referrer');
   response.setHeader('Content-Security-Policy',
-    "default-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; media-src 'self' https://d.quranenc.com https://cdn.islamic.network");
+    "default-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; media-src 'self' https://d.quranenc.com https://cdn.islamic.network https://everyayah.com");
   if (![host + ':' + port, 'localhost:' + port].includes(request.headers.host)) {
     return json(response, 403, { error: 'Open Akhlaq on your phone’s loopback address.' });
   }

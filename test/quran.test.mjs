@@ -38,6 +38,8 @@ test('verse lookup checks chapter boundaries and each audio source uses its numb
   for (const ref of ['0:1', '114:7', '115:1', '1:0']) assert.equal(verseReference(ref, chapters), null);
   assert.match(audioUrl('english', 2, 1, 8), /english_rwwad\/002001\.mp3$/);
   assert.match(audioUrl('arabic', 2, 1, 8), /ar\.alafasy\/8\.mp3$/);
+  assert.equal(audioUrl('urdu', 2, 1, 8), 'https://everyayah.com/data/translations/urdu_shamshad_ali_khan_46kbps/002001.mp3');
+  assert.match(audioUrl('urdu', 114, 6, 6236), /114006\.mp3$/);
 });
 
 test('saved verses migrate a legacy bookmark and validate and deduplicate references', () => {
@@ -65,4 +67,18 @@ test('older voice settings start paired, and new explicit language choices persi
   assert.equal(savedAudioMode({ voice: 'arabic' }), 'both');
   assert.equal(savedAudioMode({ audioMode: 'english' }), 'english');
   assert.equal(savedAudioMode({ audioMode: 'arabic' }), 'arabic');
+  assert.equal(savedAudioMode({ audioMode: 'urdu' }), 'urdu');
+  assert.equal(savedAudioMode({ audioMode: 'arabic-urdu' }), 'arabic-urdu');
+  assert.equal(savedAudioMode({ audioMode: 'unknown' }), 'both');
+});
+
+test('Urdu pairs finish their translation even for a single verse or the end of a surah', () => {
+  for (const continuous of [false, true]) {
+    for (const hasNext of [false, true]) {
+      assert.equal(nextAudioPart('arabic-urdu', 'arabic', continuous, hasNext), 'urdu');
+      const expected = continuous && hasNext ? 'next-verse' : 'finished';
+      assert.equal(nextAudioPart('arabic-urdu', 'urdu', continuous, hasNext), expected);
+      assert.equal(nextAudioPart('urdu', 'urdu', continuous, hasNext), expected);
+    }
+  }
 });

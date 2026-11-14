@@ -255,7 +255,7 @@ footer { padding-bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom))); }
 }
 .player-inner {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
   gap: .35rem;
   max-width: 54rem;
@@ -265,16 +265,13 @@ footer { padding-bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom))); }
 .player-verse { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-weight: 650; }
 .player-inner button { min-height: 44px; min-width: 44px; max-width: 7rem; padding: .3rem .45rem; font-size: .85rem; }
 .player-inner p { grid-column: 1 / -1; margin: 0; line-height: 1.25; }
-.audio-open footer { padding-bottom: calc(11rem + env(safe-area-inset-bottom)); }
-.audio-open .ayah { scroll-margin-bottom: calc(10rem + env(safe-area-inset-bottom)); }
 @media (max-width: 380px) {
   .home-shortcuts a { padding-inline: .5rem; font-size: .8rem; }
   .player-inner { padding-inline: .5rem; }
 }
 
-.player-inner select { grid-column: 1 / 3; min-height: 38px; padding-block: .3rem; font-size: .82rem; }
+.player-inner select { grid-column: 1 / 3; min-height: 44px; padding-block: .3rem; font-size: .82rem; }
 .player-inner p { grid-column: 3 / -1; font-size: .8rem; }
-.audio-open footer { padding-bottom: calc(12rem + env(safe-area-inset-bottom)); }
 
 .reader-listen { display: flex; flex-wrap: wrap; align-items: end; gap: .45rem; }
 .reader-listen select { min-height: 42px; }
@@ -288,3 +285,15 @@ footer { padding-bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom))); }
 .ayah-urdu { margin-top: .55rem; font-size: calc(1.24rem * var(--reader-scale)); }
 :is(.ayah-urdu, .ayah-english, #daily-text) { overflow-wrap: anywhere; }
 #quran-results [dir="rtl"] { text-align: right; }
+
+.reader-presets { display: flex; flex-wrap: wrap; gap: .45rem; margin: .6rem 0 1rem; }
+.reader-presets > span { flex-basis: 100%; font-size: .85rem; }
+.reader-presets button { flex: 1 1 auto; min-height: 44px; }
+.reader-presets [aria-pressed="true"] { background: var(--green); color: #10251d; border-color: var(--green); }
+.player-verse { grid-column: 1 / 4; }
+#player-close { grid-column: 4; grid-row: 1; justify-self: end; }
+#player-previous { grid-column: 1; grid-row: 2; }
+#player-toggle { grid-column: 2 / 4; grid-row: 2; max-width: none; }
+#player-next { grid-column: 4; grid-row: 2; }
+.audio-open footer { padding-bottom: calc(15rem + env(safe-area-inset-bottom)); }
+.audio-open .ayah { scroll-margin-bottom: calc(14rem + env(safe-area-inset-bottom)); }

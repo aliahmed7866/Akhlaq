@@ -6,7 +6,9 @@ const displayModes = {
   both: ['ar', 'en'], 'arabic-urdu': ['ar', 'ur'], all: ['ar', 'en', 'ur'],
   english: ['en'], urdu: ['ur'], arabic: ['ar'],
 };
-const audioModes = ['both', 'english', 'arabic'];
+const audioModes = ['both', 'arabic-urdu', 'english', 'urdu', 'arabic'];
+const audioParts = { both: ['arabic', 'english'], 'arabic-urdu': ['arabic', 'urdu'], english: ['english'], urdu: ['urdu'], arabic: ['arabic'] };
+const partNames = { arabic: 'Arabic recitation', english: 'English translation', urdu: 'Urdu translation' };
 const byId = id => document.getElementById(id);
 const make = (tag, text) => {
   const node = document.createElement(tag);
@@ -61,6 +63,7 @@ export function findVerses(chapters, query, urdu, limit = 16) {
 
 export function audioUrl(voice, chapter, verse, globalVerse) {
   const pad = value => String(value).padStart(3, '0');
+  if (voice === 'urdu') return 'https://everyayah.com/data/translations/urdu_shamshad_ali_khan_46kbps/' + pad(chapter) + pad(verse) + '.mp3';
   return voice === 'arabic'
     ? 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/' + globalVerse + '.mp3'
     : 'https://d.quranenc.com/data/audio/english_rwwad/' + pad(chapter) + pad(verse) + '.mp3';
@@ -82,7 +85,9 @@ export function savedAudioMode(reader) {
 }
 
 export function nextAudioPart(mode, part, continueToNext, hasNextVerse) {
-  if (mode === 'both' && part === 'arabic') return 'english';
+  const parts = audioParts[mode];
+  const next = parts[parts.indexOf(part) + 1];
+  if (next) return next;
   return continueToNext && hasNextVerse ? 'next-verse' : 'finished';
 }
 
@@ -95,6 +100,8 @@ export function setupQuran({ stored, save, today }) {
   const player = byId('quran-player');
   const playerToggle = byId('player-toggle');
   const playerNext = byId('player-next');
+  const playerPrevious = byId('player-previous');
+  const speed = byId('quran-speed');
   const playerMode = byId('player-mode');
   const size = byId('quran-size');
   const voiceSelect = byId('quran-voice');
@@ -126,6 +133,8 @@ export function setupQuran({ stored, save, today }) {
   byId('quran-autoplay').checked = saved.autoplay !== false;
   size.value = ['large', 'extra'].includes(saved.size) ? saved.size : 'standard';
   byId('quran').dataset.size = size.value;
+  speed.value = [0.75, 1, 1.25, 1.5].includes(saved.speed) ? String(saved.speed) : '1';
+  audio.defaultPlaybackRate = audio.playbackRate = Number(speed.value);
   function remember(fields) {
     saved = { ...saved, ...fields };
     return save(readerKey, saved);
@@ -136,6 +145,15 @@ export function setupQuran({ stored, save, today }) {
   const hashFor = ref => '#quran/' + ref.chapter + ':' + ref.verse;
   const reference = ref => data.chapters[ref.chapter - 1].name + ' ' + ref.chapter + ':' + ref.verse;
   const pageStart = verse => Math.floor((verse - 1) / pageSize) * pageSize + 1;
+
+  function renderPresets() {
+    for (const button of document.querySelectorAll('[data-reader-preset]')) {
+      const mode = button.dataset.readerPreset;
+      button.setAttribute('aria-pressed', String(language.value === mode && voiceSelect.value === mode));
+    }
+    byId('quran-audio-credit').hidden = !['urdu', 'arabic-urdu'].includes(voiceSelect.value);
+  }
+  renderPresets();
 
   function renderLanguageStatus() {
     for (const [prefix, requested] of [['daily', dailyLanguage.value === 'ur'], ['quran', displayModes[language.value].includes('ur')]]) {
@@ -209,6 +227,7 @@ export function setupQuran({ stored, save, today }) {
     dailyText.lang = translated ? 'ur' : 'en';
     dailyText.dir = translated ? 'rtl' : 'ltr';
     dailyText.textContent = translated ? urdu.verses[id - 1][0] : english;
+    byId('daily-listen').textContent = dailyLanguage.value === 'ur' ? 'Listen · Arabic → Urdu' : 'Listen · Arabic → English';
     byId('daily-credit').textContent = translated
       ? 'Urdu translation by Muhammad Ibrahim Junagarhi via QuranEnc'
       : 'English translation by Rowwad Translation Center';
@@ -394,7 +413,7 @@ export function setupQuran({ stored, save, today }) {
   }
 
   function showAudioFailure(action, message) {
-    const language = playing.part === 'arabic' ? 'Arabic' : 'English';
+    const language = { arabic: 'Arabic', english: 'English', urdu: 'Urdu' }[playing.part];
     playerToggle.textContent = action + ' ' + language;
     audioStatus.textContent = partLabel(playing) + ' · ' + message;
   }
@@ -417,13 +436,14 @@ export function setupQuran({ stored, save, today }) {
     const track = data.chapters[playing.chapter - 1].ayahs[playing.verse - 1];
     audioStatus.textContent = start ? 'Loading · ' + partLabel(playing) : partLabel(playing);
     audio.src = audioUrl(part, playing.chapter, playing.verse, track[0]);
+    audio.playbackRate = Number(speed.value);
     playerToggle.textContent = start ? 'Pause' : 'Play';
     if (start) requestPlay(attempt);
   }
 
   function partLabel({ mode, part }) {
-    if (mode === 'both') return part === 'arabic' ? '1 of 2 · Arabic recitation' : '2 of 2 · English translation';
-    return part === 'arabic' ? 'Arabic recitation' : 'English translation';
+    const parts = audioParts[mode];
+    return (parts.length > 1 ? (parts.indexOf(part) + 1) + ' of ' + parts.length + ' · ' : '') + partNames[part];
   }
 
   function play(ref, mode, { follow = route === 'quran', focus = false, singleVerse = false, start = true } = {}) {
@@ -435,9 +455,10 @@ export function setupQuran({ stored, save, today }) {
     verseLink.textContent = reference(ref);
     verseLink.href = hashFor(ref);
     playerNext.disabled = ref.verse >= chapter.ayahs.length;
+    playerPrevious.disabled = ref.verse <= 1;
     player.hidden = false;
     document.body.classList.add('audio-open');
-    loadAudioPart(mode === 'english' ? 'english' : 'arabic', start);
+    loadAudioPart(audioParts[mode][0], start);
   }
 
   function nextAudioVerse() {
@@ -449,12 +470,18 @@ export function setupQuran({ stored, save, today }) {
   function changeAudioMode(mode) {
     voiceSelect.value = playerMode.value = mode;
     remember({ audioMode: mode });
+    renderPresets();
     if (playing && playing.mode !== mode) {
       play(playing, mode, { follow: false, singleVerse: playing.singleVerse, start: !audio.paused && !playing.finished });
     }
   }
 
   playerNext.addEventListener('click', nextAudioVerse);
+  playerPrevious.addEventListener('click', () => {
+    if (!playing || playerPrevious.disabled) return;
+    const follow = route === 'quran' && selection && keyFor(selection) === keyFor(playing);
+    play({ chapter: playing.chapter, verse: playing.verse - 1 }, playing.mode, { follow, focus: follow, singleVerse: playing.singleVerse });
+  });
   playerMode.addEventListener('change', () => changeAudioMode(playerMode.value));
   byId('player-close').addEventListener('click', () => {
     clearAudio();
@@ -467,7 +494,7 @@ export function setupQuran({ stored, save, today }) {
   playerToggle.addEventListener('click', () => {
     if (!playing) return;
     if (playing.finished) {
-      loadAudioPart(playing.mode === 'english' ? 'english' : 'arabic');
+      loadAudioPart(audioParts[playing.mode][0]);
     } else if (audio.error) {
       loadAudioPart(playing.part);
     } else if (audio.paused) {
@@ -491,7 +518,7 @@ export function setupQuran({ stored, save, today }) {
     if (!playing) return;
     const next = nextAudioPart(playing.mode, playing.part,
       !playing.singleVerse && byId('quran-autoplay').checked, !playerNext.disabled);
-    if (next === 'english') loadAudioPart(next);
+    if (next === 'english' || next === 'urdu') loadAudioPart(next);
     else if (next === 'next-verse') nextAudioVerse();
     else {
       playing.finished = true;
@@ -530,7 +557,7 @@ export function setupQuran({ stored, save, today }) {
   }
 
   byId('daily-listen').addEventListener('click', () => {
-    if (daily) play(daily, voiceSelect.value, { follow: false, singleVerse: true });
+    if (daily) play(daily, dailyLanguage.value === 'ur' ? 'arabic-urdu' : 'both', { follow: false, singleVerse: true });
   });
   byId('daily-save').addEventListener('click', () => toggleBookmark(daily));
   window.addEventListener('storage', event => {
@@ -540,6 +567,7 @@ export function setupQuran({ stored, save, today }) {
     renderBookmarks();
     renderResume();
     voiceSelect.value = savedAudioMode(saved);
+    renderPresets();
     if (!playing) playerMode.value = voiceSelect.value;
   });
   playButton.addEventListener('click', () => play(selection, voiceSelect.value));
@@ -547,12 +575,24 @@ export function setupQuran({ stored, save, today }) {
   function setReadingLanguage(mode) {
     language.value = mode;
     remember({ language: mode });
+    renderPresets();
     if (selection) render(false);
     renderLanguageStatus();
     if (displayModes[mode].includes('ur')) void getUrdu(true);
   }
 
   language.addEventListener('change', () => setReadingLanguage(language.value));
+  for (const button of document.querySelectorAll('[data-reader-preset]')) {
+    button.addEventListener('click', () => {
+      const mode = button.dataset.readerPreset;
+      setReadingLanguage(mode);
+      changeAudioMode(mode);
+    });
+  }
+  speed.addEventListener('change', () => {
+    audio.defaultPlaybackRate = audio.playbackRate = Number(speed.value);
+    remember({ speed: Number(speed.value) });
+  });
   dailyLanguage.addEventListener('change', () => {
     remember({ dailyLanguage: dailyLanguage.value });
     renderDailyText();

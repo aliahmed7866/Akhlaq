@@ -113,12 +113,20 @@
           <ul id="quran-saved-list"></ul>
         </details>
         <p id="quran-save-status" class="muted" role="status"></p>
+        <div class="reader-presets" role="group" aria-label="Reading and listening presets">
+          <span class="muted">Read &amp; listen</span>
+          <button type="button" data-reader-preset="both">Arabic + English</button>
+          <button type="button" data-reader-preset="arabic-urdu">Arabic + <span lang="ur" dir="rtl">اردو</span></button>
+          <button type="button" data-reader-preset="arabic">Arabic only</button>
+        </div>
         <div class="chapter-heading">
           <div><h2 id="quran-chapter-name"></h2><p class="muted" id="quran-chapter-info"></p></div>
           <div class="reader-listen">
             <label class="field">Playback mode
               <select id="quran-voice">
                 <option value="both">Arabic → English</option>
+                <option value="arabic-urdu">Arabic → Urdu</option>
+                <option value="urdu">Urdu only · اردو</option>
                 <option value="english">English only</option>
                 <option value="arabic">Arabic only</option>
               </select>
@@ -126,30 +134,34 @@
             <button id="quran-play" type="button" class="primary">Play from this verse</button>
           </div>
         </div>
-        <div class="reader-display">
-          <label class="field">Show text
-            <select id="quran-language">
-              <option value="both">Arabic + English</option>
-              <option value="arabic-urdu">Arabic + Urdu</option>
-              <option value="all">Arabic + English + Urdu</option>
-              <option value="english">English only</option>
-              <option value="urdu">Urdu only</option>
-              <option value="arabic">Arabic only</option>
-            </select>
-          </label>
-          <p id="quran-language-status" class="muted" role="status"></p>
-          <button type="button" id="quran-urdu-retry" hidden>Retry Urdu download</button>
-        </div>
+        <p id="quran-audio-credit" class="muted" hidden>Urdu voice: Shamshad Ali Khan via EveryAyah. The recording may use different wording from the displayed Junagarhi translation.</p>
         <details class="reader-preferences">
-          <summary>Reading &amp; audio options</summary>
+          <summary>Text, size &amp; playback options</summary>
+          <div class="reader-display">
+            <label class="field">Show text
+              <select id="quran-language">
+                <option value="both">Arabic + English</option>
+                <option value="arabic-urdu">Arabic + Urdu</option>
+                <option value="all">Arabic + English + Urdu</option>
+                <option value="english">English only</option>
+                <option value="urdu">Urdu only</option>
+                <option value="arabic">Arabic only</option>
+              </select>
+            </label>
+          </div>
           <div class="reader-option-fields">
             <label class="field">Text size
               <select id="quran-size"><option value="standard">Standard</option><option value="large">Large</option><option value="extra">Extra large</option></select>
+            </label>
+            <label class="field">Listening speed
+              <select id="quran-speed"><option value="0.75">0.75× · Slower</option><option value="1">1× · Normal</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option></select>
             </label>
             <label class="autoplay"><input id="quran-autoplay" type="checkbox" checked> Continue to next verse</label>
           </div>
           <p class="muted">Audio streams over the internet.</p>
         </details>
+        <p id="quran-language-status" class="muted" role="status"></p>
+        <button type="button" id="quran-urdu-retry" hidden>Retry Urdu download</button>
         <p id="quran-basmala" lang="ar" dir="rtl" class="quran-basmala" hidden></p>
         <ol id="quran-verses" class="ayahs"></ol>
         <div class="reader-pagination">
@@ -160,7 +172,7 @@
         <details class="quran-sources">
           <summary>Quran sources</summary>
           <p class="muted">English translation by <a href="https://quranenc.com/en/browse/english_rwwad" target="_blank" rel="noopener noreferrer">Rowwad Translation Center via QuranEnc</a> <span id="quran-version"></span>. Arabic Uthmani text from the <a href="https://tanzil.net/docs/Text_License" target="_blank" rel="noopener noreferrer">Tanzil Project</a>. English audio from <a href="https://quranenc.com/en/audio" target="_blank" rel="noopener noreferrer">QuranEnc</a>. Arabic recitation by Mishary Rashid Alafasy via <a href="https://alquran.cloud/cdn" target="_blank" rel="noopener noreferrer">Al Quran Cloud</a>.</p>
-          <p class="muted">Urdu translation by <a href="https://quranenc.com/en/browse/urdu_junagarhi" target="_blank" rel="noopener noreferrer">Muhammad Ibrahim Junagarhi via QuranEnc</a> <span id="quran-urdu-version"></span>.</p>
+          <p class="muted">Urdu translation by <a href="https://quranenc.com/en/browse/urdu_junagarhi" target="_blank" rel="noopener noreferrer">Muhammad Ibrahim Junagarhi via QuranEnc</a> <span id="quran-urdu-version"></span>. Urdu audio is read by <a href="https://everyayah.com/recitations_ayat.html" target="_blank" rel="noopener noreferrer">Shamshad Ali Khan via EveryAyah</a>; its wording may differ from the displayed translation.</p>
           <details><summary>Publisher and licence notices</summary><pre id="quran-notices"></pre></details>
         </details>
       </div>
@@ -324,12 +336,15 @@
   <aside id="quran-player" class="mini-player" aria-label="Quran audio player" hidden>
     <div class="player-inner">
       <a id="playing-verse" href="#quran" class="player-verse"></a>
+      <button id="player-previous" type="button" aria-label="Previous audio verse">Prev</button>
       <button id="player-toggle" class="primary" type="button">Pause</button>
       <button id="player-next" type="button" aria-label="Next audio verse">Next</button>
       <button id="player-close" type="button" aria-label="Stop Quran audio">✕</button>
       <label class="sr-only" for="player-mode">Playback mode</label>
       <select id="player-mode">
         <option value="both">Arabic → English</option>
+        <option value="arabic-urdu">Arabic → Urdu</option>
+        <option value="urdu">Urdu only · اردو</option>
         <option value="english">English only</option>
         <option value="arabic">Arabic only</option>
       </select>
