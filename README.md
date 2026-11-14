@@ -62,3 +62,7 @@ Log each prayer from Today or Practice. Both screens use the same log. Track dai
 For development, run `npm ci` to install the build and test dependencies. Run `npm run build:engine` and commit the updated `public/engine.js` when prayer calculation code or dependencies change. Run `npm test` to verify the calculation engine, compass math, calendar files, backup format and offline package.
 
 Optional browser regression: install Python Playwright and its Chromium browser, then run `python scripts/check-player-browser.py`. This uses generated audio to check verse transitions, media controls and exact-position resumption; physical Android background and lock-screen testing is still required. Set `CHROMIUM_PATH` to use an existing Chromium executable.
+
+## Standalone Android branch
+
+The `android-standalone` branch contains the independent Android APK project. See [Android setup and preview notes](android/README.md) for building, installing, offline downloads and device verification. The Termux web app remains usable from this source tree.

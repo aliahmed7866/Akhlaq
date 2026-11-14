@@ -1,2 +1,8 @@
 node_modules/
 npm-debug.log*
+android/.gradle/
+android/local.properties
+android/**/build/
+*.jks
+*.keystore
+data/urdu.json.gz

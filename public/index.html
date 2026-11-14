@@ -159,7 +159,17 @@
             <label class="autoplay"><input id="quran-autoplay" type="checkbox" checked> Continue to next verse</label>
           </div>
           <p class="muted">Audio streams over the internet.</p>
-          <p class="muted">For background listening, press Home or lock your screen after pressing Play. Supported phones show controls on the lock screen. Fully closing the app or browser can stop playback; reopen Akhlaq and tap Resume to continue from your saved listening place.</p>
+          <p id="quran-background-help" class="muted">For background listening, press Home or lock your screen after pressing Play. Supported phones show controls on the lock screen. Fully closing the app or browser can stop playback; reopen Akhlaq and tap Resume to continue from your saved listening place.</p>
+        </details>
+        <details id="native-downloads" hidden>
+          <summary>Offline audio</summary>
+          <p class="muted">Download this surah in the selected playback mode. Audio downloads use internet and phone storage; Quran text is already included.</p>
+          <div class="reader-actions">
+            <button id="native-download" type="button">Download this surah</button>
+            <button id="native-download-pause" type="button">Pause downloads</button>
+            <button id="native-download-clear" type="button">Remove audio downloads</button>
+          </div>
+          <p id="native-download-status" class="muted" role="status"></p>
         </details>
         <p id="quran-language-status" class="muted" role="status"></p>
         <button type="button" id="quran-urdu-retry" hidden>Retry Urdu download</button>

@@ -1,4 +1,8 @@
 export function setupInstall(hasUnsavedReflection, isPlaying = () => false) {
+  if (window.AkhlaqNative) {
+    document.getElementById('offline-status').textContent = 'Standalone Android · ready offline';
+    return;
+  }
   const button = document.getElementById('install');
   const note = document.getElementById('install-note');
   const standalone = window.matchMedia('(display-mode: standalone)');

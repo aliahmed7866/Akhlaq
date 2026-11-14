@@ -103,6 +103,8 @@ export function savedListening(value, chapters) {
 }
 
 export function setupQuran({ stored, save, today }) {
+  const native = window.AkhlaqNative;
+  let nativeState = {};
   const status = byId('quran-status');
   const dailyText = byId('daily-text');
   const dailyLanguage = byId('daily-language');
@@ -138,7 +140,7 @@ export function setupQuran({ stored, save, today }) {
   let audioAttempt = 0;
   let resumeAt = 0;
   let lastCheckpoint = 0;
-  const mediaSession = setupMediaSession({ audio, actions: {
+  const mediaSession = setupMediaSession({ audio, session: native ? null : navigator.mediaSession, actions: {
     play: resumeAudio, pause: () => audio.pause(), stop: clearAudio,
     previous: previousAudioVerse, next: nextAudioVerse,
   } });
@@ -172,6 +174,56 @@ export function setupQuran({ stored, save, today }) {
   }
   renderPresets();
 
+  function nativeCommand(command) {
+    try { native.command(JSON.stringify(command)); }
+    catch { status.textContent = 'Android audio is unavailable. Close and reopen Akhlaq.'; }
+  }
+
+  function syncNative(event) {
+    if (!native) return;
+    try { nativeState = event?.detail || JSON.parse(native.status()); } catch { return; }
+    if (!data) return;
+    const downloads = nativeState.downloads || {};
+    byId('native-download-status').textContent = `${downloads.completed || 0} audio parts saved · ${downloads.pending || 0} pending · ${Math.round((downloads.bytes || 0) / 1048576)} MB`
+      + (downloads.failed ? ` · ${downloads.failed} failed; tap Download to retry.` : '');
+    if (!nativeState.chapter) {
+      playing = null;
+      player.hidden = true;
+      document.body.classList.remove('audio-open');
+      if (nativeState.error) status.textContent = nativeState.error;
+      return;
+    }
+    const ref = verseReference(nativeState.chapter + ':' + nativeState.verse, data.chapters);
+    if (!ref || !audioParts[nativeState.mode]?.includes(nativeState.part)) return;
+    const follow = route === 'quran' && playing && selection && keyFor(selection) === keyFor(playing);
+    playing = { ...ref, mode: nativeState.mode, part: nativeState.part,
+      finished: nativeState.finished, singleVerse: nativeState.singleVerse };
+    if (follow) selectVerse(ref);
+    player.hidden = false;
+    document.body.classList.add('audio-open');
+    byId('playing-verse').textContent = reference(ref);
+    byId('playing-verse').href = hashFor(ref);
+    playerMode.value = nativeState.mode;
+    playerNext.disabled = ref.verse >= data.chapters[ref.chapter - 1].ayahs.length;
+    playerPrevious.disabled = ref.verse <= 1;
+    playerToggle.textContent = nativeState.error ? 'Retry' : nativeState.finished ? 'Replay' : nativeState.playing ? 'Pause' : 'Resume';
+    audioStatus.textContent = nativeState.error || (nativeState.buffering ? 'Loading · ' : '') + partLabel(playing);
+    if (nativeState.speed) speed.value = String(nativeState.speed);
+  }
+
+  if (native) {
+    byId('native-downloads').hidden = false;
+    byId('quran-background-help').textContent = 'Android plays recitation independently of this screen, with lock-screen controls. Use Stop to end playback. Download a surah below for offline listening.';
+    window.addEventListener('akhlaq-native-state', syncNative);
+    byId('native-download').addEventListener('click', () => {
+      if (selection) nativeCommand({ action: 'download', chapter: selection.chapter, verse: 1, mode: voiceSelect.value });
+    });
+    byId('native-download-pause').addEventListener('click', () => nativeCommand({ action: 'pauseDownloads' }));
+    byId('native-download-clear').addEventListener('click', () => {
+      if (confirm('Remove all downloaded Quran audio? Quran text and your practice log will stay.')) nativeCommand({ action: 'clearDownloads' });
+    });
+  }
+
   function renderLanguageStatus() {
     for (const [prefix, requested] of [['daily', dailyLanguage.value === 'ur'], ['quran', displayModes[language.value].includes('ur')]]) {
       byId(prefix + '-language-status').textContent = requested ? urduMessage : '';
@@ -192,7 +244,7 @@ export function setupQuran({ stored, save, today }) {
       renderLanguageStatus();
       const cache = await window.caches?.open(urduCache).catch(() => null);
       try {
-        let response = await cache?.match(urduEndpoint);
+        let response = native ? await fetch('/urdu.json') : await cache?.match(urduEndpoint);
         let savedOffline = Boolean(response);
         if (!response && download) {
           response = await fetch(urduEndpoint, { method: 'POST' });
@@ -408,6 +460,7 @@ export function setupQuran({ stored, save, today }) {
   }
 
   function clearAudio() {
+    if (native) nativeCommand({ action: 'stop' });
     if (!playing) return;
     playing = null;
     resumeAt = 0;
@@ -447,7 +500,7 @@ export function setupQuran({ stored, save, today }) {
   }
 
   function checkpoint() {
-    if (!playing) return;
+    if (native || !playing) return;
     lastCheckpoint = Date.now();
     if (playing.finished) return save(listeningKey, {});
     save(listeningKey, { chapter: playing.chapter, verse: playing.verse, mode: playing.mode,
@@ -488,6 +541,12 @@ export function setupQuran({ stored, save, today }) {
 
   function play(ref, mode, { follow = route === 'quran', focus = false, singleVerse = false, start = true,
     part = audioParts[mode][0], seconds = 0 } = {}) {
+    if (native) {
+      if (follow) selectVerse(ref, { focus });
+      nativeCommand({ action: 'play', ...ref, mode, part, seconds, start, speed: Number(speed.value),
+        singleVerse: singleVerse || !byId('quran-autoplay').checked });
+      return;
+    }
     if (follow) selectVerse(ref, { focus });
     const chapter = data.chapters[ref.chapter - 1];
     playing = { chapter: ref.chapter, verse: ref.verse, mode, singleVerse };
@@ -519,7 +578,7 @@ export function setupQuran({ stored, save, today }) {
     remember({ audioMode: mode });
     renderPresets();
     if (playing && playing.mode !== mode) {
-      play(playing, mode, { follow: false, singleVerse: playing.singleVerse, start: !audio.paused && !playing.finished });
+      play(playing, mode, { follow: false, singleVerse: playing.singleVerse, start: (native ? nativeState.playing : !audio.paused) && !playing.finished });
     }
   }
 
@@ -535,6 +594,11 @@ export function setupQuran({ stored, save, today }) {
     }
   });
   function resumeAudio() {
+    if (native) {
+      if (playing?.finished) play(playing, playing.mode);
+      else nativeCommand({ action: 'resume' });
+      return;
+    }
     if (!playing) return;
     if (playing.finished) {
       loadAudioPart(audioParts[playing.mode][0]);
@@ -545,6 +609,11 @@ export function setupQuran({ stored, save, today }) {
     }
   }
   playerToggle.addEventListener('click', () => {
+    if (native) {
+      if (nativeState.playing && !nativeState.finished) nativeCommand({ action: 'pause' });
+      else resumeAudio();
+      return;
+    }
     if (audio.paused || playing?.finished) resumeAudio();
     else audio.pause();
   });
@@ -623,7 +692,8 @@ export function setupQuran({ stored, save, today }) {
       renderBookmarks();
       renderResume();
       openRoute();
-      const listening = savedListening(stored(listeningKey), data.chapters);
+      if (native) syncNative();
+      const listening = native ? null : savedListening(stored(listeningKey), data.chapters);
       if (listening) {
         play(listening, listening.mode, { follow: false, start: false, ...listening });
         playerToggle.textContent = 'Resume';
@@ -669,6 +739,7 @@ export function setupQuran({ stored, save, today }) {
   speed.addEventListener('change', () => {
     audio.defaultPlaybackRate = audio.playbackRate = Number(speed.value);
     remember({ speed: Number(speed.value) });
+    if (native) nativeCommand({ action: 'speed', speed: Number(speed.value) });
   });
   dailyLanguage.addEventListener('change', () => {
     remember({ dailyLanguage: dailyLanguage.value });
@@ -683,7 +754,11 @@ export function setupQuran({ stored, save, today }) {
     byId('quran').dataset.size = size.value;
     remember({ size: size.value });
   });
-  byId('quran-autoplay').addEventListener('change', event => remember({ autoplay: event.target.checked }));
+  byId('quran-autoplay').addEventListener('change', event => {
+    remember({ autoplay: event.target.checked });
+    if (native && playing) play(playing, playing.mode, { follow: false, part: playing.part,
+      seconds: nativeState.seconds || 0, start: nativeState.playing, singleVerse: !event.target.checked });
+  });
   select.addEventListener('change', () => {
     results.hidden = true;
     selectVerse({ chapter: Number(select.value), verse: 1 });
@@ -742,7 +817,7 @@ export function setupQuran({ stored, save, today }) {
   });
 
   return {
-    isPlaying: () => Boolean(playing && !audio.paused && !playing.finished),
+    isPlaying: () => Boolean(playing && (native ? nativeState.playing : !audio.paused) && !playing.finished),
     navigate(page, suffix) {
       if (route === page && target === suffix) return;
       byId('quran-save-status').textContent = '';

@@ -231,6 +231,7 @@ byId('gps').addEventListener('click', async event => {
   settingsStatus.textContent = 'Getting your location…';
   try {
     const { latitude, longitude } = await findLocation().catch(async () => {
+      if (window.AkhlaqNative) throw new Error('Location unavailable. Allow location for Akhlaq in Android settings.');
       try {
         return await fetchJson('/api/gps', { method: 'POST', signal: AbortSignal.timeout(22000) });
       } catch (error) {

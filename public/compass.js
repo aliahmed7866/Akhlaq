@@ -47,6 +47,7 @@ const degrees = value => Math.round(wrap(value)) % 360 + '°';
 const cardinal = value => directions[Math.round(wrap(value) / 22.5) % 16];
 
 export function setupCompass() {
+  const native = window.AkhlaqNative;
   const get = id => document.getElementById(id);
   const button = get('compass');
   const note = get('compass-note');
@@ -92,7 +93,7 @@ export function setupCompass() {
 
   function read(event) {
     const angle = window.screen.orientation?.angle ?? Number(window.orientation ?? 0);
-    const measurement = readHeading(event, angle, position.declination);
+    const measurement = readHeading(event.detail || event, native ? 0 : angle, position.declination);
     if (!measurement) return;
     lastEvent = event;
     clearTimeout(initialTimer);
@@ -136,6 +137,7 @@ export function setupCompass() {
 
   function stop(message = staticNote) {
     listening = false;
+    if (native) { native.compass(false); window.removeEventListener('akhlaq-heading', read); }
     lastEvent = undefined;
     clearTimeout(initialTimer);
     for (const name of ['deviceorientationabsolute', 'deviceorientation']) window.removeEventListener(name, read);
@@ -150,7 +152,7 @@ export function setupCompass() {
     if (!Number.isFinite(position?.declination)) return stop('Magnetic correction is unavailable here. Use the true-north bearing.');
     promptPending = true;
     try {
-      if (typeof window.DeviceOrientationEvent?.requestPermission === 'function'
+      if (!native && typeof window.DeviceOrientationEvent?.requestPermission === 'function'
           && await window.DeviceOrientationEvent.requestPermission(true) !== 'granted') {
         return stop('Motion access was denied. The true and magnetic bearings still work.');
       }
@@ -158,7 +160,8 @@ export function setupCompass() {
       listening = true;
       button.textContent = 'Stop compass';
       note.textContent = 'Hold the phone flat, screen up, and away from metal.';
-      for (const name of ['deviceorientationabsolute', 'deviceorientation']) window.addEventListener(name, read);
+      if (native) { window.addEventListener('akhlaq-heading', read); native.compass(true); }
+      else for (const name of ['deviceorientationabsolute', 'deviceorientation']) window.addEventListener(name, read);
       initialTimer = setTimeout(() => stop('No compass reading. Check your browser’s motion permissions or use the magnetic bearing.'), 8500);
     } catch {
       stop('Live heading is unavailable. Use the bearings above.');
