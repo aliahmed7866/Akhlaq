@@ -19,7 +19,9 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
       - name: Verify shared app
-        run: npm test
+        run: |
+          npm ci --include=dev --ignore-scripts
+          npm test
       - name: Build and check Android preview
         working-directory: android
         run: ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
