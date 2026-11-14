@@ -26,7 +26,7 @@ let schedule;
 let clock;
 const renderCompass = setupCompass();
 const quran = setupQuran({ stored, save, today: todayForPractice });
-const renderPractice = setupPractice({ salah, stored, save, todayForPractice, shiftDate, dateLabel });
+const practiceLog = setupPractice({ salah, stored, save, todayForPractice, shiftDate, dateLabel });
 
 function stored(key) {
   try {
@@ -117,6 +117,15 @@ function showSchedule(data) {
     const time = document.createElement('strong');
     time.textContent = timeLabel(schedule.days[0].times[key]);
     item.append(label, time);
+    if (key !== 'sunrise') {
+      const log = document.createElement('button');
+      log.className = 'quick-log';
+      log.type = 'button';
+      log.dataset.logPrayer = key;
+      log.setAttribute('aria-label', 'Log ' + label);
+      log.addEventListener('click', () => practiceLog.toggleTodayPrayer(key));
+      item.append(log);
+    }
     return item;
   }));
   const table = byId('week');
@@ -139,8 +148,10 @@ function showSchedule(data) {
   renderCompass(data);
   calendarButton.disabled = false;
   if (previous !== data.today) {
-    renderPractice();
+    practiceLog.refresh();
     quran.showDaily();
+  } else {
+    practiceLog.renderTodayLog();
   }
 }
 
@@ -322,11 +333,14 @@ function start() {
   }
   for (const city of cities) byId('city').add(new Option(city.name, city.name));
   fillForm();
-  renderPractice();
+  practiceLog.refresh();
   refresh();
-  setupInstall();
+  setupInstall(practiceLog.hasUnsavedReflection);
   navigate();
   window.addEventListener('hashchange', navigate);
+  window.addEventListener('storage', event => {
+    if (event.key === null || event.key.startsWith('akhlaq.practice.v1.')) practiceLog.refresh();
+  });
   setInterval(refresh, 15000);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) refresh();

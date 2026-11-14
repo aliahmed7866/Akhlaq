@@ -19,7 +19,7 @@ Wait for **Ready for offline use** in the footer before stopping Termux. Once th
 
 ### Update an existing installation
 
-In the Akhlaq folder, run `git pull --ff-only` and `npm ci`. Stop the old server with Ctrl+C if it is still running, then run `npm start`. Open Akhlaq on the same address. Close all open Akhlaq tabs and the standalone window, then relaunch if the previous version is still showing. Using the same browser profile and address keeps your settings and practice entries.
+In the Akhlaq folder, run `git pull --ff-only` and `npm ci`. Stop the old server with Ctrl+C if it is still running, then run `npm start`. Open Akhlaq on the same address. Use **Update & reload** when the app shows that the update is ready. If your installed version predates this button, close all Akhlaq windows and tabs, then relaunch. Using the same browser profile and address keeps your settings and practice entries.
 
 ## Prayer times and reminders
 
@@ -38,7 +38,7 @@ Grant precise location to Chrome if prompted. To enable the optional Termux fall
 
 ## Quran
 
-The Today tab shows a verse that changes with the date in your selected time zone. Open it in context or listen in English. The Quran tab includes all 114 surahs, verse and English phrase search, a reading position, a bookmark and translation notes.
+The Today tab shows a verse that changes with the date in your selected time zone. Open it in context or listen in English. The Quran tab includes all 114 surahs, verse and English phrase search, a saved-verse collection and translation notes. Tap a verse number to set your reading place and use **Continue reading** on Today to return to it. Older bookmarks appear in **Saved verses**.
 
 - English text and footnotes come from the [Rowwad Translation Center edition on QuranEnc](https://quranenc.com/en/browse/english_rwwad), version **1.0.21** (CSV revision 1, 9 November 2026).
 - Arabic is [Tanzil’s Uthmani text](https://tanzil.net/docs/Text_License), version **1.1**. The reader includes both publisher notices.
@@ -47,6 +47,6 @@ The Today tab shows a verse that changes with the date in your selected time zon
 
 ## Practice and backup
 
-Log prayers and daily habits, keep reflections, and browse the past week. The dhikr counter saves progress by day and phrase and supports personal targets of 33, 99 or 100. These targets are counter settings. Use **Back up your practice** to export a JSON file. Restore fills dates missing on the device. Browser data is local to the address and profile, and clearing it removes your entries.
+Log each prayer from Today or Practice. Both screens use the same log. Track daily habits, keep reflections, and browse the past week in Practice. The dhikr counter saves progress by day and phrase and supports personal targets of 33, 99 or 100. These targets are counter settings. Use **Back up your practice** to export a JSON file. Restore fills dates missing on the device. Browser data is local to the address and profile, and clearing it removes your entries.
 
 Run `npm test` to verify the calculation engine, compass math, calendar files, backup format and offline package.

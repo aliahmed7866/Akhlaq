@@ -39,7 +39,31 @@ export function setupPractice({ salah, stored, save, todayForPractice, shiftDate
     return stored(prefix + day);
   }
 
+  function renderTodayLog() {
+    const entry = dbEntry(todayForPractice());
+    const logged = salah.filter(([key]) => entry[key] === true).length;
+    for (const button of document.querySelectorAll('[data-log-prayer]')) {
+      const checked = entry[button.dataset.logPrayer] === true;
+      button.setAttribute('aria-pressed', String(checked));
+      button.textContent = checked ? '✓ Logged' : 'Log';
+    }
+    get('today-prayer-progress').textContent = logged + ' of ' + salah.length + ' prayers logged';
+  }
+
+  function toggleTodayPrayer(key) {
+    const today = todayForPractice();
+    const entry = dbEntry(today);
+    entry[key] = entry[key] !== true;
+    if (!save(prefix + today, entry)) {
+      get('today-prayer-progress').textContent = 'Could not save. Browser storage is unavailable.';
+      return;
+    }
+    if (today === practiceDay) form.elements[key].checked = entry[key];
+    renderStats();
+  }
+
   function renderStats() {
+    renderTodayLog();
     const today = todayForPractice();
     const rows = Array.from({ length: 7 }, (_, index) => shiftDate(today, index - 6));
     let prayersLogged = 0;
@@ -215,9 +239,14 @@ export function setupPractice({ salah, stored, save, todayForPractice, shiftDate
     show(practiceDay);
   });
 
-  return () => {
-    const today = todayForPractice();
-    show(trackToday || !practiceDay || practiceDay > today ? today : practiceDay);
+  return {
+    refresh() {
+      const today = todayForPractice();
+      show(trackToday || !practiceDay || practiceDay > today ? today : practiceDay);
+    },
+    renderTodayLog,
+    toggleTodayPrayer,
+    hasUnsavedReflection: () => drafts.size > 0,
   };
 }
 

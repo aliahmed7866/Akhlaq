@@ -21,6 +21,10 @@
     </div>
   </header>
   <main>
+    <div class="update-notice" id="update-notice" hidden>
+      <p id="update-status" role="status">An Akhlaq update is ready.</p>
+      <button id="apply-update" type="button">Update &amp; reload</button>
+    </div>
     <p id="install-note" class="install-note" role="status" hidden>In Android Chrome, open the ⋮ menu, choose <strong>Install and create shortcut</strong> or <strong>Add to Home screen</strong>, then tap <strong>Install</strong>.</p>
     <div class="intro" data-page="home">
       <p lang="ar" dir="rtl" class="arabic">السلام عليكم</p>
@@ -39,6 +43,10 @@
         <div class="next-clock"><strong id="next-time">—</strong><span id="countdown"></span></div>
       </div>
       <ul id="prayers" class="prayers" aria-label="Today’s prayer times"></ul>
+      <div class="prayer-progress">
+        <p id="today-prayer-progress" class="muted" role="status"></p>
+        <a href="#practice">Prayer log</a>
+      </div>
       <p id="prayer-method" class="muted"></p>
       <p id="unavailable" class="muted" hidden>Some solar events are unavailable at this latitude. Check your local mosque’s timetable for those prayers.</p>
       <details>
@@ -62,19 +70,25 @@
         </form>
       </details>
     </section>
+    <section class="card home-reading" id="home-reading" data-page="home" aria-labelledby="home-reading-title" hidden>
+      <div><h2 id="home-reading-title">Continue reading</h2><p id="home-reading-reference" class="muted"></p></div>
+      <a class="small-button" id="home-resume" href="#quran">Open Quran</a>
+    </section>
     <section id="daily-verse" data-page="home" class="card daily-verse" aria-labelledby="daily-title">
       <div class="card-head"><div><h2 id="daily-title">Verse of the day</h2><p id="daily-reference"></p></div></div>
       <blockquote id="daily-text">Loading the Quran…</blockquote>
       <div class="reader-actions">
         <a class="small-button" id="daily-open" href="#quran" hidden>Read in context</a>
         <button id="daily-listen" type="button" hidden>Listen in English</button>
+        <button id="daily-save" type="button" aria-pressed="false" hidden>Save verse</button>
       </div>
+      <p id="daily-save-status" class="muted" role="status"></p>
       <p id="daily-credit" class="muted" hidden>English translation by Rowwad Translation Center</p>
     </section>
     <section id="quran" data-page="quran" class="card reader" aria-labelledby="quran-title" hidden>
       <div class="card-head">
         <div><h1 id="quran-title">Quran</h1><p>Arabic and English translation</p></div>
-        <button id="quran-resume" type="button" hidden>Bookmark</button>
+
       </div>
       <p id="quran-status" role="status"></p>
       <div id="quran-tools" hidden>
@@ -86,6 +100,12 @@
           </form>
         </div>
         <div id="quran-results" hidden></div>
+        <details id="quran-saved">
+          <summary id="quran-saved-title">Saved verses</summary>
+          <p id="quran-saved-empty" class="muted">Save a verse from the reader or Today to find it here.</p>
+          <ul id="quran-saved-list"></ul>
+        </details>
+        <p id="quran-save-status" class="muted" role="status"></p>
         <div class="quran-audio" aria-labelledby="audio-title">
           <div class="audio-controls">
             <label class="field" id="audio-title">Listen

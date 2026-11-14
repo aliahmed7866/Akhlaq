@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { gunzipSync } from 'node:zlib';
-import { audioUrl, dailyVerse, verseReference } from '../public/quran.js';
+import { audioUrl, dailyVerse, readingBookmarks, verseReference } from '../public/quran.js';
 
 const quran = JSON.parse(gunzipSync(await readFile(new URL('../data/quran.json.gz', import.meta.url))));
 const { chapters } = quran;
@@ -38,4 +38,14 @@ test('verse lookup checks chapter boundaries and each audio source uses its numb
   for (const ref of ['0:1', '114:7', '115:1', '1:0']) assert.equal(verseReference(ref, chapters), null);
   assert.match(audioUrl('english', 2, 1, 8), /english_rwwad\/002001\.mp3$/);
   assert.match(audioUrl('arabic', 2, 1, 8), /ar\.alafasy\/8\.mp3$/);
+});
+
+test('saved verses migrate a legacy bookmark and validate and deduplicate references', () => {
+  const first = { chapter: 2, verse: 255 };
+  const second = { chapter: 114, verse: 6 };
+  assert.deepEqual([...readingBookmarks({ bookmark: first }, chapters).values()], [first]);
+  assert.deepEqual([...readingBookmarks({
+    bookmark: first, bookmarks: [first, first, second, { chapter: 114, verse: 7 }, null],
+  }, chapters).values()], [first, second]);
+  assert.equal(readingBookmarks({ bookmark: first, bookmarks: [] }, chapters).size, 0);
 });

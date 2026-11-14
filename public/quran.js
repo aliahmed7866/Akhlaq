@@ -34,6 +34,16 @@ export function audioUrl(voice, chapter, verse, globalVerse) {
     : 'https://d.quranenc.com/data/audio/english_rwwad/' + pad(chapter) + pad(verse) + '.mp3';
 }
 
+export function readingBookmarks(saved, chapters) {
+  const items = Array.isArray(saved.bookmarks) ? saved.bookmarks : [saved.bookmark];
+  const references = new Map();
+  for (const item of items) {
+    const ref = item && verseReference(item.chapter + ':' + item.verse, chapters);
+    if (ref) references.set(ref.chapter + ':' + ref.verse, ref);
+  }
+  return references;
+}
+
 export function setupQuran({ stored, save, today }) {
   const status = byId('quran-status');
   const dailyText = byId('daily-text');
@@ -53,6 +63,7 @@ export function setupQuran({ stored, save, today }) {
   let saved = stored(readerKey);
   let selection;
   let daily;
+  let bookmarks;
   let playing;
   let audioAttempt = 0;
   let pendingDailyListen = false;
@@ -62,7 +73,7 @@ export function setupQuran({ stored, save, today }) {
   byId('quran-autoplay').checked = saved.autoplay !== false;
   function remember(fields) {
     saved = { ...saved, ...fields };
-    save(readerKey, saved);
+    return save(readerKey, saved);
   }
   function current() {
     return data.chapters[selection.chapter - 1];
@@ -76,11 +87,13 @@ export function setupQuran({ stored, save, today }) {
     const day = today();
     if (day === shownDay) return;
     shownDay = day;
+    byId('daily-save-status').textContent = '';
     daily = dailyVerse(data.chapters, day);
     byId('daily-reference').textContent = reference(daily);
     dailyText.textContent = data.chapters[daily.chapter - 1].ayahs[daily.verse - 1][2];
     byId('daily-open').href = hashFor(daily);
-    for (const id of ['daily-open', 'daily-listen', 'daily-credit']) byId(id).hidden = false;
+    for (const id of ['daily-open', 'daily-listen', 'daily-save', 'daily-credit']) byId(id).hidden = false;
+    syncSaveButton(byId('daily-save'), daily);
   }
 
   function showSelected(focus = false) {
@@ -119,20 +132,20 @@ export function setupQuran({ stored, save, today }) {
 
       const actions = document.createElement('div');
       actions.className = 'ayah-actions';
-      const label = make('span', chapter.id + ':' + verse);
+      const ref = { chapter: chapter.id, verse };
+      const label = make('button', chapter.id + ':' + verse);
+      label.type = 'button';
+      label.className = 'ayah-reference';
+      label.setAttribute('aria-label', 'Set reading place at ' + chapter.id + ':' + verse);
+      label.addEventListener('click', () => selectVerse(ref));
       const listen = make('button', 'Listen');
       listen.type = 'button';
       listen.setAttribute('aria-label', 'Listen to verse ' + chapter.id + ':' + verse);
       listen.addEventListener('click', () => play({ chapter: chapter.id, verse }, voiceSelect.value));
-      const bookmark = make('button', 'Bookmark');
+      const bookmark = make('button', 'Save verse');
       bookmark.type = 'button';
       bookmark.dataset.bookmark = String(verse);
-      bookmark.setAttribute('aria-label', 'Bookmark verse ' + chapter.id + ':' + verse);
-      bookmark.addEventListener('click', () => {
-        selectVerse({ chapter: chapter.id, verse });
-        remember({ bookmark: selection });
-        updateBookmark();
-      });
+      bookmark.addEventListener('click', () => toggleBookmark(ref));
       actions.append(label, listen, bookmark);
 
       const original = make('p', arabic);
@@ -148,26 +161,66 @@ export function setupQuran({ stored, save, today }) {
       }
       return row;
     }));
-    updateBookmark();
+    updateSaveButtons();
     showSelected(focus);
   }
 
-  function updateBookmark() {
-    const bookmark = saved.bookmark;
-    const button = byId('quran-resume');
-    button.hidden = !bookmark;
-    if (bookmark) button.textContent = 'Bookmark · ' + bookmark.chapter + ':' + bookmark.verse;
-    for (const mark of list.querySelectorAll('[data-bookmark]')) {
-      const matched = selection.chapter === bookmark?.chapter && Number(mark.dataset.bookmark) === bookmark?.verse;
-      mark.textContent = matched ? 'Bookmarked' : 'Bookmark';
-      mark.setAttribute('aria-pressed', String(matched));
+  const keyFor = ref => ref.chapter + ':' + ref.verse;
+
+  function syncSaveButton(button, ref) {
+    const selected = bookmarks.has(keyFor(ref));
+    button.textContent = selected ? 'Saved ✓' : 'Save verse';
+    button.setAttribute('aria-label', 'Save verse ' + keyFor(ref));
+    button.setAttribute('aria-pressed', String(selected));
+  }
+
+  function updateSaveButtons() {
+    if (daily) syncSaveButton(byId('daily-save'), daily);
+    for (const button of list.querySelectorAll('[data-bookmark]')) {
+      syncSaveButton(button, { chapter: selection.chapter, verse: Number(button.dataset.bookmark) });
     }
+  }
+
+  function renderBookmarks() {
+    byId('quran-saved-title').textContent = 'Saved verses · ' + bookmarks.size;
+    byId('quran-saved-empty').hidden = bookmarks.size > 0;
+    const rows = [...bookmarks.values()].reverse().map(ref => {
+      const item = document.createElement('li');
+      const button = make('button', reference(ref));
+      button.type = 'button';
+      button.addEventListener('click', () => selectVerse(ref, { focus: true }));
+      item.append(button);
+      return item;
+    });
+    byId('quran-saved-list').replaceChildren(...rows);
+    updateSaveButtons();
+  }
+
+  function toggleBookmark(ref) {
+    const key = keyFor(ref);
+    const added = !bookmarks.has(key);
+    if (added) bookmarks.set(key, ref);
+    else bookmarks.delete(key);
+    const success = remember({ bookmarks: [...bookmarks.values()] });
+    const status = byId(route === 'quran' ? 'quran-save-status' : 'daily-save-status');
+    status.textContent = success ? (added ? 'Verse saved.' : 'Verse removed.')
+      : 'Could not save to this device. The change is available for this session.';
+    renderBookmarks();
+  }
+
+  function renderResume() {
+    const last = saved.last && verseReference(keyFor(saved.last), data.chapters);
+    byId('home-reading').hidden = route !== 'home' || !last;
+    if (!last) return;
+    byId('home-reading-reference').textContent = reference(last);
+    byId('home-resume').href = hashFor(last);
   }
 
   function selectVerse(ref, { focus = false, updateUrl = true } = {}) {
     const rerender = !selection || ref.chapter !== selection.chapter || pageStart(ref.verse) !== pageStart(selection.verse);
     selection = ref;
     remember({ last: ref });
+    renderResume();
     if (updateUrl && route === 'quran') {
       target = ref.chapter + ':' + ref.verse;
       history.replaceState(null, '', hashFor(ref));
@@ -239,6 +292,7 @@ export function setupQuran({ stored, save, today }) {
         loading = undefined;
         return;
       }
+      bookmarks = readingBookmarks(saved, data.chapters);
       select.replaceChildren(...data.chapters.map(chapter => new Option(chapter.id + '. ' + chapter.name + ' · ' + chapter.meaning, chapter.id)));
       byId('quran-version').textContent = '(' + data.englishVersion + ')';
       byId('quran-notices').textContent = data.englishTranscript + '\n\n' + data.arabicNotice;
@@ -246,6 +300,8 @@ export function setupQuran({ stored, save, today }) {
       status.textContent = '';
       byId('quran-tools').hidden = false;
       showDaily();
+      renderBookmarks();
+      renderResume();
       openRoute();
     })();
   }
@@ -261,7 +317,14 @@ export function setupQuran({ stored, save, today }) {
     play(daily, 'english', false, true);
     pendingDailyListen = false;
   });
-  byId('quran-resume').addEventListener('click', () => selectVerse(saved.bookmark, { focus: true }));
+  byId('daily-save').addEventListener('click', () => toggleBookmark(daily));
+  window.addEventListener('storage', event => {
+    if (!data || (event.key !== readerKey && event.key !== null)) return;
+    saved = stored(readerKey);
+    bookmarks = readingBookmarks(saved, data.chapters);
+    renderBookmarks();
+    renderResume();
+  });
   playButton.addEventListener('click', () => play(selection, voiceSelect.value));
   voiceSelect.addEventListener('change', () => {
     clearAudio();
@@ -331,11 +394,15 @@ export function setupQuran({ stored, save, today }) {
   return {
     navigate(page, suffix) {
       if (route === page && target === suffix) return;
+      byId('quran-save-status').textContent = '';
+      byId('daily-save-status').textContent = '';
       route = page;
       target = suffix;
       if (route !== 'quran') clearAudio();
-      if (data) openRoute();
-      else if (route === 'home' || route === 'quran') load();
+      if (data) {
+        renderResume();
+        openRoute();
+      } else if (route === 'home' || route === 'quran') load();
     },
     showDaily,
   };
