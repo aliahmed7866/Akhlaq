@@ -42,7 +42,7 @@ The Today tab shows a verse that changes with the date in your selected time zon
 
 - English text and footnotes come from the [Rowwad Translation Center edition on QuranEnc](https://quranenc.com/en/browse/english_rwwad), version **1.0.21** (CSV revision 1, 9 November 2026).
 - Arabic is [Tanzil’s Uthmani text](https://tanzil.net/docs/Text_License), version **1.1**. The reader includes both publisher notices.
-- The text works offline after the app caches it. **Listen** streams [QuranEnc’s English recordings](https://quranenc.com/en/home/api/) or [Mishary Rashid Alafasy’s Arabic recitation](https://alquran.cloud/cdn). The player can continue through the current surah and stays available above the tabs while you use the app. Tap the verse in the player to jump to its text. Use **Reading & audio options** to change text size, translation language or voice.
+- The text works offline after the app caches it. **Listen** streams [QuranEnc’s English recordings](https://quranenc.com/en/home/api/) or [Mishary Rashid Alafasy’s Arabic recitation](https://alquran.cloud/cdn). **Arabic → English** plays both recordings for each verse in order. Switch between the three modes in the player. The Today button plays just the verse of the day using your chosen mode. The player can continue through the current surah and stays available above the tabs while you use the app. Tap the verse in the player to jump to its text. Use **Reading & audio options** to change text size, translation language or voice.
 - To refresh the bundled text, use `scripts/import-quran.py` with the official QuranEnc CSV, Tanzil numbered Uthmani text and the Al Quran Cloud Quran edition response for chapter metadata.
 
 ## Practice and backup

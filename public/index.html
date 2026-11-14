@@ -84,7 +84,7 @@
       <blockquote id="daily-text">Loading the Quran…</blockquote>
       <div class="reader-actions">
         <a class="small-button" id="daily-open" href="#quran" hidden>Read in context</a>
-        <button id="daily-listen" type="button" hidden>Listen in English</button>
+        <button id="daily-listen" type="button" hidden>Listen</button>
         <button id="daily-save" type="button" aria-pressed="false" hidden>Save verse</button>
       </div>
       <p id="daily-save-status" class="muted" role="status"></p>
@@ -120,8 +120,9 @@
             </label>
             <label class="field">Voice
               <select id="quran-voice">
-                <option value="english">English translation</option>
-                <option value="arabic">Arabic · Mishary Alafasy</option>
+                <option value="both">Arabic → English</option>
+                <option value="english">English only</option>
+                <option value="arabic">Arabic only</option>
               </select>
             </label>
             <label class="field">Text size
@@ -307,6 +308,12 @@
       <button id="player-toggle" class="primary" type="button">Pause</button>
       <button id="player-next" type="button" aria-label="Next audio verse">Next</button>
       <button id="player-close" type="button" aria-label="Stop Quran audio">✕</button>
+      <label class="sr-only" for="player-mode">Playback mode</label>
+      <select id="player-mode">
+        <option value="both">Arabic → English</option>
+        <option value="english">English only</option>
+        <option value="arabic">Arabic only</option>
+      </select>
       <p id="quran-audio-status" class="muted" role="status"></p>
       <audio id="quran-audio" preload="none"></audio>
     </div>

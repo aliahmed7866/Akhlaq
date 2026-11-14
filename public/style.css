@@ -271,3 +271,7 @@ footer { padding-bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom))); }
   .home-shortcuts a { padding-inline: .5rem; font-size: .8rem; }
   .player-inner { padding-inline: .5rem; }
 }
+
+.player-inner select { grid-column: 1 / 3; min-height: 38px; padding-block: .3rem; font-size: .82rem; }
+.player-inner p { grid-column: 3 / -1; font-size: .8rem; }
+.audio-open footer { padding-bottom: calc(12rem + env(safe-area-inset-bottom)); }

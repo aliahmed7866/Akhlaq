@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { gunzipSync } from 'node:zlib';
-import { audioUrl, dailyVerse, readingBookmarks, verseReference } from '../public/quran.js';
+import { audioUrl, dailyVerse, nextAudioPart, readingBookmarks, verseReference } from '../public/quran.js';
 
 const quran = JSON.parse(gunzipSync(await readFile(new URL('../data/quran.json.gz', import.meta.url))));
 const { chapters } = quran;
@@ -48,4 +48,14 @@ test('saved verses migrate a legacy bookmark and validate and deduplicate refere
     bookmark: first, bookmarks: [first, first, second, { chapter: 114, verse: 7 }, null],
   }, chapters).values()], [first, second]);
   assert.equal(readingBookmarks({ bookmark: first, bookmarks: [] }, chapters).size, 0);
+});
+
+test('paired playback translates the same verse before advancing or finishing', () => {
+  assert.equal(nextAudioPart('both', 'arabic', true, true), 'english');
+  assert.equal(nextAudioPart('both', 'arabic', false, false), 'english');
+  assert.equal(nextAudioPart('both', 'english', true, true), 'next-verse');
+  assert.equal(nextAudioPart('both', 'english', false, true), 'finished');
+  assert.equal(nextAudioPart('both', 'english', true, false), 'finished');
+  assert.equal(nextAudioPart('arabic', 'arabic', true, true), 'next-verse');
+  assert.equal(nextAudioPart('english', 'english', false, true), 'finished');
 });
