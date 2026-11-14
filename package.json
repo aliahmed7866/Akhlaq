@@ -1,6 +1,6 @@
 {
   "name": "akhlaq",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Local prayer times, Qibla and daily practice for Termux",
   "scripts": {
     "test": "node --test",
@@ -21,6 +21,7 @@
   "private": true,
   "dependencies": {
     "adhan": "4.4.6",
+    "esbuild-wasm": "0.28.1",
     "geomagnetism": "0.2.0"
   }
 }

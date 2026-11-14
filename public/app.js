@@ -1,3 +1,9 @@
+import { calculate, cities } from './engine.js';
+import { setupCompass } from './compass.js';
+import { setupPractice } from './practice.js';
+import { downloadFile, makeCalendar } from './calendar.js';
+import { setupInstall } from './install.js';
+
 const byId = id => document.getElementById(id);
 const prayers = [
   ['fajr', 'Fajr'], ['sunrise', 'Sunrise'], ['dhuhr', 'Dhuhr'],
@@ -10,24 +16,15 @@ const defaults = {
 };
 const settingsKey = 'akhlaq.settings.v1';
 const form = byId('settings-form');
-const practice = byId('practice-form');
 const settingsStatus = byId('settings-status');
-const compassButton = byId('compass');
-const compassNote = byId('compass-note');
-const staticNote = compassNote.textContent;
 const dateFormatters = new Map();
-const practiceFields = [...salah.map(([key]) => key), 'quran', 'dhikr', 'kindness'];
-const drafts = new Map();
+const calendar = byId('calendar-form');
+const calendarButton = calendar.querySelector('[type=submit]');
 let settings = { ...defaults, ...stored(settingsKey) };
 let schedule;
 let clock;
-let practiceDay;
-let trackToday = true;
-let listening = false;
-let compassTimer;
-let orientationTimer;
-let heading = null;
-let cities = [];
+const renderCompass = setupCompass();
+const renderPractice = setupPractice({ salah, stored, save, todayForPractice, shiftDate, dateLabel });
 
 function stored(key) {
   try {
@@ -82,12 +79,12 @@ function updateMethodNote() {
   byId('high-latitude-note').hidden = form.elements.method.value !== 'MoonsightingCommittee';
 }
 
-async function requestSchedule(selection) {
+function requestSchedule(selection) {
   const query = new URLSearchParams({
     lat: selection.latitude, lon: selection.longitude, zone: selection.zone, method: selection.method,
     madhab: selection.madhab, highLatitude: selection.highLatitude, offsets: selection.offsets.join(','),
   });
-  return fetchJson('/api/prayers?' + query);
+  return calculate(query);
 }
 
 function showSchedule(data) {
@@ -98,6 +95,14 @@ function showSchedule(data) {
   });
   byId('prayer-error').hidden = true;
   byId('today-label').textContent = dateLabel(schedule.today, true);
+  try {
+    const hijri = new Intl.DateTimeFormat('en-GB-u-ca-islamic-civil', {
+      day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+    }).format(new Date(schedule.today + 'T12:00:00Z'));
+    byId('hijri-date').textContent = hijri + ' · estimated';
+  } catch {
+    byId('hijri-date').textContent = '';
+  }
   byId('schedule-location').textContent = (settings.city || 'Custom location') + ' · ' + schedule.zone.replaceAll('_', ' ');
   const select = form.elements.method;
   const method = Array.from(select.options).find(option => option.value === settings.method).textContent;
@@ -129,11 +134,9 @@ function showSchedule(data) {
     prayers.forEach(([key]) => { row.insertCell().textContent = timeLabel(day.times[key]); });
   }
   updateCountdown();
-  stopCompass();
-  if (previous !== data.today) {
-    if (trackToday || !practiceDay || practiceDay > data.today) showPractice(data.today);
-    else byId('later').disabled = false;
-  }
+  renderCompass(data);
+  calendarButton.disabled = false;
+  if (previous !== data.today) renderPractice();
 }
 
 function updateCountdown() {
@@ -168,89 +171,6 @@ function dateInZoneFor(instant, zone) {
   return [parts.year, parts.month, parts.day].join('-');
 }
 
-function wrap(degrees) {
-  return (degrees % 360 + 360) % 360;
-}
-
-function drawCompass() {
-  const bearing = schedule?.bearing;
-  const declination = schedule?.declination;
-  const valid = Number.isFinite(bearing);
-  byId('needle').hidden = !valid;
-  compassButton.disabled = !valid;
-  byId('bearing').textContent = valid
-    ? (Math.round(bearing) % 360) + '° true · ' + ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(bearing / 45) % 8]
-    : 'Qibla bearing unavailable at this location';
-  byId('magnetic').hidden = !valid || !Number.isFinite(declination);
-  if (!byId('magnetic').hidden) {
-    byId('magnetic').textContent = (Math.round(wrap(bearing - declination)) % 360) + '° on a magnetic compass';
-  }
-  byId('dial-rose').style.transform = 'rotate(' + -(heading ?? 0) + 'deg)';
-  byId('needle').style.transform = 'rotate(' + (bearing - (heading ?? 0)) + 'deg)';
-}
-
-function onOrientation(event) {
-  if (!listening || !Number.isFinite(event.beta) || !Number.isFinite(event.gamma)) return;
-  if (Math.abs(event.beta) > 30 || Math.abs(event.gamma) > 30) {
-    heading = null;
-    drawCompass();
-    compassNote.textContent = 'Hold your phone flat to find the Qibla.';
-    return;
-  }
-  if (!Number.isFinite(schedule?.declination)) {
-    stopCompass('Magnetic correction is unavailable here. Use the true-north bearing above.');
-    return;
-  }
-  const magnetic = Number.isFinite(event.webkitCompassHeading) && event.webkitCompassHeading >= 0
-    ? event.webkitCompassHeading
-    : event.absolute && Number.isFinite(event.alpha) ? -event.alpha : null;
-  if (magnetic === null) return;
-
-  clearTimeout(compassTimer);
-  clearTimeout(orientationTimer);
-  orientationTimer = setTimeout(() => stopCompass('Phone heading stopped updating. Start again or use the bearing above.'), 4000);
-  const rotation = screen.orientation?.angle ?? Number(window.orientation ?? 0);
-  heading = wrap(magnetic + schedule.declination + rotation);
-  const turn = wrap(schedule.bearing - heading + 180) - 180;
-  const remaining = Math.round(Math.abs(turn));
-  const message = remaining <= 5
-    ? 'You’re facing the Qibla.'
-    : 'Turn ' + remaining + '° ' + (turn > 0 ? 'right.' : 'left.');
-  if (compassNote.textContent !== message) compassNote.textContent = message;
-  byId('dial-rose').style.transform = 'rotate(' + -heading + 'deg)';
-  byId('needle').style.transform = 'rotate(' + (schedule.bearing - heading) + 'deg)';
-}
-
-function stopCompass(message = staticNote) {
-  listening = false;
-  heading = null;
-  clearTimeout(compassTimer);
-  clearTimeout(orientationTimer);
-  window.removeEventListener('deviceorientationabsolute', onOrientation);
-  window.removeEventListener('deviceorientation', onOrientation);
-  compassButton.textContent = 'Start live compass';
-  compassNote.textContent = message;
-  if (schedule) drawCompass();
-}
-
-compassButton.addEventListener('click', async () => {
-  if (listening) return stopCompass();
-  try {
-    if (typeof window.DeviceOrientationEvent?.requestPermission === 'function'
-        && await window.DeviceOrientationEvent.requestPermission() !== 'granted') {
-      return stopCompass('Motion permission was denied. You can still use the bearing above.');
-    }
-    listening = true;
-    compassButton.textContent = 'Stop compass';
-    compassNote.textContent = 'Hold your phone flat and away from metal.';
-    window.addEventListener('deviceorientationabsolute', onOrientation);
-    window.addEventListener('deviceorientation', onOrientation);
-    compassTimer = setTimeout(() => stopCompass('No usable heading received. Check motion permissions or use the bearing above.'), 9000);
-  } catch {
-    stopCompass('Live heading is unavailable. You can still use the bearing above.');
-  }
-});
-
 function findLocation() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) return reject(new Error('Browser location unavailable'));
@@ -270,25 +190,17 @@ function readSettings() {
   };
 }
 
-let saving = false;
-async function applySettings() {
-  if (saving || !form.reportValidity()) return;
-  saving = true;
-  const submit = form.querySelector('[type=submit]');
-  submit.disabled = true;
-  settingsStatus.textContent = 'Calculating…';
+function applySettings() {
+  if (!form.reportValidity()) return;
   const selection = readSettings();
   try {
-    const data = await requestSchedule(selection);
+    const data = requestSchedule(selection);
     settings = selection;
     const saved = save(settingsKey, settings);
     showSchedule(data);
     settingsStatus.textContent = saved ? 'Settings saved.' : 'Settings applied for this session. Browser storage is unavailable.';
   } catch (error) {
     settingsStatus.textContent = error.message;
-  } finally {
-    saving = false;
-    submit.disabled = false;
   }
 }
 
@@ -297,12 +209,21 @@ byId('gps').addEventListener('click', async event => {
   button.disabled = true;
   settingsStatus.textContent = 'Getting your location…';
   try {
-    const { latitude, longitude } = await findLocation().catch(() => fetchJson('/api/gps', { method: 'POST' }));
+    const { latitude, longitude } = await findLocation().catch(async () => {
+      try {
+        return await fetchJson('/api/gps', { method: 'POST', signal: AbortSignal.timeout(22000) });
+      } catch (error) {
+        if (error instanceof TypeError || error.name === 'TimeoutError') {
+          throw new Error('Browser GPS is unavailable. Start Termux for its GPS fallback.');
+        }
+        throw error;
+      }
+    });
     byId('city').value = '';
     form.elements.latitude.value = latitude;
     form.elements.longitude.value = longitude;
     form.elements.zone.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    await applySettings();
+    applySettings();
   } catch (error) {
     settingsStatus.textContent = error.message + ' You can also choose a city.';
   } finally {
@@ -310,11 +231,11 @@ byId('gps').addEventListener('click', async event => {
   }
 });
 
-byId('city').addEventListener('change', async event => {
+byId('city').addEventListener('change', event => {
   const city = cities.find(entry => entry.name === event.target.value);
   if (!city) return;
   for (const name of ['latitude', 'longitude', 'zone']) form.elements[name].value = city[name];
-  await applySettings();
+  applySettings();
 });
 for (const name of ['latitude', 'longitude', 'zone']) {
   form.elements[name].addEventListener('input', () => { byId('city').value = ''; });
@@ -322,79 +243,44 @@ for (const name of ['latitude', 'longitude', 'zone']) {
 form.elements.method.addEventListener('change', updateMethodNote);
 form.addEventListener('submit', event => {
   event.preventDefault();
-  void applySettings();
+  applySettings();
 });
 
 function todayForPractice() {
   return schedule?.today || dateInZoneFor(new Date(), settings.zone);
 }
 
-function showPractice(day) {
-  practiceDay = day;
-  const entry = stored('akhlaq.practice.v1.' + day);
-  for (const name of practiceFields) practice.elements[name].checked = entry[name] === true;
-  practice.elements.reflection.value = drafts.get(day) ?? entry.reflection ?? '';
-  byId('practice-date').textContent = dateLabel(day, true);
-  byId('later').disabled = day >= todayForPractice();
-  byId('save-status').textContent = drafts.has(day) ? 'Unsaved reflection' : '';
-}
-
-function savePractice(includeReflection) {
-  const key = 'akhlaq.practice.v1.' + practiceDay;
-  const entry = Object.fromEntries(practiceFields.map(name => [name, practice.elements[name].checked]));
-  entry.reflection = includeReflection ? practice.elements.reflection.value : stored(key).reflection || '';
-  const saved = save(key, entry);
-  if (saved && includeReflection) drafts.delete(practiceDay);
-  byId('save-status').textContent = saved ? (drafts.has(practiceDay) ? 'Unsaved reflection' : 'Saved on this device')
-    : 'Browser storage is unavailable.';
-}
-
-practice.elements.reflection.addEventListener('input', event => {
-  drafts.set(practiceDay, event.target.value);
-  byId('save-status').textContent = 'Unsaved reflection';
-});
-practice.addEventListener('change', event => {
-  if (event.target.type === 'checkbox') savePractice(false);
-});
-practice.addEventListener('submit', event => {
-  event.preventDefault();
-  savePractice(true);
-});
-byId('earlier').addEventListener('click', () => {
-  trackToday = false;
-  showPractice(shiftDate(practiceDay, -1));
-});
-byId('later').addEventListener('click', () => {
-  const next = shiftDate(practiceDay, 1);
-  if (next <= todayForPractice()) {
-    trackToday = next === todayForPractice();
-    showPractice(next);
-  }
-});
-byId('today').addEventListener('click', () => {
-  trackToday = true;
-  showPractice(todayForPractice());
-});
-
-let refreshing = false;
-async function refresh() {
-  if (saving || refreshing) return;
+function refresh() {
   if (schedule && schedule.today === dateInZoneFor(new Date(), settings.zone)) return updateCountdown();
-  refreshing = true;
-  const selection = settings;
   try {
-    const data = await requestSchedule(selection);
-    if (selection === settings) showSchedule(data);
+    showSchedule(requestSchedule(settings));
   } catch (error) {
     const message = byId('prayer-error');
     message.hidden = false;
     message.textContent = error.message;
-  } finally {
-    refreshing = false;
   }
 }
 
-async function start() {
+calendar.addEventListener('submit', event => {
+  event.preventDefault();
+  if (!schedule) return;
+  const status = byId('calendar-status');
+  const selected = salah.filter(([key]) => calendar.elements[key].checked);
+  if (!selected.length) {
+    status.textContent = 'Choose at least one prayer.';
+    return;
+  }
+  const calendarFile = makeCalendar([schedule.previous, ...schedule.days], selected,
+    settings.city || 'Akhlaq', Number(calendar.elements.lead.value));
+  if (!calendarFile.includes('BEGIN:VEVENT')) {
+    status.textContent = 'No upcoming times are available to export.';
+    return;
+  }
+  downloadFile('akhlaq-prayers-' + schedule.today + '.ics', calendarFile, 'text/calendar;charset=utf-8');
+  status.textContent = 'Calendar downloaded. Open the file in your calendar app to import it.';
+});
+
+function start() {
   for (const [key, label] of prayers) {
     const offset = document.createElement('label');
     offset.className = 'field';
@@ -404,22 +290,21 @@ async function start() {
     byId('offsets').append(offset);
   }
   for (const [key, label] of salah) {
-    const check = document.createElement('label');
+    const choice = document.createElement('label');
     const input = document.createElement('input');
-    Object.assign(input, { type: 'checkbox', name: key });
-    check.append(input, ' ' + label);
-    byId('prayer-checks').append(check);
+    Object.assign(input, { type: 'checkbox', name: key, checked: true });
+    choice.append(input, ' ' + label);
+    byId('calendar-prayers').querySelector('.checks').append(choice);
   }
-  try {
-    cities = await fetchJson('/api/cities');
-    for (const city of cities) byId('city').add(new Option(city.name, city.name));
-  } catch {
-    settingsStatus.textContent = 'City shortcuts are temporarily unavailable.';
-  }
+  for (const city of cities) byId('city').add(new Option(city.name, city.name));
   fillForm();
-  showPractice(todayForPractice());
-  await refresh();
+  renderPractice();
+  refresh();
+  setupInstall();
   setInterval(refresh, 15000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refresh();
+  });
 }
 
-void start();
+start();

@@ -1,8 +1,8 @@
 # Akhlaq
 
-A private dashboard for Salah, finding the Qibla, and building habits around Qur’an, dhikr and good character. Termux runs a local server and you use Akhlaq in your phone’s browser.
+A private Android web app for prayer times, finding the Qibla, and daily practice. Termux serves the app at a local address. Android Chrome can install it with its own icon.
 
-## Run on Android with Termux
+## Set up in Termux
 
 ```sh
 pkg update
@@ -13,19 +13,31 @@ npm ci
 npm start
 ```
 
-Keep the server running and open [http://127.0.0.1:8786](http://127.0.0.1:8786) in your Android browser. To open it from a second Termux session, run `termux-open-url http://127.0.0.1:8786`. Use the same browser and address to access your saved entries. To update, run `git pull --ff-only` and `npm ci` from the Akhlaq folder, then restart the server.
+Open [http://127.0.0.1:8786](http://127.0.0.1:8786) in Android Chrome and tap **Install app**. If Chrome does not offer an in-page prompt, open its ⋮ menu, choose **Install and create shortcut** or **Add to Home screen**, then tap **Install**. Open Akhlaq again from its icon.
 
-## Location and prayer times
+Wait for **Ready for offline use** in the footer before stopping Termux. Once the app is cached, its timetable, city presets, compass and practice tools work without internet or a running server. Termux is needed for the first load, app updates and the optional Termux GPS fallback.
 
-- Akhlaq starts with Manchester, the Moonsighting Committee method and Hanafi Asr. Choose another city, enter coordinates or tap **Use my location**. GPS uses the phone’s time zone. Check the time zone if you’ve travelled and Android hasn’t updated it yet.
-- Browser location works when Android and the browser grant location permission. For Termux GPS fallback, install the [Termux:API Android add-on](https://github.com/termux/termux-api) from the same distribution source as Termux, grant it location access, and run `pkg install termux-api`.
-- Prayer times are calculated offline with [Adhan](https://github.com/batoulapps/adhan-js). The timetable shows prayer start times, including a separate sunrise entry. Match your mosque by selecting its calculation method and Asr convention and adjusting individual minutes as needed. The [Islamic Relief Manchester timetable](https://www.islamic-relief.org.uk/resources/prayer-timetables/manchester/) is linked for comparison. Check your mosque for congregational times and its high-latitude practice.
-- The Moonsighting Committee method applies its own seasonal Fajr and Isha rules. Akhlaq marks unavailable times with a dash when the selected method cannot determine them.
+### Update an existing installation
 
-## Qibla and daily practice
+In the Akhlaq folder, run `git pull --ff-only` and `npm ci`. Stop the old server with Ctrl+C if it is still running, then run `npm start`. Open Akhlaq on the same address. Close all open Akhlaq tabs and the standalone window, then relaunch if the previous version is still showing. Using the same browser profile and address keeps your settings and practice entries.
 
-The dial gives the true-north bearing. When the magnetic model supports your location and date, it also gives a bearing to use with a magnetic compass. Tap **Start live compass**, allow motion access if prompted, and hold the phone flat and away from metal. Live mode requires a browser and phone that supply absolute heading. The static bearing works without motion access.
+## Prayer times and reminders
 
-Tick prayers and habits as you complete them. Use the arrows to review previous days and **Save reflection** to keep a note. The browser saves settings and practice locally. Clearing this site's browser data removes those entries. Akhlaq runs without internet after installation and listens only on the phone's loopback address.
+- Akhlaq starts with Manchester, the Moonsighting Committee method and Hanafi Asr. Choose a city, enter coordinates, or use GPS. Check the time zone when travelling.
+- [Adhan](https://github.com/batoulapps/adhan-js) calculates start times locally. Choose your mosque’s method and Asr convention and adjust individual minutes when needed. The [Islamic Relief Manchester timetable](https://www.islamic-relief.org.uk/resources/prayer-timetables/manchester/) is available for comparison. Check your mosque for congregational times or when the app shows unavailable solar times.
+- The Hijri date is a civil-calendar estimate. Local moon-sighting dates can differ.
+- **Prayer reminders in your calendar** downloads an ICS file for upcoming prayers in the seven-day timetable. Select the prayers and how early to be reminded. Import the file into a calendar that supports event alerts. If you change location or calculation settings, replace the previously imported events.
 
-Run `npm test` to verify the prayer and Qibla calculations.
+## Qibla
+
+The dial shows the true-north bearing and approximate distance to the Kaaba. Where the magnetic model is valid, it also shows the bearing for a magnetic compass. Tap **Start live compass** and hold the phone screen-up. Follow the left or right instruction and hold steady until the dial turns green. Move away from metal and magnetic cases if the heading jumps. The live compass requires usable absolute-orientation readings from the browser and phone.
+
+## Browser and Termux location
+
+Grant precise location to Chrome if prompted. To enable the optional Termux fallback, install the [Termux:API Android add-on](https://github.com/termux/termux-api) from the same distribution source as Termux, grant it location access, and run `pkg install termux-api` in Termux.
+
+## Practice and backup
+
+Log prayers and daily habits, keep reflections, and browse the past week. The dhikr counter saves progress by day and phrase and supports personal targets of 33, 99 or 100. These targets are counter settings. Use **Back up your practice** to export a JSON file. Restore fills dates missing on the device. Browser data is local to the address and profile, and clearing it removes your entries.
+
+Run `npm test` to verify the calculation engine, compass math, calendar files, backup format and offline package.

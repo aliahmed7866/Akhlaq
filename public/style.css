@@ -20,7 +20,6 @@ button, summary, select, input[type="checkbox"] { cursor: pointer; }
 .masthead, main, footer { max-width: 64rem; margin-inline: auto; padding-inline: 1.5rem; }
 .masthead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 68px; border-bottom: 1px solid var(--border); }
 .wordmark { font-size: 1.3rem; font-weight: 700; text-decoration: none; }
-.wordmark span { color: var(--accent); margin-right: .35rem; }
 nav { display: flex; align-items: center; gap: clamp(.7rem, 4vw, 1.8rem); }
 nav a { color: var(--muted); text-decoration: none; font-size: .93rem; padding-block: .6rem; }
 nav a:hover, .reference:hover { color: var(--accent); }
@@ -58,7 +57,7 @@ td, #next-time, .prayers strong { font-variant-numeric: tabular-nums; }
 .dial { width: min(100%, 13rem); aspect-ratio: 1; border: 1px solid #658b7b; border-radius: 50%; background: radial-gradient(circle, #25493e, #142b23 66%); position: relative; margin: auto; overflow: hidden; }
 .dial-rose, .needle { position: absolute; inset: 0; }
 .dial-rose::before { content: ''; position: absolute; inset: 24%; border: 1px dashed #597969; border-radius: 50%; }
-.point { position: absolute; color: var(--muted); font-size: .8rem; }
+.point { position: absolute; color: var(--muted); font-size: .8rem; rotate: var(--heading, 0deg); }
 .north { top: 7%; left: 50%; translate: -50% 0; color: var(--accent); font-weight: 750; }
 .south { bottom: 7%; left: 50%; translate: -50% 0; }
 .east { right: 7%; top: 50%; translate: 0 -50%; }
@@ -96,4 +95,63 @@ footer { padding-top: .15rem; padding-bottom: 2rem; }
   .prayers { grid-template-columns: repeat(3, 1fr); }
   .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .intro { padding-block: 1.8rem 1.3rem; }
+}
+
+/* Layout shared by the Android launcher and the browser. */
+.masthead { flex-wrap: wrap; column-gap: .65rem; }
+.wordmark { display: flex; align-items: center; gap: .45rem; }
+.wordmark img { border-radius: 8px; }
+.masthead nav { margin-left: auto; }
+.masthead #install { flex-shrink: 0; }
+.install-note { border: 1px solid var(--border); border-radius: 10px; background: var(--deep); color: var(--muted); padding: .8rem 1rem; margin-top: .8rem; }
+.intro #hijri-date { margin-top: .15rem; }
+footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
+#offline-status { color: var(--green); }
+#calendar-prayers { margin-top: .8rem; margin-bottom: .65rem; }
+#calendar-form .location-tools { margin-bottom: .5rem; }
+
+.dial { width: min(100%, 15rem); isolation: isolate; border: 2px solid #658b7b; }
+.dial::before { content: ''; position: absolute; inset: 10%; border-radius: 50%; border: 1px solid #436756; }
+.dial-rose { z-index: 0; border-radius: 50%; }
+.dial-rose::before { inset: 12%; border: 0; background: repeating-conic-gradient(from -1deg, #618b77 0deg 2deg, transparent 2deg 15deg); mask: radial-gradient(transparent 62%, #000 63%); z-index: -1; }
+.dial-rose::after { content: ''; position: absolute; inset: 23%; border-radius: 50%; border: 1px dashed #587968; z-index: -1; }
+.aim-mark { position: absolute; z-index: 2; top: 1.5%; left: 50%; translate: -50% 0; width: 13px; height: 9px; background: var(--accent); clip-path: polygon(0 0,100% 0,50% 100%); }
+.point.north { top: 8%; }
+.point.south { bottom: 8%; }
+.point.east { right: 8%; }
+.point.west { left: 8%; }
+.needle::after { width: 16%; left: 42%; top: 16%; height: 36%; background: var(--accent); }
+.dial[data-aligned="true"] { border-color: var(--green); box-shadow: 0 0 0 5px #91d6b619, 0 0 26px #91d6b633; }
+.dial[data-aligned="true"] .aim-mark, .dial[data-aligned="true"] .needle::after { background: var(--green); }
+.compass-readout { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin: .85rem 0 0; }
+.compass-readout div { text-align: center; padding: .5rem .25rem; border: 1px solid var(--border); border-radius: 8px; background: var(--deep); }
+.compass-readout dt { color: var(--muted); font-size: .77rem; }
+.compass-readout dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.compass-note + .compass-note { margin-top: .3rem; }
+#compass-note { min-height: 2.9em; }
+.reflection-prompt { margin-bottom: .55rem; }
+#week-totals { padding-block: .5rem; }
+.week-practice { display: grid; gap: .3rem; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.week-practice button { min-width: 0; padding: .32rem .15rem; font-size: .72rem; color: var(--muted); }
+.week-practice strong { display: block; color: var(--text); font-size: .9rem; line-height: 1.35; }
+.week-practice button[aria-current] { border-color: var(--green); }
+.dhikr-layout progress { display: block; width: 100%; height: .65rem; accent-color: var(--green); margin-top: 1.75rem; }
+#dhikr-progress-text { margin-top: .4rem; }
+.dhikr-actions { display: flex; gap: .65rem; align-items: center; justify-content: center; margin-top: 1rem; }
+#dhikr-add { display: grid; min-width: min(11rem, 56%); padding: .5rem 1.2rem; line-height: 1.2; }
+#dhikr-add strong { font: 2.5rem Georgia, serif; font-variant-numeric: tabular-nums; }
+#dhikr-add span { font-size: .82rem; }
+#dhikr-status { margin-top: .5rem; text-align: center; }
+dialog { color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 14px; max-width: min(24rem, 90vw); }
+dialog h3 { margin-top: 0; }
+dialog::backdrop { background: #050a08bf; }
+#backup-file { max-width: 18rem; }
+
+@media (max-width: 560px) {
+  .masthead { padding-top: .55rem; gap: .15rem .85rem; }
+  .masthead nav { order: 3; width: 100%; justify-content: space-between; }
+  .masthead #install { margin-left: auto; }
+  .dhikr-layout .settings-grid { grid-template-columns: 1.5fr 1fr; }
+  .dhikr-layout .settings-grid > :last-child { grid-column: 1 / -1; }
+  .dhikr-layout progress { margin-top: .1rem; }
 }

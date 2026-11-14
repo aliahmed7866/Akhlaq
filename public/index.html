@@ -2,25 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101c19">
   <meta name="description" content="Local prayer times, Qibla and daily practice for Termux.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/akhlaq.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <link rel="stylesheet" href="/style.css">
   <script type="module" src="/app.js"></script>
   <title>Akhlaq</title>
 </head>
 <body>
   <header class="masthead">
-    <a class="wordmark" href="/" aria-label="Akhlaq home"><span aria-hidden="true">✦</span> Akhlaq</a>
+    <a class="wordmark" href="/" aria-label="Akhlaq home"><img src="/icons/akhlaq.svg" alt="" width="30" height="30"> Akhlaq</a>
     <nav aria-label="Main">
-      <a href="#salah">Salah</a><a href="#qibla">Qibla</a><a href="#practice">Practice</a>
+      <a href="#salah">Salah</a><a href="#qibla">Qibla</a><a href="#practice">Practice</a><a href="#dhikr">Dhikr</a>
     </nav>
+    <button id="install" class="small-button" type="button" aria-controls="install-note" hidden>Install app</button>
   </header>
   <main>
+    <p id="install-note" class="install-note" role="status" hidden>In Android Chrome, open the ⋮ menu, choose <strong>Install and create shortcut</strong> or <strong>Add to Home screen</strong>, then tap <strong>Install</strong>.</p>
     <div class="intro">
       <p lang="ar" dir="rtl" class="arabic">السلام عليكم</p>
       <h1>Assalamu alaikum</h1>
       <p id="today-label"></p>
+      <p id="hijri-date" class="muted"></p>
     </div>
     <section id="salah" aria-labelledby="prayer-title" class="card prayer-card">
       <div class="card-head">
@@ -41,11 +47,26 @@
           <table id="week"><caption class="sr-only">Prayer start times for the next seven days</caption></table>
         </div>
       </details>
+      <details>
+        <summary>Prayer reminders in your calendar</summary>
+        <p class="muted">Download the next seven days and import them into a calendar that supports alerts. Export again if your location or prayer settings change.</p>
+        <form id="calendar-form">
+          <fieldset id="calendar-prayers"><legend>Prayers to include</legend><div class="checks"></div></fieldset>
+          <div class="location-tools">
+            <label class="field">Alert before prayer
+              <select name="lead"><option value="0">At prayer time</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option></select>
+            </label>
+            <button class="primary" type="submit" disabled>Download calendar</button>
+          </div>
+          <p id="calendar-status" class="muted" role="status"></p>
+        </form>
+      </details>
     </section>
     <div class="columns">
       <section id="qibla" class="card" aria-labelledby="qibla-title">
         <div class="card-head"><div><h2 id="qibla-title">Qibla</h2><p>Direction of the Kaaba in Makkah</p></div></div>
-        <div class="dial" aria-hidden="true">
+        <div class="dial" id="compass-dial" aria-hidden="true">
+          <div class="aim-mark"></div>
           <div id="dial-rose" class="dial-rose">
             <span class="point north">N</span><span class="point east">E</span>
             <span class="point south">S</span><span class="point west">W</span>
@@ -55,8 +76,17 @@
         </div>
         <p class="bearing" id="bearing">—</p>
         <p id="magnetic" class="compass-note muted" hidden></p>
+        <p id="qibla-distance" class="compass-note muted"></p>
+        <dl class="compass-readout">
+          <div><dt>Phone heading</dt><dd id="phone-heading">—</dd></div>
+          <div><dt>Turn to Qibla</dt><dd id="compass-turn">—</dd></div>
+        </dl>
         <button id="compass" type="button" class="primary" disabled>Start live compass</button>
         <p id="compass-note" class="compass-note muted" role="status">The dial shows north at the top. Start the live compass to align it with your phone.</p>
+        <details>
+          <summary>Compass help</summary>
+          <p class="muted">Hold the phone screen-up and point its top edge where you want to face. Remove magnetic cases and step away from metal. If the reading jumps, move the phone in a figure eight. You can also use the magnetic bearing with a separate compass.</p>
+        </details>
       </section>
       <section id="practice" class="card" aria-labelledby="practice-title">
         <div class="card-head"><div><h2 id="practice-title">Daily practice</h2><p id="practice-date"></p></div></div>
@@ -78,13 +108,60 @@
               <label><input type="checkbox" name="kindness"> Do an act of kindness</label>
             </div>
           </fieldset>
+          <p id="reflection-prompt" class="reflection-prompt muted"></p>
           <label class="field">Intention or reflection
             <textarea name="reflection" rows="3" maxlength="2000" placeholder="What would you like to work on?"></textarea>
           </label>
           <div class="practice-save"><button type="submit" class="primary">Save reflection</button><span id="save-status" class="muted" role="status"></span></div>
         </form>
+        <details open>
+          <summary>Last seven days</summary>
+          <p id="week-totals" class="muted"></p>
+          <div id="week-practice" class="week-practice" aria-label="Daily prayer log"></div>
+        </details>
       </section>
     </div>
+    <section id="dhikr" class="card" aria-labelledby="dhikr-title">
+      <div class="card-head">
+        <div><h2 id="dhikr-title">Dhikr counter</h2><p id="dhikr-date"></p></div>
+        <button id="dhikr-use-today" type="button">Today</button>
+      </div>
+      <div class="dhikr-layout">
+        <div class="settings-grid">
+          <label class="field">Phrase
+            <select id="dhikr-type">
+              <option value="subhanallah">Subhanallah · سبحان الله</option>
+              <option value="alhamdulillah">Alhamdulillah · الحمد لله</option>
+              <option value="allahu-akbar">Allahu Akbar · الله أكبر</option>
+              <option value="astaghfirullah">Astaghfirullah · أستغفر الله</option>
+            </select>
+          </label>
+          <label class="field">Personal target
+            <select id="dhikr-goal"><option>33</option><option>99</option><option>100</option></select>
+          </label>
+          <div>
+            <progress id="dhikr-progress" aria-label="Dhikr progress" max="33" value="0"></progress>
+            <p id="dhikr-progress-text" class="muted"></p>
+          </div>
+        </div>
+        <div class="dhikr-actions">
+          <button id="dhikr-minus" type="button" aria-label="Subtract one">−</button>
+          <button id="dhikr-add" type="button" class="primary"><strong id="dhikr-count">0</strong><span>Tap to count</span></button>
+          <button id="dhikr-reset" type="button">Reset</button>
+        </div>
+      </div>
+      <p id="dhikr-status" class="muted" role="status"></p>
+      <dialog id="dhikr-reset-dialog" aria-labelledby="reset-title">
+        <form method="dialog">
+          <h3 id="reset-title">Reset this count?</h3>
+          <p>This clears the selected phrase for the displayed day.</p>
+          <div class="practice-save">
+            <button type="submit" autofocus>Cancel</button>
+            <button id="dhikr-confirm-reset" class="primary" type="submit">Reset count</button>
+          </div>
+        </form>
+      </dialog>
+    </section>
     <section id="settings" class="card" aria-labelledby="settings-title">
       <div class="card-head"><div><h2 id="settings-title">Location &amp; settings</h2><p>Set your location and match your local mosque’s prayer method.</p></div></div>
       <form id="settings-form">
@@ -120,9 +197,19 @@
           <p id="settings-status" class="muted" role="status"></p>
         </div>
       </form>
+      <details>
+        <summary>Back up your practice</summary>
+        <p class="muted">The file includes your prayer log, dhikr counts and private reflections. Restoring fills missing days and keeps entries already on this device.</p>
+        <div class="settings-actions">
+          <button id="export-backup" type="button">Download backup</button>
+          <label class="field">Choose backup<input id="backup-file" type="file" accept=".json,application/json"></label>
+          <button id="import-backup" type="button" disabled>Restore missing days</button>
+        </div>
+        <p id="backup-status" class="muted" role="status"></p>
+      </details>
       <a href="https://www.islamic-relief.org.uk/resources/prayer-timetables/manchester/" target="_blank" rel="noopener noreferrer" class="reference">Islamic Relief Manchester timetable ↗</a>
     </section>
   </main>
-  <footer>Your location, prayer log and reflections stay on this device.</footer>
+  <footer><span>Your location, prayer log and reflections stay on this device.</span><span id="offline-status"></span></footer>
 </body>
 </html>

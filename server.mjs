@@ -1,8 +1,8 @@
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { calculate, cities } from './prayer.mjs';
+import { loadAssets } from './assets.mjs';
 
 const run = promisify(execFile);
 const host = '127.0.0.1';
@@ -11,11 +11,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   throw new Error('PORT must be an integer between 1 and 65535.');
 }
 
-const assets = {
-  '/': ['index.html', 'text/html; charset=utf-8'],
-  '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
-  '/style.css': ['style.css', 'text/css; charset=utf-8'],
-};
+const assets = await loadAssets();
 
 function json(response, status, value) {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -58,11 +54,10 @@ const server = createServer(async (request, response) => {
     if (url.pathname === '/api/prayers') {
       return json(response, 200, calculate(url.searchParams));
     }
-    if (!Object.hasOwn(assets, url.pathname)) return json(response, 404, { error: 'Page unavailable.' });
-    const [path, type] = assets[url.pathname];
-    const contents = await readFile(new URL('./public/' + path, import.meta.url));
-    response.writeHead(200, { 'Content-Type': type });
-    response.end(contents);
+    const asset = assets.get(url.pathname);
+    if (!asset) return json(response, 404, { error: 'Page unavailable.' });
+    response.writeHead(200, { 'Content-Type': asset.type });
+    response.end(asset.body);
   } catch (error) {
     if (error instanceof RangeError) return json(response, 400, { error: error.message });
     console.error(error);

@@ -118,8 +118,15 @@ export function calculate(query, now = new Date()) {
   } catch (error) {
     if (!/date/i.test(error.message)) throw error;
   }
-  const bearing = Math.abs(latitude) === 90
-    || (Math.abs(latitude - 21.4225) < 0.0001 && Math.abs(longitude - 39.8262) < 0.0001)
+  const radians = Math.PI / 180;
+  const kaabaLatitude = 21.4225241;
+  const kaabaLongitude = 39.8261818;
+  const haversine = Math.sin((latitude - kaabaLatitude) * radians / 2) ** 2
+    + Math.cos(latitude * radians) * Math.cos(kaabaLatitude * radians)
+    * Math.sin((longitude - kaabaLongitude) * radians / 2) ** 2;
+  const arc = 2 * Math.asin(Math.sqrt(Math.min(1, haversine)));
+  const distanceKm = 6371 * arc;
+  const bearing = Math.abs(latitude) === 90 || distanceKm < 0.015 || Math.PI - arc < 0.000002
     ? null : Qibla(coordinates);
-  return { days, previous, today, zone, bearing, declination };
+  return { days, previous, today, zone, bearing, declination, distanceKm };
 }
