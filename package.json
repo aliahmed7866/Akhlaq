@@ -1,6 +1,6 @@
 {
   "name": "akhlaq",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Local prayer times, Qibla and daily practice for Termux",
   "scripts": {
     "test": "node --test",

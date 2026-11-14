@@ -110,20 +110,22 @@
         <p id="quran-save-status" class="muted" role="status"></p>
         <div class="chapter-heading">
           <div><h2 id="quran-chapter-name"></h2><p class="muted" id="quran-chapter-info"></p></div>
-          <button id="quran-play" type="button" class="primary">Play from this verse</button>
+          <div class="reader-listen">
+            <label class="field">Playback mode
+              <select id="quran-voice">
+                <option value="both">Arabic → English</option>
+                <option value="english">English only</option>
+                <option value="arabic">Arabic only</option>
+              </select>
+            </label>
+            <button id="quran-play" type="button" class="primary">Play from this verse</button>
+          </div>
         </div>
         <details class="reader-preferences">
           <summary>Reading &amp; audio options</summary>
           <div class="reader-option-fields">
             <label class="field">Text
               <select id="quran-language"><option value="both">Arabic + English</option><option value="english">English only</option><option value="arabic">Arabic only</option></select>
-            </label>
-            <label class="field">Voice
-              <select id="quran-voice">
-                <option value="both">Arabic → English</option>
-                <option value="english">English only</option>
-                <option value="arabic">Arabic only</option>
-              </select>
             </label>
             <label class="field">Text size
               <select id="quran-size"><option value="standard">Standard</option><option value="large">Large</option><option value="extra">Extra large</option></select>

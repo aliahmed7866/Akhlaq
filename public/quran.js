@@ -44,6 +44,11 @@ export function readingBookmarks(saved, chapters) {
   return references;
 }
 
+export function savedAudioMode(reader) {
+  // The old voice menu stored single-language choices before paired playback existed.
+  return audioModes.includes(reader.audioMode) ? reader.audioMode : 'both';
+}
+
 export function nextAudioPart(mode, part, continueToNext, hasNextVerse) {
   if (mode === 'both' && part === 'arabic') return 'english';
   return continueToNext && hasNextVerse ? 'next-verse' : 'finished';
@@ -77,7 +82,7 @@ export function setupQuran({ stored, save, today }) {
   let playing;
   let audioAttempt = 0;
 
-  voiceSelect.value = audioModes.includes(saved.voice) ? saved.voice : 'both';
+  voiceSelect.value = savedAudioMode(saved);
   playerMode.value = voiceSelect.value;
   language.value = ['arabic', 'english'].includes(saved.language) ? saved.language : 'both';
   byId('quran-autoplay').checked = saved.autoplay !== false;
@@ -251,6 +256,7 @@ export function setupQuran({ stored, save, today }) {
     player.hidden = true;
     document.body.classList.remove('audio-open');
     playerToggle.textContent = 'Play';
+    playerMode.value = voiceSelect.value;
     audioStatus.textContent = '';
   }
 
@@ -262,12 +268,20 @@ export function setupQuran({ stored, save, today }) {
     selectVerse(ref, { focus: Boolean(target), updateUrl: false });
   }
 
+  function showAudioFailure(action, message) {
+    const language = playing.part === 'arabic' ? 'Arabic' : 'English';
+    playerToggle.textContent = action + ' ' + language;
+    audioStatus.textContent = partLabel(playing) + ' · ' + message;
+  }
+
   function requestPlay(attempt) {
     audio.play().catch(error => {
       if (attempt !== audioAttempt || error.name === 'AbortError') return;
-      playerToggle.textContent = audio.error ? 'Retry' : 'Play';
-      audioStatus.textContent = error.name === 'NotAllowedError'
-        ? 'Tap Play to continue.' : 'Audio unavailable. Check your internet connection and retry.';
+      if (error.name === 'NotAllowedError') {
+        showAudioFailure('Play', 'Tap to continue playback.');
+      } else {
+        showAudioFailure('Retry', 'Recording unavailable. Check your connection.');
+      }
     });
   }
 
@@ -291,6 +305,7 @@ export function setupQuran({ stored, save, today }) {
     if (follow) selectVerse(ref, { focus });
     const chapter = data.chapters[ref.chapter - 1];
     playing = { chapter: ref.chapter, verse: ref.verse, mode, singleVerse };
+    playerMode.value = mode;
     const verseLink = byId('playing-verse');
     verseLink.textContent = reference(ref);
     verseLink.href = hashFor(ref);
@@ -308,7 +323,7 @@ export function setupQuran({ stored, save, today }) {
 
   function changeAudioMode(mode) {
     voiceSelect.value = playerMode.value = mode;
-    remember({ voice: mode });
+    remember({ audioMode: mode });
     if (playing && playing.mode !== mode) {
       play(playing, mode, { follow: false, singleVerse: playing.singleVerse, start: !audio.paused && !playing.finished });
     }
@@ -337,14 +352,15 @@ export function setupQuran({ stored, save, today }) {
     }
   });
   audio.addEventListener('play', () => { playerToggle.textContent = 'Pause'; });
-  audio.addEventListener('pause', () => { playerToggle.textContent = 'Play'; });
+  audio.addEventListener('pause', () => {
+    if (playing && !audio.error && !audio.ended) playerToggle.textContent = 'Play';
+  });
   audio.addEventListener('playing', () => {
     if (playing) audioStatus.textContent = partLabel(playing);
   });
   audio.addEventListener('error', () => {
     if (!playing) return;
-    playerToggle.textContent = 'Retry';
-    audioStatus.textContent = 'Audio unavailable. Check your internet connection and retry.';
+    showAudioFailure('Retry', 'Recording unavailable. Check your connection.');
   });
   audio.addEventListener('ended', () => {
     if (!playing) return;
@@ -397,6 +413,8 @@ export function setupQuran({ stored, save, today }) {
     bookmarks = readingBookmarks(saved, data.chapters);
     renderBookmarks();
     renderResume();
+    voiceSelect.value = savedAudioMode(saved);
+    if (!playing) playerMode.value = voiceSelect.value;
   });
   playButton.addEventListener('click', () => play(selection, voiceSelect.value));
   voiceSelect.addEventListener('change', () => changeAudioMode(voiceSelect.value));
