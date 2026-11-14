@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { calculate, cities } from './prayer.mjs';
+import { calculate, cities } from './public/engine.js';
 import { loadAssets } from './assets.mjs';
 
 const run = promisify(execFile);

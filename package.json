@@ -4,7 +4,8 @@
   "description": "Local prayer times, Qibla and daily practice for Termux",
   "scripts": {
     "test": "node --test",
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "build:engine": "node scripts/build-engine.mjs"
   },
   "repository": {
     "type": "git",
@@ -19,7 +20,7 @@
     "node": ">=20"
   },
   "private": true,
-  "dependencies": {
+  "devDependencies": {
     "adhan": "4.4.6",
     "esbuild-wasm": "0.28.1",
     "geomagnetism": "0.2.0"

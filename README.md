@@ -9,8 +9,7 @@ pkg update
 pkg install git nodejs-lts
 git clone https://github.com/aliahmed7866/Akhlaq.git
 cd Akhlaq
-npm ci
-npm start
+node server.mjs
 ```
 
 Open [http://127.0.0.1:8786](http://127.0.0.1:8786) in Android Chrome and tap **Install app**. If Chrome does not offer an in-page prompt, open its ⋮ menu, choose **Install and create shortcut** or **Add to Home screen**, then tap **Install**. Open Akhlaq again from its icon.
@@ -19,7 +18,7 @@ Wait for **Ready for offline use** in the footer before stopping Termux. Once th
 
 ### Update an existing installation
 
-In the Akhlaq folder, run `git pull --ff-only` and `npm ci`. Stop the old server with Ctrl+C if it is still running, then run `npm start`. Open Akhlaq on the same address. Use **Update & reload** when the app shows that the update is ready. If your installed version predates this button, close all Akhlaq windows and tabs, then relaunch. Using the same browser profile and address keeps your settings and practice entries.
+In the Akhlaq folder, run `git pull --ff-only`. Stop the old Akhlaq server with Ctrl+C in its own Termux session if it is still running, then run `node server.mjs`. Akhlaq ships with its prayer engine built and starts without installing packages. Open Akhlaq on the same address. Use **Update & reload** when the app shows that the update is ready. If your installed version predates this button, close all Akhlaq windows and tabs, then relaunch. Using the same browser profile and address keeps your settings and practice entries.
 
 ## Prayer times and reminders
 
@@ -49,4 +48,4 @@ The Today tab shows a verse that changes with the date in your selected time zon
 
 Log each prayer from Today or Practice. Both screens use the same log. Track daily habits, keep reflections, and browse the past week in Practice. The dhikr counter saves progress by day and phrase and supports personal targets of 33, 99 or 100. These targets are counter settings. Use **Back up your practice** to export a JSON file. Restore fills dates missing on the device. Browser data is local to the address and profile, and clearing it removes your entries.
 
-Run `npm test` to verify the calculation engine, compass math, calendar files, backup format and offline package.
+For development, run `npm ci` to install the build and test dependencies. Run `npm run build:engine` and commit the updated `public/engine.js` when prayer calculation code or dependencies change. Run `npm test` to verify the calculation engine, compass math, calendar files, backup format and offline package.
