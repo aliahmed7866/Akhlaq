@@ -2,6 +2,7 @@ import { calculate, cities } from './engine.js';
 import { setupCompass } from './compass.js';
 import { setupPractice } from './practice.js';
 import { downloadFile, makeCalendar } from './calendar.js';
+import { setupQuran } from './quran.js';
 import { setupInstall } from './install.js';
 
 const byId = id => document.getElementById(id);
@@ -24,6 +25,7 @@ let settings = { ...defaults, ...stored(settingsKey) };
 let schedule;
 let clock;
 const renderCompass = setupCompass();
+const quran = setupQuran({ stored, save, today: todayForPractice });
 const renderPractice = setupPractice({ salah, stored, save, todayForPractice, shiftDate, dateLabel });
 
 function stored(key) {
@@ -136,7 +138,10 @@ function showSchedule(data) {
   updateCountdown();
   renderCompass(data);
   calendarButton.disabled = false;
-  if (previous !== data.today) renderPractice();
+  if (previous !== data.today) {
+    renderPractice();
+    quran.showDaily();
+  }
 }
 
 function updateCountdown() {
@@ -280,6 +285,25 @@ calendar.addEventListener('submit', event => {
   status.textContent = 'Calendar downloaded. Open the file in your calendar app to import it.';
 });
 
+let openPage;
+
+function navigate() {
+  const [requested, target = ''] = location.hash.slice(1).split('/');
+  const page = ['quran', 'qibla', 'practice', 'dhikr', 'settings'].includes(requested) ? requested : 'home';
+  if (openPage !== page) {
+    if (openPage === 'qibla' && byId('compass').textContent === 'Stop compass') byId('compass').click();
+    openPage = page;
+    for (const section of document.querySelectorAll('[data-page]')) section.hidden = section.dataset.page !== page;
+    for (const link of document.querySelectorAll('[data-route]')) {
+      const active = link.dataset.route === (page === 'dhikr' ? 'practice' : page);
+      if (active) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    }
+    window.scrollTo(0, 0);
+  }
+  quran.navigate(page, target);
+}
+
 function start() {
   for (const [key, label] of prayers) {
     const offset = document.createElement('label');
@@ -301,6 +325,8 @@ function start() {
   renderPractice();
   refresh();
   setupInstall();
+  navigate();
+  window.addEventListener('hashchange', navigate);
   setInterval(refresh, 15000);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) refresh();

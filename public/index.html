@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101c19">
-  <meta name="description" content="Local prayer times, Qibla and daily practice for Termux.">
+  <meta name="description" content="Prayer times, Qibla, Quran and private daily practice.">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icons/akhlaq.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
@@ -14,24 +14,24 @@
 </head>
 <body>
   <header class="masthead">
-    <a class="wordmark" href="/" aria-label="Akhlaq home"><img src="/icons/akhlaq.svg" alt="" width="30" height="30"> Akhlaq</a>
-    <nav aria-label="Main">
-      <a href="#salah">Salah</a><a href="#qibla">Qibla</a><a href="#practice">Practice</a><a href="#dhikr">Dhikr</a>
-    </nav>
-    <button id="install" class="small-button" type="button" aria-controls="install-note" hidden>Install app</button>
+    <a class="wordmark" href="#home" aria-label="Akhlaq home"><img src="/icons/akhlaq.svg" alt="" width="30" height="30"> Akhlaq</a>
+    <div class="masthead-actions">
+      <button id="install" class="small-button" type="button" aria-controls="install-note" hidden>Install app</button>
+      <a class="small-button" href="#settings" data-route="settings">Settings</a>
+    </div>
   </header>
   <main>
     <p id="install-note" class="install-note" role="status" hidden>In Android Chrome, open the ⋮ menu, choose <strong>Install and create shortcut</strong> or <strong>Add to Home screen</strong>, then tap <strong>Install</strong>.</p>
-    <div class="intro">
+    <div class="intro" data-page="home">
       <p lang="ar" dir="rtl" class="arabic">السلام عليكم</p>
       <h1>Assalamu alaikum</h1>
       <p id="today-label"></p>
       <p id="hijri-date" class="muted"></p>
     </div>
-    <section id="salah" aria-labelledby="prayer-title" class="card prayer-card">
+    <section id="salah" data-page="home" aria-labelledby="prayer-title" class="card prayer-card">
       <div class="card-head">
         <div><h2 id="prayer-title">Prayer times</h2><p id="schedule-location"></p></div>
-        <a class="small-button" href="#settings">Location &amp; settings</a>
+        <a class="small-button" href="#settings">Change location</a>
       </div>
       <p id="prayer-error" role="status" hidden></p>
       <div class="next">
@@ -62,8 +62,65 @@
         </form>
       </details>
     </section>
-    <div class="columns">
-      <section id="qibla" class="card" aria-labelledby="qibla-title">
+    <section id="daily-verse" data-page="home" class="card daily-verse" aria-labelledby="daily-title">
+      <div class="card-head"><div><h2 id="daily-title">Verse of the day</h2><p id="daily-reference"></p></div></div>
+      <blockquote id="daily-text">Loading the Quran…</blockquote>
+      <div class="reader-actions">
+        <a class="small-button" id="daily-open" href="#quran" hidden>Read in context</a>
+        <button id="daily-listen" type="button" hidden>Listen in English</button>
+      </div>
+      <p id="daily-credit" class="muted" hidden>English translation by Rowwad Translation Center</p>
+    </section>
+    <section id="quran" data-page="quran" class="card reader" aria-labelledby="quran-title" hidden>
+      <div class="card-head">
+        <div><h1 id="quran-title">Quran</h1><p>Arabic and English translation</p></div>
+        <button id="quran-resume" type="button" hidden>Bookmark</button>
+      </div>
+      <p id="quran-status" role="status"></p>
+      <div id="quran-tools" hidden>
+        <div class="reader-controls">
+          <label class="field">Surah<select id="quran-chapter"></select></label>
+          <form id="quran-search" role="search">
+            <label class="field">Find a verse<input id="quran-query" type="search" maxlength="120" placeholder="2:255 or a phrase"></label>
+            <button type="submit">Find</button>
+          </form>
+        </div>
+        <div id="quran-results" hidden></div>
+        <div class="quran-audio" aria-labelledby="audio-title">
+          <div class="audio-controls">
+            <label class="field" id="audio-title">Listen
+              <select id="quran-voice">
+                <option value="english">English translation</option>
+                <option value="arabic">Arabic · Mishary Alafasy</option>
+              </select>
+            </label>
+            <button id="quran-play" type="button" class="primary">Play from this verse</button>
+            <label class="autoplay"><input id="quran-autoplay" type="checkbox" checked> Continue to next verse</label>
+          </div>
+          <p id="quran-audio-status" class="muted" role="status">Audio streams over the internet.</p>
+          <audio id="quran-audio" controls preload="none" hidden></audio>
+        </div>
+        <div class="chapter-heading">
+          <div><h2 id="quran-chapter-name"></h2><p class="muted" id="quran-chapter-info"></p></div>
+          <label class="field" id="quran-language-label">Text
+            <select id="quran-language"><option value="both">Arabic + English</option><option value="english">English only</option><option value="arabic">Arabic only</option></select>
+          </label>
+        </div>
+        <p id="quran-basmala" lang="ar" dir="rtl" class="quran-basmala" hidden></p>
+        <ol id="quran-verses" class="ayahs"></ol>
+        <div class="reader-pagination">
+          <button id="quran-previous" type="button">Previous</button>
+          <span id="quran-page-label" class="muted"></span>
+          <button id="quran-next" type="button">Next</button>
+        </div>
+        <details class="quran-sources">
+          <summary>Quran sources</summary>
+          <p class="muted">English translation by <a href="https://quranenc.com/en/browse/english_rwwad" target="_blank" rel="noopener noreferrer">Rowwad Translation Center via QuranEnc</a> <span id="quran-version"></span>. Arabic Uthmani text from the <a href="https://tanzil.net/docs/Text_License" target="_blank" rel="noopener noreferrer">Tanzil Project</a>. English audio from <a href="https://quranenc.com/en/audio" target="_blank" rel="noopener noreferrer">QuranEnc</a>. Arabic recitation by Mishary Rashid Alafasy via <a href="https://alquran.cloud/cdn" target="_blank" rel="noopener noreferrer">Al Quran Cloud</a>.</p>
+          <details><summary>Publisher and licence notices</summary><pre id="quran-notices"></pre></details>
+        </details>
+      </div>
+    </section>
+      <section id="qibla" data-page="qibla" hidden class="card" aria-labelledby="qibla-title">
         <div class="card-head"><div><h2 id="qibla-title">Qibla</h2><p>Direction of the Kaaba in Makkah</p></div></div>
         <div class="dial" id="compass-dial" aria-hidden="true">
           <div class="aim-mark"></div>
@@ -88,7 +145,7 @@
           <p class="muted">Hold the phone screen-up and point its top edge where you want to face. Remove magnetic cases and step away from metal. If the reading jumps, move the phone in a figure eight. You can also use the magnetic bearing with a separate compass.</p>
         </details>
       </section>
-      <section id="practice" class="card" aria-labelledby="practice-title">
+      <section id="practice" data-page="practice" hidden class="card" aria-labelledby="practice-title">
         <div class="card-head"><div><h2 id="practice-title">Daily practice</h2><p id="practice-date"></p></div></div>
         <div class="practice-navigation">
           <button id="earlier" type="button" aria-label="Previous practice day">←</button>
@@ -114,14 +171,14 @@
           </label>
           <div class="practice-save"><button type="submit" class="primary">Save reflection</button><span id="save-status" class="muted" role="status"></span></div>
         </form>
-        <details open>
+        <a class="small-button practice-link" href="#dhikr">Open dhikr counter</a>
+        <details>
           <summary>Last seven days</summary>
           <p id="week-totals" class="muted"></p>
           <div id="week-practice" class="week-practice" aria-label="Daily prayer log"></div>
         </details>
       </section>
-    </div>
-    <section id="dhikr" class="card" aria-labelledby="dhikr-title">
+    <section id="dhikr" data-page="dhikr" hidden class="card" aria-labelledby="dhikr-title">
       <div class="card-head">
         <div><h2 id="dhikr-title">Dhikr counter</h2><p id="dhikr-date"></p></div>
         <button id="dhikr-use-today" type="button">Today</button>
@@ -162,7 +219,7 @@
         </form>
       </dialog>
     </section>
-    <section id="settings" class="card" aria-labelledby="settings-title">
+    <section id="settings" data-page="settings" hidden class="card" aria-labelledby="settings-title">
       <div class="card-head"><div><h2 id="settings-title">Location &amp; settings</h2><p>Set your location and match your local mosque’s prayer method.</p></div></div>
       <form id="settings-form">
         <div class="location-tools">
@@ -210,6 +267,12 @@
       <a href="https://www.islamic-relief.org.uk/resources/prayer-timetables/manchester/" target="_blank" rel="noopener noreferrer" class="reference">Islamic Relief Manchester timetable ↗</a>
     </section>
   </main>
+  <nav class="tab-bar" aria-label="Main">
+    <a href="#home" data-route="home" aria-current="page">Today</a>
+    <a href="#quran" data-route="quran">Quran</a>
+    <a href="#qibla" data-route="qibla">Qibla</a>
+    <a href="#practice" data-route="practice">Practice</a>
+  </nav>
   <footer><span>Your location, prayer log and reflections stay on this device.</span><span id="offline-status"></span></footer>
 </body>
 </html>

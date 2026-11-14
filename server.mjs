@@ -23,7 +23,7 @@ const server = createServer(async (request, response) => {
   response.setHeader('X-Content-Type-Options', 'nosniff');
   response.setHeader('Referrer-Policy', 'no-referrer');
   response.setHeader('Content-Security-Policy',
-    "default-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
+    "default-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; media-src 'self' https://d.quranenc.com https://cdn.islamic.network");
   if (![host + ':' + port, 'localhost:' + port].includes(request.headers.host)) {
     return json(response, 403, { error: 'Open Akhlaq on your phone’s loopback address.' });
   }
@@ -56,8 +56,15 @@ const server = createServer(async (request, response) => {
     }
     const asset = assets.get(url.pathname);
     if (!asset) return json(response, 404, { error: 'Page unavailable.' });
-    response.writeHead(200, { 'Content-Type': asset.type });
-    response.end(asset.body);
+    const headers = { 'Content-Type': asset.type };
+    if (asset.compressed) {
+      headers.Vary = 'Accept-Encoding';
+      if (/(?:^|,)\s*gzip\s*(?:,|$)/i.test(request.headers['accept-encoding'] || '')) {
+        headers['Content-Encoding'] = 'gzip';
+      }
+    }
+    response.writeHead(200, headers);
+    response.end(headers['Content-Encoding'] ? asset.compressed : asset.body);
   } catch (error) {
     if (error instanceof RangeError) return json(response, 400, { error: error.message });
     console.error(error);

@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Akhlaq",
   "short_name": "Akhlaq",
-  "description": "Prayer times, Qibla and private daily practice.",
+  "description": "Prayer times, Qibla, Quran and private daily practice.",
   "lang": "en-GB",
   "start_url": "/",
   "scope": "/",
@@ -16,6 +16,7 @@
   "shortcuts": [
     { "name": "Qibla compass", "short_name": "Qibla", "url": "/#qibla" },
     { "name": "Prayer times", "short_name": "Salah", "url": "/#salah" },
+    { "name": "Quran reader", "short_name": "Quran", "url": "/#quran" },
     { "name": "Dhikr counter", "short_name": "Dhikr", "url": "/#dhikr" }
   ]
 }
