@@ -3,6 +3,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { calculate, cities } from './public/engine.js';
 import { loadAssets } from './assets.mjs';
+import { downloadUrdu } from './urdu.mjs';
 
 const run = promisify(execFile);
 const host = '127.0.0.1';
@@ -12,6 +13,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 }
 
 const assets = await loadAssets();
+let urduDownload;
 
 function json(response, status, value) {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -47,6 +49,18 @@ const server = createServer(async (request, response) => {
         return json(response, 503, {
           error: 'Termux GPS is unavailable. Enable Android location for Termux:API, or use a city or coordinates.',
         });
+      }
+    }
+    if (url.pathname === '/api/quran/urdu' && request.method === 'POST') {
+      if (request.headers.origin !== 'http://' + request.headers.host) {
+        return json(response, 403, { error: 'Open Akhlaq to download the Urdu edition.' });
+      }
+      urduDownload ??= downloadUrdu(JSON.parse(assets.get('/quran.json').body).chapters);
+      try {
+        return json(response, 200, await urduDownload);
+      } catch {
+        urduDownload = undefined;
+        return json(response, 502, { error: 'QuranEnc could not supply the Urdu edition. Try again later.' });
       }
     }
     if (request.method !== 'GET') return json(response, 405, { error: 'Method unavailable.' });

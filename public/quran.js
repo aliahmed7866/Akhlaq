@@ -1,5 +1,11 @@
 const pageSize = 15;
 const readerKey = 'akhlaq.reader.v1';
+const urduEndpoint = '/api/quran/urdu';
+const urduCache = 'akhlaq-quran-urdu-v1';
+const displayModes = {
+  both: ['ar', 'en'], 'arabic-urdu': ['ar', 'ur'], all: ['ar', 'en', 'ur'],
+  english: ['en'], urdu: ['ur'], arabic: ['ar'],
+};
 const audioModes = ['both', 'english', 'arabic'];
 const byId = id => document.getElementById(id);
 const make = (tag, text) => {
@@ -19,12 +25,38 @@ export function dailyVerse(chapters, day) {
   }
 }
 
+function westernDigits(value) {
+  return value.replace(/[٠-٩۰-۹]/g, digit => String(digit.charCodeAt(0) & 15));
+}
+
 export function verseReference(value, chapters) {
-  const match = /^(\d{1,3})\s*:\s*(\d{1,3})$/.exec(value.trim());
+  const match = /^(\d{1,3})\s*:\s*(\d{1,3})$/.exec(westernDigits(value.trim()));
   if (!match) return null;
   const chapter = Number(match[1]);
   const verse = Number(match[2]);
   return verse >= 1 && verse <= (chapters[chapter - 1]?.ayahs.length || 0) ? { chapter, verse } : null;
+}
+
+function searchText(text) {
+  return text.normalize('NFKD').toLowerCase().replace(/[\p{M}ـ]/gu, '')
+    .replace(/ٱ/g, 'ا').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/\[\d+\]/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
+
+export function findVerses(chapters, query, urdu, limit = 16) {
+  const needle = searchText(query);
+  const hits = [];
+  if (needle.length < 2) return hits;
+  for (const chapter of chapters) {
+    for (const [index, [id, arabic, english]] of chapter.ayahs.entries()) {
+      const candidates = [['en', english], ['ur', urdu?.verses[id - 1]?.[0]], ['ar', arabic]];
+      const match = candidates.find(([, text]) => text && searchText(text).includes(needle));
+      if (!match) continue;
+      hits.push({ chapter: chapter.id, verse: index + 1, lang: match[0], text: match[1] });
+      if (hits.length >= limit) return hits;
+    }
+  }
+  return hits;
 }
 
 export function audioUrl(voice, chapter, verse, globalVerse) {
@@ -57,6 +89,7 @@ export function nextAudioPart(mode, part, continueToNext, hasNextVerse) {
 export function setupQuran({ stored, save, today }) {
   const status = byId('quran-status');
   const dailyText = byId('daily-text');
+  const dailyLanguage = byId('daily-language');
   const select = byId('quran-chapter');
   const audio = byId('quran-audio');
   const player = byId('quran-player');
@@ -71,6 +104,10 @@ export function setupQuran({ stored, save, today }) {
   const list = byId('quran-verses');
   const playButton = byId('quran-play');
   let data;
+  let urdu;
+  let urduLoad;
+  let urduMessage = '';
+  let urduFailed = false;
   let loading;
   let shownDay;
   let route = '';
@@ -84,7 +121,8 @@ export function setupQuran({ stored, save, today }) {
 
   voiceSelect.value = savedAudioMode(saved);
   playerMode.value = voiceSelect.value;
-  language.value = ['arabic', 'english'].includes(saved.language) ? saved.language : 'both';
+  language.value = Object.hasOwn(displayModes, saved.language) ? saved.language : 'both';
+  dailyLanguage.value = saved.dailyLanguage === 'ur' ? 'ur' : 'en';
   byId('quran-autoplay').checked = saved.autoplay !== false;
   size.value = ['large', 'extra'].includes(saved.size) ? saved.size : 'standard';
   byId('quran').dataset.size = size.value;
@@ -99,6 +137,83 @@ export function setupQuran({ stored, save, today }) {
   const reference = ref => data.chapters[ref.chapter - 1].name + ' ' + ref.chapter + ':' + ref.verse;
   const pageStart = verse => Math.floor((verse - 1) / pageSize) * pageSize + 1;
 
+  function renderLanguageStatus() {
+    for (const [prefix, requested] of [['daily', dailyLanguage.value === 'ur'], ['quran', displayModes[language.value].includes('ur')]]) {
+      byId(prefix + '-language-status').textContent = requested ? urduMessage : '';
+      byId(prefix + '-urdu-retry').hidden = !requested || !urduFailed;
+    }
+  }
+
+  async function getUrdu(download = false) {
+    if (urdu) return;
+    if (urduLoad) {
+      await urduLoad;
+      if (download && !urdu && !urduFailed) return getUrdu(true);
+      return;
+    }
+    urduLoad = (async () => {
+      urduFailed = false;
+      urduMessage = download ? 'Getting Urdu translation…' : '';
+      renderLanguageStatus();
+      const cache = await window.caches?.open(urduCache).catch(() => null);
+      try {
+        let response = await cache?.match(urduEndpoint);
+        let savedOffline = Boolean(response);
+        if (!response && download) {
+          response = await fetch(urduEndpoint, { method: 'POST' });
+          if (!response.ok) {
+            const failure = await response.json();
+            throw new Error(failure.error || 'Urdu download unavailable.');
+          }
+        }
+        if (!response) return;
+        const edition = await response.clone().json();
+        if (!edition.version || !edition.transcript || edition.verses?.length !== data.chapters.at(-1).ayahs.at(-1)[0]) {
+          await cache?.delete(urduEndpoint);
+          throw new Error('The Urdu download is incomplete.');
+        }
+        if (!savedOffline && cache) {
+          try {
+            await cache.put(urduEndpoint, response);
+            savedOffline = true;
+          } catch {
+            // Reading can continue for this session if browser storage is full.
+          }
+        }
+        urdu = edition;
+        urduMessage = savedOffline ? '' : 'Urdu is available for this session. Browser storage is unavailable.';
+        byId('quran-urdu-version').textContent = '(' + urdu.version + ')';
+        byId('quran-notices').textContent += '\n\n' + urdu.transcript;
+        renderDailyText();
+        if (selection) render(false);
+      } catch (error) {
+        if (!download) return;
+        urduFailed = true;
+        urduMessage = error instanceof TypeError
+          ? 'Start Akhlaq in Termux and connect to the internet for the first Urdu download.' : error.message;
+      } finally {
+        renderLanguageStatus();
+      }
+    })();
+    try {
+      await urduLoad;
+    } finally {
+      urduLoad = undefined;
+    }
+  }
+
+  function renderDailyText() {
+    if (!daily) return;
+    const [id, , english] = data.chapters[daily.chapter - 1].ayahs[daily.verse - 1];
+    const translated = dailyLanguage.value === 'ur' && urdu;
+    dailyText.lang = translated ? 'ur' : 'en';
+    dailyText.dir = translated ? 'rtl' : 'ltr';
+    dailyText.textContent = translated ? urdu.verses[id - 1][0] : english;
+    byId('daily-credit').textContent = translated
+      ? 'Urdu translation by Muhammad Ibrahim Junagarhi via QuranEnc'
+      : 'English translation by Rowwad Translation Center';
+  }
+
   function showDaily() {
     if (!data) return;
     const day = today();
@@ -107,9 +222,9 @@ export function setupQuran({ stored, save, today }) {
     byId('daily-save-status').textContent = '';
     daily = dailyVerse(data.chapters, day);
     byId('daily-reference').textContent = reference(daily);
-    dailyText.textContent = data.chapters[daily.chapter - 1].ayahs[daily.verse - 1][2];
+    renderDailyText();
     byId('daily-open').href = hashFor(daily);
-    for (const id of ['daily-open', 'daily-listen', 'daily-save', 'daily-credit']) byId(id).hidden = false;
+    for (const id of ['daily-open', 'daily-listen', 'daily-save', 'daily-credit', 'daily-language-field']) byId(id).hidden = false;
     syncSaveButton(byId('daily-save'), daily);
   }
 
@@ -136,11 +251,12 @@ export function setupQuran({ stored, save, today }) {
     byId('quran-page-label').textContent = start + '–' + end + ' of ' + chapter.ayahs.length;
     byId('quran-previous').disabled = chapter.id === 1 && start === 1;
     byId('quran-next').disabled = chapter.id === data.chapters.length && end === chapter.ayahs.length;
-    byId('quran').dataset.language = language.value;
+    const shown = displayModes[language.value].filter(lang => lang !== 'ur' || urdu);
+    if (!shown.length) shown.push('ar');
     const basmala = byId('quran-basmala');
-    basmala.hidden = start !== 1 || [1, 9].includes(chapter.id);
+    basmala.hidden = !shown.includes('ar') || start !== 1 || [1, 9].includes(chapter.id);
     list.start = start;
-    list.replaceChildren(...chapter.ayahs.slice(start - 1, end).map(([, arabic, english, notes], index) => {
+    list.replaceChildren(...chapter.ayahs.slice(start - 1, end).map(([id, arabic, english, notes], index) => {
       const verse = start + index;
       const row = document.createElement('li');
       row.className = 'ayah';
@@ -165,17 +281,26 @@ export function setupQuran({ stored, save, today }) {
       bookmark.addEventListener('click', () => toggleBookmark(ref));
       actions.append(label, listen, bookmark);
 
-      const original = make('p', arabic);
-      Object.assign(original, { className: 'ayah-arabic', lang: 'ar', dir: 'rtl' });
-      const translation = make('p', english);
-      translation.className = 'ayah-english';
-      row.append(actions, original, translation);
-      if (notes) {
-        const detail = document.createElement('details');
-        detail.className = 'ayah-notes';
-        detail.append(make('summary', 'Translation notes'), make('p', notes));
-        row.append(detail);
-      }
+      row.append(actions);
+      const appendText = (lang, text, footnotes) => {
+        const paragraph = make('p', text);
+        paragraph.lang = lang;
+        paragraph.dir = lang === 'en' ? 'ltr' : 'rtl';
+        paragraph.className = 'ayah-' + { ar: 'arabic', en: 'english', ur: 'urdu' }[lang];
+        row.append(paragraph);
+        if (footnotes) {
+          const detail = document.createElement('details');
+          detail.className = 'ayah-notes';
+          const note = make('p', footnotes);
+          note.lang = lang;
+          note.dir = paragraph.dir;
+          detail.append(make('summary', lang === 'ur' ? 'Urdu translation notes' : 'English translation notes'), note);
+          row.append(detail);
+        }
+      };
+      if (shown.includes('ar')) appendText('ar', arabic);
+      if (shown.includes('en')) appendText('en', english, notes);
+      if (shown.includes('ur')) appendText('ur', ...urdu.verses[id - 1]);
       return row;
     }));
     updateSaveButtons();
@@ -400,6 +525,7 @@ export function setupQuran({ stored, save, today }) {
       renderBookmarks();
       renderResume();
       openRoute();
+      void getUrdu(dailyLanguage.value === 'ur' || displayModes[language.value].includes('ur'));
     })();
   }
 
@@ -418,10 +544,24 @@ export function setupQuran({ stored, save, today }) {
   });
   playButton.addEventListener('click', () => play(selection, voiceSelect.value));
   voiceSelect.addEventListener('change', () => changeAudioMode(voiceSelect.value));
-  language.addEventListener('change', () => {
-    byId('quran').dataset.language = language.value;
-    remember({ language: language.value });
+  function setReadingLanguage(mode) {
+    language.value = mode;
+    remember({ language: mode });
+    if (selection) render(false);
+    renderLanguageStatus();
+    if (displayModes[mode].includes('ur')) void getUrdu(true);
+  }
+
+  language.addEventListener('change', () => setReadingLanguage(language.value));
+  dailyLanguage.addEventListener('change', () => {
+    remember({ dailyLanguage: dailyLanguage.value });
+    renderDailyText();
+    renderLanguageStatus();
+    if (dailyLanguage.value === 'ur') void getUrdu(true);
   });
+  for (const id of ['daily-urdu-retry', 'quran-urdu-retry']) {
+    byId(id).addEventListener('click', () => void getUrdu(true));
+  }
   size.addEventListener('change', () => {
     byId('quran').dataset.size = size.value;
     remember({ size: size.value });
@@ -456,26 +596,28 @@ export function setupQuran({ stored, save, today }) {
       selectVerse(direct, { focus: true });
       return;
     }
-    if (/^\d+\s*:/.test(query) || query.length < 2) {
-      results.append(make('p', /^\d+\s*:/.test(query) ? 'No verse at that reference.' : 'Enter at least two characters.'));
+    const verseQuery = /^\d+\s*:/.test(westernDigits(query));
+    if (verseQuery || searchText(query).length < 2) {
+      results.append(make('p', verseQuery ? 'No verse at that reference.' : 'Enter at least two characters.'));
       return;
     }
-    const needle = query.toLocaleLowerCase('en-GB');
-    const hits = [];
-    for (const chapter of data.chapters) {
-      for (const [index, [, , english]] of chapter.ayahs.entries()) {
-        if (english.toLocaleLowerCase('en-GB').includes(needle)) hits.push({ chapter: chapter.id, verse: index + 1, english });
-        if (hits.length > 15) break;
-      }
-      if (hits.length > 15) break;
+    const hits = findVerses(data.chapters, query, urdu);
+    if (!urdu && /\p{Script=Arabic}/u.test(query)) {
+      results.append(make('p', 'Select an Urdu option under Show text to download Urdu and include it in search.'));
     }
     results.append(make('p', hits.length > 15 ? 'First 15 matches' : hits.length ? hits.length + (hits.length === 1 ? ' match' : ' matches') : 'No matching verses.'));
-    for (const { chapter, verse, english } of hits.slice(0, 15)) {
+    for (const { chapter, verse, lang, text } of hits.slice(0, 15)) {
       const button = make('button', '');
       button.type = 'button';
-      button.append(make('strong', reference({ chapter, verse })), make('span', english));
+      const excerpt = make('span', text);
+      excerpt.lang = lang;
+      excerpt.dir = lang === 'en' ? 'ltr' : 'rtl';
+      button.append(make('strong', reference({ chapter, verse })), excerpt);
       button.addEventListener('click', () => {
         results.hidden = true;
+        if (!displayModes[language.value].includes(lang)) {
+          setReadingLanguage({ ar: 'arabic', ur: 'arabic-urdu', en: 'both' }[lang]);
+        }
         selectVerse({ chapter, verse }, { focus: true });
       });
       results.append(button);

@@ -278,3 +278,13 @@ footer { padding-bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom))); }
 
 .reader-listen { display: flex; flex-wrap: wrap; align-items: end; gap: .45rem; }
 .reader-listen select { min-height: 42px; }
+
+.reader-display { display: flex; align-items: end; flex-wrap: wrap; gap: .5rem .8rem; }
+.reader-display .field { flex: 0 1 17rem; }
+.daily-language { max-width: 12rem; }
+:is(#daily-language-status, #quran-language-status):empty { display: none; }
+:is(#daily-language-status, #quran-language-status) { margin-top: .4rem; }
+:is(.ayah-urdu, #daily-text[lang="ur"]) { font-family: "Noto Nastaliq Urdu", "Noto Naskh Arabic", "Noto Sans Arabic", serif; line-height: 2.15; }
+.ayah-urdu { margin-top: .55rem; font-size: calc(1.24rem * var(--reader-scale)); }
+:is(.ayah-urdu, .ayah-english, #daily-text) { overflow-wrap: anywhere; }
+#quran-results [dir="rtl"] { text-align: right; }
