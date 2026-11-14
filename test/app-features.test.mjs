@@ -68,7 +68,7 @@ test('offline package contains install assets and the same prayer engine as Term
     assert.equal(image.readUInt32BE(20), height);
     assert.ok(worker.includes(JSON.stringify(icon.src)));
   }
-  for (const path of ['/engine.js', '/app.js', '/compass.js', '/practice.js', '/calendar.js', '/install.js', '/quran.js', '/quran.json']) {
+  for (const path of ['/engine.js', '/app.js', '/compass.js', '/practice.js', '/calendar.js', '/install.js', '/quran.js', '/media-session.js', '/quran.json']) {
     assert.ok(assets.has(path) && worker.includes(JSON.stringify(path)));
   }
   assert.ok(!worker.includes('/api/gps'));

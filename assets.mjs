@@ -13,7 +13,7 @@ const types = {
 };
 const paths = [
   'index.html', 'app.js', 'style.css', 'compass.js', 'practice.js', 'calendar.js', 'install.js',
-  'quran.js', 'engine.js', 'manifest.webmanifest', 'icons/akhlaq.svg', 'icons/icon-192.png', 'icons/icon-512.png',
+  'quran.js', 'media-session.js', 'engine.js', 'manifest.webmanifest', 'icons/akhlaq.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 const load = path => readFile(new URL('./public/' + path, import.meta.url));
 

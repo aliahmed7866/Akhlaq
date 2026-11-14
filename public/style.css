@@ -297,3 +297,5 @@ footer { padding-bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom))); }
 #player-next { grid-column: 4; grid-row: 2; }
 .audio-open footer { padding-bottom: calc(15rem + env(safe-area-inset-bottom)); }
 .audio-open .ayah { scroll-margin-bottom: calc(14rem + env(safe-area-inset-bottom)); }
+/* Prevent an accidental pull-to-refresh from destroying the active player. */
+html:has(body.audio-open) { overscroll-behavior-y: contain; }

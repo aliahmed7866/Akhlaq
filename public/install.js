@@ -1,4 +1,4 @@
-export function setupInstall(hasUnsavedReflection) {
+export function setupInstall(hasUnsavedReflection, isPlaying = () => false) {
   const button = document.getElementById('install');
   const note = document.getElementById('install-note');
   const standalone = window.matchMedia('(display-mode: standalone)');
@@ -59,6 +59,10 @@ export function setupInstall(hasUnsavedReflection) {
     });
     apply.addEventListener('click', () => {
       if (!registration.waiting) return showWaiting();
+      if (isPlaying()) {
+        status.textContent = 'Pause the recitation before updating. Your listening place will be saved.';
+        return;
+      }
       if (hasUnsavedReflection()) {
         status.textContent = 'Save your draft reflection in Practice, then tap Update & reload.';
         return;

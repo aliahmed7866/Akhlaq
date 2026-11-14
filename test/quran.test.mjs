@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { gunzipSync } from 'node:zlib';
-import { audioUrl, dailyVerse, nextAudioPart, readingBookmarks, savedAudioMode, verseReference } from '../public/quran.js';
+import { audioUrl, dailyVerse, nextAudioPart, readingBookmarks, savedAudioMode, savedListening, verseReference } from '../public/quran.js';
 
 const quran = JSON.parse(gunzipSync(await readFile(new URL('../data/quran.json.gz', import.meta.url))));
 const { chapters } = quran;
@@ -80,5 +80,14 @@ test('Urdu pairs finish their translation even for a single verse or the end of 
       assert.equal(nextAudioPart('arabic-urdu', 'urdu', continuous, hasNext), expected);
       assert.equal(nextAudioPart('urdu', 'urdu', continuous, hasNext), expected);
     }
+  }
+});
+
+test('listening resumes the exact translation and time and rejects corrupt or obsolete saves', () => {
+  const point = { chapter: 2, verse: 255, mode: 'arabic-urdu', part: 'urdu', seconds: 17.5, singleVerse: true };
+  assert.deepEqual(savedListening(point, chapters), point);
+  for (const bad of [null, {}, { ...point, seconds: -1 }, { ...point, seconds: Infinity },
+    { ...point, verse: 999 }, { ...point, mode: 'unknown' }, { ...point, part: 'english' }]) {
+    assert.equal(savedListening(bad, chapters), null);
   }
 });

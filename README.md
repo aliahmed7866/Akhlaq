@@ -47,8 +47,18 @@ The Today tab shows a verse that changes with the date in your selected time zon
 - The player stays above the tabs with previous, pause/replay and next controls. Tap the verse title to return to its text. Adjust speed from 0.75× to 1.5× or turn off **Continue to next verse** under **Text, size & playback options**; paired modes still finish both parts of the selected verse. A failed recording stays on that verse with a retry button. Text, audio and speed preferences are saved. Today’s Listen button plays only the daily verse, in Arabic followed by the selected English or Urdu translation.
 - To refresh the bundled text, use `scripts/import-quran.py` with the official QuranEnc CSV, Tanzil numbered Uthmani text and the Al Quran Cloud Quran edition response for chapter metadata.
 
+## Background listening
+
+Press Play once, then press Home, switch apps or lock the screen. Supported browsers expose the current surah, verse and audio language through Android’s media controls, with play/pause, previous/next verse and seeking. The same audio element carries Arabic → English or Arabic → Urdu through each verse; hiding the page does not pause or restart it. Calls, other media apps and Android power management may interrupt playback.
+
+Fully closing or force-stopping the app/browser can still end a web player. Akhlaq saves the verse, current language and playback position every five seconds, and on pause or backgrounding. Reopen and tap **Resume**; playback never restarts audibly without your action. **Stop** clears the listening session. Updates ask you to pause first, and pull-to-refresh is suppressed while the player is open in supported browsers.
+
+This is a web app, not an Android foreground media service. Lock-screen availability and background lifetime depend on the browser and Android device. No screen wake lock or unrelated Termux service is used.
+
 ## Practice and backup
 
 Log each prayer from Today or Practice. Both screens use the same log. Track daily habits, keep reflections, and browse the past week in Practice. The dhikr counter saves progress by day and phrase and supports personal targets of 33, 99 or 100. These targets are counter settings. Use **Back up your practice** to export a JSON file. Restore fills dates missing on the device. Browser data is local to the address and profile, and clearing it removes your entries.
 
 For development, run `npm ci` to install the build and test dependencies. Run `npm run build:engine` and commit the updated `public/engine.js` when prayer calculation code or dependencies change. Run `npm test` to verify the calculation engine, compass math, calendar files, backup format and offline package.
+
+Optional browser regression: install Python Playwright and its Chromium browser, then run `python scripts/check-player-browser.py`. This uses generated audio to check verse transitions, media controls and exact-position resumption; physical Android background and lock-screen testing is still required. Set `CHROMIUM_PATH` to use an existing Chromium executable.

@@ -357,7 +357,7 @@ function start() {
   fillForm();
   practiceLog.refresh();
   refresh();
-  setupInstall(practiceLog.hasUnsavedReflection);
+  setupInstall(practiceLog.hasUnsavedReflection, quran.isPlaying);
   navigate();
   window.addEventListener('hashchange', navigate);
   window.addEventListener('storage', event => {
