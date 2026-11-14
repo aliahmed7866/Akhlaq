@@ -31,6 +31,11 @@
       <h1>Assalamu alaikum</h1>
       <p id="today-label"></p>
       <p id="hijri-date" class="muted"></p>
+      <nav class="home-shortcuts" aria-label="Daily tools">
+        <a class="small-button" href="#quran">Read Quran</a>
+        <a class="small-button" href="#qibla">Find Qibla</a>
+        <a class="small-button" href="#dhikr">Count dhikr</a>
+      </nav>
     </div>
     <section id="salah" data-page="home" aria-labelledby="prayer-title" class="card prayer-card">
       <div class="card-head">
@@ -86,10 +91,7 @@
       <p id="daily-credit" class="muted" hidden>English translation by Rowwad Translation Center</p>
     </section>
     <section id="quran" data-page="quran" class="card reader" aria-labelledby="quran-title" hidden>
-      <div class="card-head">
-        <div><h1 id="quran-title">Quran</h1><p>Arabic and English translation</p></div>
-
-      </div>
+      <div class="card-head"><div><h1 id="quran-title">Quran</h1><p>Arabic and English translation</p></div></div>
       <p id="quran-status" role="status"></p>
       <div id="quran-tools" hidden>
         <div class="reader-controls">
@@ -106,26 +108,29 @@
           <ul id="quran-saved-list"></ul>
         </details>
         <p id="quran-save-status" class="muted" role="status"></p>
-        <div class="quran-audio" aria-labelledby="audio-title">
-          <div class="audio-controls">
-            <label class="field" id="audio-title">Listen
+        <div class="chapter-heading">
+          <div><h2 id="quran-chapter-name"></h2><p class="muted" id="quran-chapter-info"></p></div>
+          <button id="quran-play" type="button" class="primary">Play from this verse</button>
+        </div>
+        <details class="reader-preferences">
+          <summary>Reading &amp; audio options</summary>
+          <div class="reader-option-fields">
+            <label class="field">Text
+              <select id="quran-language"><option value="both">Arabic + English</option><option value="english">English only</option><option value="arabic">Arabic only</option></select>
+            </label>
+            <label class="field">Voice
               <select id="quran-voice">
                 <option value="english">English translation</option>
                 <option value="arabic">Arabic · Mishary Alafasy</option>
               </select>
             </label>
-            <button id="quran-play" type="button" class="primary">Play from this verse</button>
+            <label class="field">Text size
+              <select id="quran-size"><option value="standard">Standard</option><option value="large">Large</option><option value="extra">Extra large</option></select>
+            </label>
             <label class="autoplay"><input id="quran-autoplay" type="checkbox" checked> Continue to next verse</label>
           </div>
-          <p id="quran-audio-status" class="muted" role="status">Audio streams over the internet.</p>
-          <audio id="quran-audio" controls preload="none" hidden></audio>
-        </div>
-        <div class="chapter-heading">
-          <div><h2 id="quran-chapter-name"></h2><p class="muted" id="quran-chapter-info"></p></div>
-          <label class="field" id="quran-language-label">Text
-            <select id="quran-language"><option value="both">Arabic + English</option><option value="english">English only</option><option value="arabic">Arabic only</option></select>
-          </label>
-        </div>
+          <p class="muted">Audio streams over the internet.</p>
+        </details>
         <p id="quran-basmala" lang="ar" dir="rtl" class="quran-basmala" hidden></p>
         <ol id="quran-verses" class="ayahs"></ol>
         <div class="reader-pagination">
@@ -199,6 +204,7 @@
         </details>
       </section>
     <section id="dhikr" data-page="dhikr" hidden class="card" aria-labelledby="dhikr-title">
+      <a class="back-link" href="#practice">← Practice</a>
       <div class="card-head">
         <div><h2 id="dhikr-title">Dhikr counter</h2><p id="dhikr-date"></p></div>
         <button id="dhikr-use-today" type="button">Today</button>
@@ -246,10 +252,17 @@
           <label class="field">Quick city<select id="city" name="city"><option value="">Custom coordinates</option></select></label>
           <button type="button" id="gps" class="primary">Use my location</button>
         </div>
-        <div class="settings-grid">
+        <details id="manual-location">
+          <summary>Coordinates &amp; time zone</summary>
+          <div class="settings-grid">
           <label class="field">Latitude<input name="latitude" type="number" min="-90" max="90" step="any" required></label>
           <label class="field">Longitude<input name="longitude" type="number" min="-180" max="180" step="any" required></label>
           <label class="field">Time zone<input name="zone" type="text" maxlength="80" placeholder="Europe/London" required></label>
+          </div>
+        </details>
+        <details class="prayer-settings">
+          <summary>Prayer calculation</summary>
+          <div class="settings-grid">
           <label class="field">Calculation method
             <select name="method">
               <option value="MoonsightingCommittee">Moonsighting Committee</option>
@@ -269,6 +282,7 @@
           <p class="muted">Add or subtract minutes to match your local timetable.</p>
           <div id="offsets" class="settings-grid"></div>
         </details>
+        </details>
         <div class="settings-actions">
           <button type="submit" class="primary">Save location &amp; settings</button>
           <p id="settings-status" class="muted" role="status"></p>
@@ -287,6 +301,16 @@
       <a href="https://www.islamic-relief.org.uk/resources/prayer-timetables/manchester/" target="_blank" rel="noopener noreferrer" class="reference">Islamic Relief Manchester timetable ↗</a>
     </section>
   </main>
+  <aside id="quran-player" class="mini-player" aria-label="Quran audio player" hidden>
+    <div class="player-inner">
+      <a id="playing-verse" href="#quran" class="player-verse"></a>
+      <button id="player-toggle" class="primary" type="button">Pause</button>
+      <button id="player-next" type="button" aria-label="Next audio verse">Next</button>
+      <button id="player-close" type="button" aria-label="Stop Quran audio">✕</button>
+      <p id="quran-audio-status" class="muted" role="status"></p>
+      <audio id="quran-audio" preload="none"></audio>
+    </div>
+  </aside>
   <nav class="tab-bar" aria-label="Main">
     <a href="#home" data-route="home" aria-current="page">Today</a>
     <a href="#quran" data-route="quran">Quran</a>

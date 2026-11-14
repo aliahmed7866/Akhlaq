@@ -207,7 +207,12 @@ function readSettings() {
 }
 
 function applySettings() {
-  if (!form.reportValidity()) return;
+  const invalid = form.querySelector(':invalid:not(fieldset)');
+  if (invalid) {
+    openField(invalid);
+    invalid.reportValidity();
+    return;
+  }
   const selection = readSettings();
   try {
     const data = requestSchedule(selection);
@@ -249,7 +254,10 @@ byId('gps').addEventListener('click', async event => {
 
 byId('city').addEventListener('change', event => {
   const city = cities.find(entry => entry.name === event.target.value);
-  if (!city) return;
+  if (!city) {
+    byId('manual-location').open = true;
+    return;
+  }
   for (const name of ['latitude', 'longitude', 'zone']) form.elements[name].value = city[name];
   applySettings();
 });
@@ -257,6 +265,12 @@ for (const name of ['latitude', 'longitude', 'zone']) {
   form.elements[name].addEventListener('input', () => { byId('city').value = ''; });
 }
 form.elements.method.addEventListener('change', updateMethodNote);
+function openField(field) {
+  for (let details = field.closest('details'); details; details = details.parentElement.closest('details')) {
+    details.open = true;
+  }
+}
+form.addEventListener('invalid', event => openField(event.target), true);
 form.addEventListener('submit', event => {
   event.preventDefault();
   applySettings();
@@ -302,6 +316,7 @@ function navigate() {
   const [requested, target = ''] = location.hash.slice(1).split('/');
   const page = ['quran', 'qibla', 'practice', 'dhikr', 'settings'].includes(requested) ? requested : 'home';
   if (openPage !== page) {
+    const initial = openPage === undefined;
     if (openPage === 'qibla' && byId('compass').textContent === 'Stop compass') byId('compass').click();
     openPage = page;
     for (const section of document.querySelectorAll('[data-page]')) section.hidden = section.dataset.page !== page;
@@ -311,6 +326,13 @@ function navigate() {
       else link.removeAttribute('aria-current');
     }
     window.scrollTo(0, 0);
+    if (!initial) {
+      const heading = document.querySelector('[data-page="' + page + '"] :is(h1, h2)');
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+      }
+    }
   }
   quran.navigate(page, target);
 }

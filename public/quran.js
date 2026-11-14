@@ -1,6 +1,5 @@
 const pageSize = 15;
 const readerKey = 'akhlaq.reader.v1';
-const audioMessage = 'Audio streams over the internet.';
 const byId = id => document.getElementById(id);
 const make = (tag, text) => {
   const node = document.createElement(tag);
@@ -49,6 +48,10 @@ export function setupQuran({ stored, save, today }) {
   const dailyText = byId('daily-text');
   const select = byId('quran-chapter');
   const audio = byId('quran-audio');
+  const player = byId('quran-player');
+  const playerToggle = byId('player-toggle');
+  const playerNext = byId('player-next');
+  const size = byId('quran-size');
   const voiceSelect = byId('quran-voice');
   const language = byId('quran-language');
   const audioStatus = byId('quran-audio-status');
@@ -66,11 +69,13 @@ export function setupQuran({ stored, save, today }) {
   let bookmarks;
   let playing;
   let audioAttempt = 0;
-  let pendingDailyListen = false;
+
 
   voiceSelect.value = saved.voice === 'arabic' ? 'arabic' : 'english';
   language.value = ['arabic', 'english'].includes(saved.language) ? saved.language : 'both';
   byId('quran-autoplay').checked = saved.autoplay !== false;
+  size.value = ['large', 'extra'].includes(saved.size) ? saved.size : 'standard';
+  byId('quran').dataset.size = size.value;
   function remember(fields) {
     saved = { ...saved, ...fields };
     return save(readerKey, saved);
@@ -236,8 +241,10 @@ export function setupQuran({ stored, save, today }) {
     audio.pause();
     audio.removeAttribute('src');
     audio.load();
-    audio.hidden = true;
-    audioStatus.textContent = audioMessage;
+    player.hidden = true;
+    document.body.classList.remove('audio-open');
+    playerToggle.textContent = 'Play';
+    audioStatus.textContent = '';
   }
 
   function openRoute() {
@@ -245,37 +252,77 @@ export function setupQuran({ stored, save, today }) {
     const ref = verseReference(target, data.chapters)
       || verseReference(saved.last ? saved.last.chapter + ':' + saved.last.verse : '', data.chapters)
       || { chapter: 1, verse: 1 };
-    selectVerse(ref, { focus: Boolean(target) && !pendingDailyListen, updateUrl: false });
+    selectVerse(ref, { focus: Boolean(target), updateUrl: false });
   }
 
-  function play(ref, voice, advancing = false, singleVerse = false) {
-    if (route !== 'quran') return;
-    selectVerse(ref, { focus: advancing });
-    const track = current().ayahs[ref.verse - 1];
-    const attempt = ++audioAttempt;
-    playing = { ...ref, voice, singleVerse };
-    audio.hidden = false;
-    audio.src = audioUrl(voice, ref.chapter, ref.verse, track[0]);
-    audioStatus.textContent = 'Loading ' + reference(ref) + '…';
+  function requestPlay(attempt) {
     audio.play().catch(error => {
       if (attempt !== audioAttempt || error.name === 'AbortError') return;
+      playerToggle.textContent = audio.error ? 'Retry' : 'Play';
       audioStatus.textContent = error.name === 'NotAllowedError'
-        ? 'Tap play on the audio controls to continue.' : 'Audio unavailable. Check your internet connection and try again.';
+        ? 'Tap Play to continue.' : 'Audio unavailable. Check your internet connection and retry.';
     });
   }
 
+  function play(ref, voice, { follow = route === 'quran', focus = false, singleVerse = false } = {}) {
+    if (follow) selectVerse(ref, { focus });
+    const chapter = data.chapters[ref.chapter - 1];
+    const track = chapter.ayahs[ref.verse - 1];
+    playing = { ...ref, voice, singleVerse };
+    const verseLink = byId('playing-verse');
+    verseLink.textContent = reference(ref);
+    verseLink.href = hashFor(ref);
+    playerNext.disabled = ref.verse >= chapter.ayahs.length;
+    player.hidden = false;
+    document.body.classList.add('audio-open');
+    audioStatus.textContent = 'Loading ' + reference(ref) + '…';
+    audio.src = audioUrl(voice, ref.chapter, ref.verse, track[0]);
+    requestPlay(++audioAttempt);
+  }
+
+  function nextAudioVerse() {
+    if (!playing || playerNext.disabled) return;
+    const follow = route === 'quran' && selection && keyFor(selection) === keyFor(playing);
+    play({ chapter: playing.chapter, verse: playing.verse + 1 }, playing.voice, { follow, focus: follow, singleVerse: playing.singleVerse });
+  }
+
+  playerNext.addEventListener('click', nextAudioVerse);
+  byId('player-close').addEventListener('click', () => {
+    clearAudio();
+    if (route === 'quran') playButton.focus({ preventScroll: true });
+    else {
+      const activeTab = document.querySelector('.tab-bar [aria-current]');
+      activeTab?.focus({ preventScroll: true });
+    }
+  });
+  playerToggle.addEventListener('click', () => {
+    if (!playing) return;
+    if (audio.error) {
+      play(playing, playing.voice, { follow: false, singleVerse: playing.singleVerse });
+    } else if (audio.paused) {
+      requestPlay(audioAttempt);
+    } else {
+      audio.pause();
+    }
+  });
+  audio.addEventListener('play', () => { playerToggle.textContent = 'Pause'; });
+  audio.addEventListener('pause', () => { playerToggle.textContent = 'Play'; });
   audio.addEventListener('playing', () => {
-    if (playing) audioStatus.textContent = reference(playing) + (playing.voice === 'arabic' ? ' · Arabic recitation' : ' · English translation');
+    if (playing) audioStatus.textContent = playing.voice === 'arabic' ? 'Arabic recitation' : 'English translation';
   });
   audio.addEventListener('error', () => {
-    if (playing) audioStatus.textContent = 'Audio unavailable. Check your internet connection and try again.';
+    if (!playing) return;
+    playerToggle.textContent = 'Retry';
+    audioStatus.textContent = 'Audio unavailable. Check your internet connection and retry.';
   });
   audio.addEventListener('ended', () => {
     if (!playing) return;
-    const chapter = data.chapters[playing.chapter - 1];
-    if (!playing.singleVerse && byId('quran-autoplay').checked && playing.verse < chapter.ayahs.length) {
-      play({ chapter: playing.chapter, verse: playing.verse + 1 }, playing.voice, true);
-    } else audioStatus.textContent = 'Finished ' + reference(playing) + '.';
+    if (!playing.singleVerse && byId('quran-autoplay').checked && !playerNext.disabled) {
+      nextAudioVerse();
+    } else {
+      playerToggle.textContent = 'Replay';
+      audioStatus.textContent = 'Finished ' + reference(playing) + '.';
+    }
   });
 
   function load() {
@@ -307,15 +354,7 @@ export function setupQuran({ stored, save, today }) {
   }
 
   byId('daily-listen').addEventListener('click', () => {
-    if (!daily) return;
-    // Prepare the reader synchronously so playback keeps the tap's user activation.
-    pendingDailyListen = true;
-    location.hash = hashFor(daily);
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
-    voiceSelect.value = 'english';
-    remember({ voice: 'english' });
-    play(daily, 'english', false, true);
-    pendingDailyListen = false;
+    if (daily) play(daily, 'english', { follow: false, singleVerse: true });
   });
   byId('daily-save').addEventListener('click', () => toggleBookmark(daily));
   window.addEventListener('storage', event => {
@@ -327,16 +366,18 @@ export function setupQuran({ stored, save, today }) {
   });
   playButton.addEventListener('click', () => play(selection, voiceSelect.value));
   voiceSelect.addEventListener('change', () => {
-    clearAudio();
     remember({ voice: voiceSelect.value });
   });
   language.addEventListener('change', () => {
     byId('quran').dataset.language = language.value;
     remember({ language: language.value });
   });
+  size.addEventListener('change', () => {
+    byId('quran').dataset.size = size.value;
+    remember({ size: size.value });
+  });
   byId('quran-autoplay').addEventListener('change', event => remember({ autoplay: event.target.checked }));
   select.addEventListener('change', () => {
-    clearAudio();
     results.hidden = true;
     selectVerse({ chapter: Number(select.value), verse: 1 });
   });
@@ -398,7 +439,6 @@ export function setupQuran({ stored, save, today }) {
       byId('daily-save-status').textContent = '';
       route = page;
       target = suffix;
-      if (route !== 'quran') clearAudio();
       if (data) {
         renderResume();
         openRoute();
