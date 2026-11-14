@@ -1,0 +1,26 @@
+{
+  "name": "akhlaq",
+  "version": "1.0.0",
+  "description": "Local prayer times, Qibla and daily practice for Termux",
+  "scripts": {
+    "test": "node --test",
+    "start": "node server.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aliahmed7866/Akhlaq.git"
+  },
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/aliahmed7866/Akhlaq/issues"
+  },
+  "homepage": "https://github.com/aliahmed7866/Akhlaq#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "private": true,
+  "dependencies": {
+    "adhan": "4.4.6",
+    "geomagnetism": "0.2.0"
+  }
+}

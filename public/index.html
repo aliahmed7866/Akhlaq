@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101c19">
+  <meta name="description" content="Local prayer times, Qibla and daily practice for Termux.">
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+  <title>Akhlaq</title>
+</head>
+<body>
+  <header class="masthead">
+    <a class="wordmark" href="/" aria-label="Akhlaq home"><span aria-hidden="true">✦</span> Akhlaq</a>
+    <nav aria-label="Main">
+      <a href="#salah">Salah</a><a href="#qibla">Qibla</a><a href="#practice">Practice</a>
+    </nav>
+  </header>
+  <main>
+    <div class="intro">
+      <p lang="ar" dir="rtl" class="arabic">السلام عليكم</p>
+      <h1>Assalamu alaikum</h1>
+      <p id="today-label"></p>
+    </div>
+    <section id="salah" aria-labelledby="prayer-title" class="card prayer-card">
+      <div class="card-head">
+        <div><h2 id="prayer-title">Prayer times</h2><p id="schedule-location"></p></div>
+        <a class="small-button" href="#settings">Location &amp; settings</a>
+      </div>
+      <p id="prayer-error" role="status" hidden></p>
+      <div class="next">
+        <div><div class="eyebrow" id="next-label">Next prayer</div><div id="next-name">—</div></div>
+        <div class="next-clock"><strong id="next-time">—</strong><span id="countdown"></span></div>
+      </div>
+      <ul id="prayers" class="prayers" aria-label="Today’s prayer times"></ul>
+      <p id="prayer-method" class="muted"></p>
+      <p id="unavailable" class="muted" hidden>Some solar events are unavailable at this latitude. Check your local mosque’s timetable for those prayers.</p>
+      <details>
+        <summary>Seven-day timetable</summary>
+        <div class="table-wrap">
+          <table id="week"><caption class="sr-only">Prayer start times for the next seven days</caption></table>
+        </div>
+      </details>
+    </section>
+    <div class="columns">
+      <section id="qibla" class="card" aria-labelledby="qibla-title">
+        <div class="card-head"><div><h2 id="qibla-title">Qibla</h2><p>Direction of the Kaaba in Makkah</p></div></div>
+        <div class="dial" aria-hidden="true">
+          <div id="dial-rose" class="dial-rose">
+            <span class="point north">N</span><span class="point east">E</span>
+            <span class="point south">S</span><span class="point west">W</span>
+          </div>
+          <div id="needle" class="needle" hidden></div>
+          <div class="dial-centre"></div>
+        </div>
+        <p class="bearing" id="bearing">—</p>
+        <p id="magnetic" class="compass-note muted" hidden></p>
+        <button id="compass" type="button" class="primary" disabled>Start live compass</button>
+        <p id="compass-note" class="compass-note muted" role="status">The dial shows north at the top. Start the live compass to align it with your phone.</p>
+      </section>
+      <section id="practice" class="card" aria-labelledby="practice-title">
+        <div class="card-head"><div><h2 id="practice-title">Daily practice</h2><p id="practice-date"></p></div></div>
+        <div class="practice-navigation">
+          <button id="earlier" type="button" aria-label="Previous practice day">←</button>
+          <button id="today" type="button">Today</button>
+          <button id="later" type="button" aria-label="Next practice day">→</button>
+        </div>
+        <form id="practice-form">
+          <fieldset>
+            <legend>Prayers completed</legend>
+            <div id="prayer-checks" class="checks"></div>
+          </fieldset>
+          <fieldset>
+            <legend>Daily habits</legend>
+            <div class="checks">
+              <label><input type="checkbox" name="quran"> Read Qur’an</label>
+              <label><input type="checkbox" name="dhikr"> Make time for dhikr</label>
+              <label><input type="checkbox" name="kindness"> Do an act of kindness</label>
+            </div>
+          </fieldset>
+          <label class="field">Intention or reflection
+            <textarea name="reflection" rows="3" maxlength="2000" placeholder="What would you like to work on?"></textarea>
+          </label>
+          <div class="practice-save"><button type="submit" class="primary">Save reflection</button><span id="save-status" class="muted" role="status"></span></div>
+        </form>
+      </section>
+    </div>
+    <section id="settings" class="card" aria-labelledby="settings-title">
+      <div class="card-head"><div><h2 id="settings-title">Location &amp; settings</h2><p>Set your location and match your local mosque’s prayer method.</p></div></div>
+      <form id="settings-form">
+        <div class="location-tools">
+          <label class="field">Quick city<select id="city" name="city"><option value="">Custom coordinates</option></select></label>
+          <button type="button" id="gps" class="primary">Use my location</button>
+        </div>
+        <div class="settings-grid">
+          <label class="field">Latitude<input name="latitude" type="number" min="-90" max="90" step="any" required></label>
+          <label class="field">Longitude<input name="longitude" type="number" min="-180" max="180" step="any" required></label>
+          <label class="field">Time zone<input name="zone" type="text" maxlength="80" placeholder="Europe/London" required></label>
+          <label class="field">Calculation method
+            <select name="method">
+              <option value="MoonsightingCommittee">Moonsighting Committee</option>
+              <option value="MuslimWorldLeague">Muslim World League</option>
+              <option value="Karachi">University of Islamic Sciences, Karachi</option>
+              <option value="Egyptian">Egyptian General Authority</option>
+              <option value="NorthAmerica">ISNA (North America)</option>
+              <option value="UmmAlQura">Umm al-Qura</option>
+            </select>
+          </label>
+          <label class="field">Asr<select name="madhab"><option value="hanafi">Hanafi</option><option value="standard">Standard (Shafi‘i, Maliki, Hanbali)</option></select></label>
+          <label class="field">High-latitude rule<select name="highLatitude"><option value="default">Recommended for location</option><option value="twilight">Twilight angle</option><option value="seventh">One seventh of the night</option><option value="middle">Middle of the night</option></select></label>
+        </div>
+        <p id="high-latitude-note" class="muted">The Moonsighting Committee method also applies its own seasonal rules for Fajr and Isha.</p>
+        <details>
+          <summary>Adjust individual times</summary>
+          <p class="muted">Add or subtract minutes to match your local timetable.</p>
+          <div id="offsets" class="settings-grid"></div>
+        </details>
+        <div class="settings-actions">
+          <button type="submit" class="primary">Save location &amp; settings</button>
+          <p id="settings-status" class="muted" role="status"></p>
+        </div>
+      </form>
+      <a href="https://www.islamic-relief.org.uk/resources/prayer-timetables/manchester/" target="_blank" rel="noopener noreferrer" class="reference">Islamic Relief Manchester timetable ↗</a>
+    </section>
+  </main>
+  <footer>Your location, prayer log and reflections stay on this device.</footer>
+</body>
+</html>
