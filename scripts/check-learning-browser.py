@@ -64,13 +64,15 @@ try:
                 page.set_viewport_size({'width': width, 'height': 844})
                 for route in ['', 'quran/1:1', 'qibla', 'practice', 'dhikr', 'settings', 'learn/hadith/5351', 'learn/practices', 'learn/stories/yusuf']:
                     page.evaluate('(r) => location.hash = r', route)
+                    if route == 'settings':
+                        page.locator('#settings details').evaluate_all('(items) => items.forEach(d => d.open = true)')
                     page.wait_for_timeout(80)
                     overflow = page.evaluate('''() => [...document.querySelectorAll('body *')].filter(e => {
-                      const r=e.getBoundingClientRect(); return r.width && r.height && (r.right>innerWidth+1 || r.left < -1) && !e.closest('.table-wrap') && !e.classList.contains('skip-link');
+                      const r=e.getBoundingClientRect(); return e.checkVisibility() && r.width && r.height && (r.right>innerWidth+1 || r.left < -1) && !e.closest('.table-wrap') && !e.classList.contains('skip-link');
                     }).map(e=>e.tagName+'#'+e.id+'.'+e.className).slice(0,12)''')
                     if overflow: failures.append((size, width, route, overflow))
                     small = page.evaluate('''() => [...document.querySelectorAll('button, .small-button, select, summary, .checks label, .check-option, .tab-bar a')].filter(e => {
-                      const r=e.getBoundingClientRect(); return r.width && r.height && (r.width<47.9 || r.height<47.9);
+                      const r=e.getBoundingClientRect(); return e.checkVisibility() && r.width && r.height && (r.width<47.9 || r.height<47.9);
                     }).map(e=>e.tagName+'#'+e.id)''')
                     if small: failures.append(('small target', size, width, route, small))
         # Inspect the fixed player independently of live audio timing.

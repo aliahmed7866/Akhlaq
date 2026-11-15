@@ -313,6 +313,10 @@ button, .small-button, select, input:not([type="checkbox"]), .checks label, .che
 button, .small-button, .wordmark { min-width: 48px; min-height: 48px; }
 .week-practice { grid-template-columns: repeat(auto-fit, minmax(min(100%, 4rem), 1fr)); }
 button, .small-button, select, input, textarea { max-width: 100%; }
+input, select, textarea { min-width: 0; }
+.settings-grid, .dhikr-layout .settings-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+}
 button, .small-button { white-space: normal; overflow-wrap: anywhere; }
 summary { min-height: 48px; padding-block: .5rem; }
 .card-head, .next, .masthead { flex-wrap: wrap; }
