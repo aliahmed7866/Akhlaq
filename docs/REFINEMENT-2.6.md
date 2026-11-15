@@ -1,0 +1,31 @@
+# Akhlaq 2.6.0: reading, listening and finding content
+
+Research and review: 15 November 2026. Branch: `android-standalone`.
+
+This pass combines current official product documentation, W3C guidance, source-code inspection and scripted task walkthroughs. It is desk research and an expert review, not interviews, production analytics, a competitive ranking or a controlled usability study. No improvement multiplier is claimed.
+
+## Research translated into changes
+
+| Evidence | Finding in Akhlaq 2.5 | Change and verification |
+| --- | --- | --- |
+| [Quran.com product updates](https://quran.com/product-updates) describe easier access to bookmarks and a cleaner reading layout. Its [audio settings article](https://quran.com/en/product-updates/simplifying-word-by-word-and-audio-settings) groups detailed listening settings around the player. | Saved verses required two nested disclosures. The full fixed player occupied substantial reading space. | Visible Find a verse / Saved verses shortcuts, removable saved items with undo, and a compact player retaining title, pause/resume, stop and the current language. Expand exposes previous/next, position and playback mode. Layout preference is local and never replaces the audio element. These are adaptations, not copies of a competitor's complete interface. |
+| [W3C status messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) covers result counts, errors and other status changes without moving focus. | Quran search returned at most 16 records and displayed 15, leaving later matches inaccessible. Native polling rewrote the same live audio status repeatedly. | Complete match list with 15-result pages, announced result ranges, next/previous results, return to the same results page and explicit clearing. Native status text only changes when the message changes; elapsed time is not a live announcement. A regression traverses all results for a frequent term and checks uniqueness and the final disabled Next button. |
+| [W3C focus visibility](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum.html) identifies fixed footers as potential obstructions. | Previous layout checks primarily measured overflow and collisions. | Preserve measured overlay spacing; additionally check focused reader controls remain visible above the player. Test both compact/expanded layouts at 320/390/844 widths and 100/150/200% text. No WCAG certification is inferred. |
+| [W3C pointer cancellation](https://www.w3.org/WAI/WCAG22/Understanding/pointer-cancellation.html) favours completion on release and recoverable interactions. [Android Media3](https://developer.android.com/media/media3/exoplayer/listening-to-player-events) documents seeking and transition events. | Position seeking was available through some system media controls but absent inside the app. | Labelled range control previews its position during input and seeks on change. It preserves pause/play state. Both JS and native code guard the current track identity, so releasing an old gesture cannot seek a new verse or translation. Unknown durations disable seeking. Saved-list removal has an explicit undo. |
+| [Pillars' official FAQ](https://thepillarsapp.com/faqs) explains calculation-method, location and Asr differences when comparing prayer times. | Calculation choices existed but were separated from the timetable by general Settings navigation. | A timetable link opens Prayer calculation directly. The explanation distinguishes calculated start times from congregational times and gives specific Fajr/Isha and Asr checks. Calculations, location handling and reminders retain their existing behaviour. |
+| Task-based review of the expanded hadith library | Exact phrase matching and unqualified numbers made the 1,018-record library harder to search. Saved-only filtering was inside a disclosure. | Word-order-independent title search, common Arabic/Urdu character-form normalization, explicit `Bukhari 6114` and `HadeethEnc 5351` queries, and a visible saved-items shortcut. The namespaces remain separate: publisher IDs are never treated as Bukhari numbers. |
+
+## Content and privacy
+
+The 1,018 hadith records, Quran texts, translations, publisher grading and notices are unchanged. Search normalization applies to the search index/query only, not displayed religious text. Hadith searching covers indexed titles and existing featured English text, not full explanations. Numbered Bukhari lookup covers only records with an already reviewed Bukhari reference; no new numbering is inferred.
+
+No new API, account, tracking, background location or permissions are introduced. Quran search runs on the bundled text; Urdu search includes the installed/downloaded edition. Android includes Urdu offline. Audio still needs an available downloaded recording or internet connection. The current audio part is the unit of seeking, preserving Arabic → translation pairing.
+
+## Checks and limits
+
+- Unit tests cover complete Quran results, explicit reference namespaces, orthographic search forms and readable position labels, alongside existing source integrity, prayer, compass, location and playback tests.
+- New browser regression exercises search pagination/return, reference digits, saved removal/undo/persistence, focus-mode shortcuts, hadith references/saved filtering, prayer-settings navigation, native seeking/track transitions, unknown duration, compact persistence and unchanged live-status suppression.
+- 18 compact/expanded player layouts add focused-control checks to the existing 300 layout combinations. Browser playback uses synthetic audio to verify seeking preserves pause state, the same element, paired progression and exact-language resume.
+- Android CI compiles preview and production variants, runs unit tests/lint, and checks bundled offline content. The release archive check now requires `player-view.js`; the web cache test requires it too.
+
+Physical Android/TalkBack, real keyboard insets, phone haptics, lock-screen playback, poor networks and vendor battery restrictions still require device testing. Before public launch, observe consenting English/Urdu readers doing the same tasks and collect wrong turns, assistance needed and an ease rating without gathering prayer histories or private reflections.

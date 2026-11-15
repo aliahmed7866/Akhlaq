@@ -15,7 +15,7 @@ const types = {
 };
 const paths = [
   'index.html', 'privacy.html', 'licenses.html', 'app.js', 'interface.js', 'location.js', 'style.css', 'compass.js', 'practice.js', 'calendar.js', 'install.js',
-  'quran.js', 'media-session.js', 'engine.js', 'manifest.webmanifest', 'icons/akhlaq.svg', 'icons/icon-192.png', 'icons/icon-512.png',
+  'quran.js', 'player-view.js', 'media-session.js', 'engine.js', 'manifest.webmanifest', 'icons/akhlaq.svg', 'icons/icon-192.png', 'icons/icon-512.png',
   'companion.js', 'devotional.json', 'adhan.oga', 'learning.js', 'hadith.json', 'learning-content.json',
 ];
 const load = path => readFile(new URL('./public/' + path, import.meta.url));

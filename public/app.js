@@ -387,8 +387,8 @@ function navigate() {
       }
     }
   }
-  if (page === 'settings' && target === 'reminders') {
-    const panel = byId('reminder-settings'); panel.open = true;
+  if (page === 'settings' && ['reminders', 'prayer'].includes(target)) {
+    const panel = byId(target === 'reminders' ? 'reminder-settings' : 'prayer-calculation'); panel.open = true;
     panel.querySelector('summary').focus(); panel.scrollIntoView({ block: 'start' });
   }
   quran.navigate(page, target);

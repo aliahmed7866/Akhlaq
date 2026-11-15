@@ -64,6 +64,7 @@ try:
   expect(page.locator('.tab-bar')).to_be_visible()
   expect(page.locator('#quran-player')).to_be_visible()
   page.locator('#quran-query').blur()
+  page.locator('#player-expand').click()
   failures=[]
   routes=['home','quran/1:1','qibla','practice','dhikr','learn/hadith/5351','essentials/calendar','settings']
   for size in [100,150,200]:

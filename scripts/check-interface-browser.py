@@ -137,6 +137,7 @@ try:
               document.querySelector('#playing-verse').textContent = 'Al-Fatihah 1:1';
               document.body.classList.add('audio-open');
             }''', size)
+            if page.locator('#quran-player').get_attribute('data-compact')=='true':page.locator('#player-expand').click()
             page.wait_for_timeout(100)
             player = page.locator('#quran-player').bounding_box()
             nav = page.locator('.tab-bar').bounding_box()

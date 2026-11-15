@@ -575,3 +575,22 @@ details[open] > summary { margin-bottom: .55rem; }
 #quran-audio-status:empty { display: none; }
 body.keyboard-open .tab-bar, body.keyboard-open .mini-player { display: none; }
 @media (max-width: 370px) { .player-inner { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* Keep frequent actions in reach; detailed listening controls are optional. */
+.reader-shortcuts, .search-pagination { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin-block: .65rem; }
+.reader-shortcuts > *, .search-pagination > * { min-width: 0; }
+#quran-search-status:empty, #player-view-status:empty { display: none; }
+.player-inner { grid-template-areas: "title title title expand" "position position position position" "previous toggle toggle next" "mode mode mode stop" "status status status status" "notice notice notice notice"; }
+#player-expand { grid-area: expand; }
+#player-view-status { grid-area: notice; }
+.player-position { grid-area: position; display: grid; grid-template-columns: minmax(0, 1fr); gap: .15rem; }
+.player-position label, #player-time { font-size: .75rem; }
+#player-seek { width: 100%; min-width: 0; padding: 0; margin: 0; accent-color: var(--accent); cursor: pointer; }
+#quran-player[data-compact="true"] .player-inner { grid-template-areas: "title title title expand" "toggle toggle toggle stop" "status status status status" "notice notice notice notice"; }
+#quran-player[data-compact="true"] :is(.player-position, #player-mode, #player-previous, #player-next) { display: none; }
+.player-inner #player-toggle { max-width: none; width: 100%; }
+#player-close { border: 1px solid var(--border); color: var(--text); }
+.reader-shortcuts button { font-size: .9rem; }
+#quran-saved-list { display: grid; grid-template-columns: minmax(0, 1fr); }
+#quran-saved-list li { display: flex; gap: .5rem; align-items: center; }
+#quran-saved-list li > :first-child { flex: 1; min-width: 0; text-align: start; }

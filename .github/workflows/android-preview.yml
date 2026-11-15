@@ -35,6 +35,7 @@ jobs:
           python -m playwright install --with-deps chromium
           python scripts/check-interface-browser.py
           python scripts/check-deep-ui-browser.py
+          python scripts/check-refinement-browser.py
           python scripts/check-learning-browser.py
           python scripts/check-player-browser.py
           python scripts/check-android-bridge.py

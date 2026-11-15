@@ -1,4 +1,5 @@
 node_modules/
+__pycache__/
 npm-debug.log*
 android/.gradle/
 android/local.properties

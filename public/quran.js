@@ -1,4 +1,5 @@
 import { setupMediaSession } from './media-session.js';
+import { setupPlayerView } from './player-view.js';
 
 const pageSize = 15;
 const readerKey = 'akhlaq.reader.v1';
@@ -13,6 +14,7 @@ const audioModes = ['both', 'arabic-urdu', 'english', 'urdu', 'arabic'];
 const audioParts = { both: ['arabic', 'english'], 'arabic-urdu': ['arabic', 'urdu'], english: ['english'], urdu: ['urdu'], arabic: ['arabic'] };
 const partNames = { arabic: 'Arabic recitation', english: 'English translation', urdu: 'Urdu translation' };
 const byId = id => document.getElementById(id);
+const setText = (element, text) => { if (element.textContent !== text) element.textContent = text; };
 const make = (tag, text) => {
   const node = document.createElement(tag);
   node.textContent = text;
@@ -44,11 +46,11 @@ export function verseReference(value, chapters) {
 
 function searchText(text) {
   return text.normalize('NFKD').toLowerCase().replace(/[\p{M}ـ]/gu, '')
-    .replace(/ٱ/g, 'ا').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/\[\d+\]/g, '')
+    .replace(/ٱ/g, 'ا').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/ہ/g, 'ه').replace(/\[\d+\]/g, '')
     .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
-export function findVerses(chapters, query, urdu, limit = 16) {
+export function findVerses(chapters, query, urdu, limit = Infinity) {
   const needle = searchText(query);
   const hits = [];
   if (needle.length < 2) return hits;
@@ -152,10 +154,22 @@ export function setupQuran({ stored, save, today }) {
   let selection;
   let daily;
   let bookmarks;
+  let removedBookmark;
   let playing;
   let audioAttempt = 0;
   let resumeAt = 0;
   let lastCheckpoint = 0;
+  let searchHits = [], searchPage = 0;
+  const searchSize = 15;
+  const playerView = setupPlayerView({ stored, save,
+    state: () => ({ track: playing ? [playing.chapter, playing.verse, playing.mode, playing.part, Boolean(playing.singleVerse)].join(':') : '',
+      seconds: native ? nativeState.seconds : audio.currentTime, duration: native ? nativeState.duration : audio.duration,
+      finished: playing?.finished, error: native ? nativeState.error : audio.error }),
+    seek: (seconds, track) => {
+      if (native) nativeCommand({action:'seek', seconds, track});
+      else { audio.currentTime = seconds; resumeAt = 0; mediaSession.position(); checkpoint(); }
+    },
+  });
   const mediaSession = setupMediaSession({ audio, session: native ? null : navigator.mediaSession, actions: {
     play: resumeAudio, pause: () => audio.pause(), stop: clearAudio,
     previous: previousAudioVerse, next: nextAudioVerse,
@@ -201,12 +215,13 @@ export function setupQuran({ stored, save, today }) {
     try { nativeState = event?.detail || JSON.parse(native.status()); } catch { return; }
     if (!data) return;
     const downloads = nativeState.downloads || {};
-    byId('native-download-status').textContent = `${downloads.completed || 0} audio parts saved · ${downloads.pending || 0} pending · ${Math.round((downloads.bytes || 0) / 1048576)} MB`
-      + (downloads.failed ? ` · ${downloads.failed} failed; tap Download to retry.` : '');
+    setText(byId('native-download-status'), `${downloads.completed || 0} audio parts saved · ${downloads.pending || 0} pending · ${Math.round((downloads.bytes || 0) / 1048576)} MB`
+      + (downloads.failed ? ` · ${downloads.failed} failed; tap Download to retry.` : ''));
     if (!nativeState.chapter) {
       playing = null;
       player.hidden = true;
       document.body.classList.remove('audio-open');
+      playerView.update();
       if (nativeState.error) status.textContent = nativeState.error;
       return;
     }
@@ -218,14 +233,15 @@ export function setupQuran({ stored, save, today }) {
     if (follow) selectVerse(ref);
     player.hidden = false;
     document.body.classList.add('audio-open');
-    byId('playing-verse').textContent = reference(ref);
+    setText(byId('playing-verse'), reference(ref));
     byId('playing-verse').href = hashFor(ref);
     playerMode.value = nativeState.mode;
     playerNext.disabled = ref.verse >= data.chapters[ref.chapter - 1].ayahs.length;
     playerPrevious.disabled = ref.verse <= 1;
-    playerToggle.textContent = nativeState.error ? 'Retry' : nativeState.finished ? 'Replay' : nativeState.playing ? 'Pause' : 'Resume';
-    audioStatus.textContent = nativeState.error || (nativeState.buffering ? 'Loading · ' : '') + partLabel(playing);
+    setText(playerToggle, nativeState.error ? 'Retry' : nativeState.finished ? 'Replay' : nativeState.playing ? 'Pause' : 'Resume');
+    setText(audioStatus, nativeState.error || (nativeState.buffering ? 'Loading · ' : '') + partLabel(playing));
     if (nativeState.speed) speed.value = String(nativeState.speed);
+    playerView.update();
   }
 
   if (native) {
@@ -430,13 +446,22 @@ export function setupQuran({ stored, save, today }) {
 
   function renderBookmarks() {
     byId('quran-saved-title').textContent = 'Saved verses · ' + bookmarks.size;
+    byId('reader-saved-open').textContent = 'Saved verses · ' + bookmarks.size;
     byId('quran-saved-empty').hidden = bookmarks.size > 0;
     const rows = [...bookmarks.values()].reverse().map(ref => {
       const item = document.createElement('li');
       const button = make('button', reference(ref));
       button.type = 'button';
       button.addEventListener('click', () => selectVerse(ref, { focus: true }));
-      item.append(button);
+      const remove = make('button', 'Remove'); remove.type = 'button';
+      remove.setAttribute('aria-label', 'Remove saved verse ' + keyFor(ref));
+      remove.addEventListener('click', () => {
+        const persisted = toggleBookmark(ref); removedBookmark = ref;
+        byId('saved-removal-status').textContent = 'Removed ' + reference(ref) + (persisted ? '. You can undo this.' : ' for this session; your device could not save the change.');
+        byId('saved-removal-undo').hidden = false;
+        byId('saved-removal-undo').focus();
+      });
+      item.append(button, remove);
       return item;
     });
     byId('quran-saved-list').replaceChildren(...rows);
@@ -453,7 +478,16 @@ export function setupQuran({ stored, save, today }) {
     status.textContent = success ? (added ? 'Verse saved.' : 'Verse removed.')
       : 'Could not save to this device. The change is available for this session.';
     renderBookmarks();
+    return success;
   }
+
+  byId('saved-removal-undo').addEventListener('click', () => {
+    if (!removedBookmark) return;
+    const persisted = bookmarks.has(keyFor(removedBookmark)) || toggleBookmark(removedBookmark);
+    byId('saved-removal-status').textContent = 'Restored ' + reference(removedBookmark) + (persisted ? '.' : ' for this session; your device could not save the change.');
+    removedBookmark = null; byId('saved-removal-undo').hidden = true;
+    byId('quran-saved-title').focus();
+  });
 
   function renderResume() {
     const last = saved.last && verseReference(keyFor(saved.last), data.chapters);
@@ -543,6 +577,7 @@ export function setupQuran({ stored, save, today }) {
     const track = data.chapters[playing.chapter - 1].ayahs[playing.verse - 1];
     audioStatus.textContent = start ? 'Loading · ' + partLabel(playing) : partLabel(playing);
     audio.src = audioUrl(part, playing.chapter, playing.verse, track[0]);
+    playerView.update();
     audio.playbackRate = Number(speed.value);
     playerToggle.textContent = start ? 'Pause' : 'Play';
     mediaSession.resetPosition();
@@ -659,6 +694,7 @@ export function setupQuran({ stored, save, today }) {
   for (const event of ['seeked', 'ratechange', 'durationchange']) {
     audio.addEventListener(event, () => { mediaSession.position(); checkpoint(); });
   }
+  for (const event of ['loadedmetadata','timeupdate','durationchange','emptied','ended','error']) audio.addEventListener(event, () => playerView.update());
   audio.addEventListener('timeupdate', () => {
     if (Date.now() - lastCheckpoint >= 5000) checkpoint();
   });
@@ -677,6 +713,7 @@ export function setupQuran({ stored, save, today }) {
     else if (next === 'next-verse') nextAudioVerse();
     else {
       playing.finished = true;
+      playerView.update();
       playerToggle.textContent = 'Replay';
       audioStatus.textContent = 'Finished ' + reference(playing) + '.';
       syncMediaSession('paused');
@@ -793,44 +830,62 @@ export function setupQuran({ stored, save, today }) {
     selectVerse(next <= current().ayahs.length ? { chapter: selection.chapter, verse: next }
       : { chapter: selection.chapter + 1, verse: 1 }, { focus: true });
   });
-  byId('quran-search').addEventListener('submit', event => {
-    event.preventDefault();
-    const query = byId('quran-query').value.trim();
-    results.replaceChildren();
-    results.hidden = !query;
-    if (!query) return;
-    const direct = verseReference(query, data.chapters);
-    if (direct) {
-      results.hidden = true;
-      selectVerse(direct, { focus: true });
-      return;
-    }
-    const verseQuery = /^\d+\s*:/.test(westernDigits(query));
-    if (verseQuery || searchText(query).length < 2) {
-      results.append(make('p', verseQuery ? 'No verse at that reference.' : 'Enter at least two characters.'));
-      return;
-    }
-    const hits = findVerses(data.chapters, query, urdu);
-    if (!urdu && /\p{Script=Arabic}/u.test(query)) {
-      results.append(make('p', 'Select an Urdu option under Show text to download Urdu and include it in search.'));
-    }
-    results.append(make('p', hits.length > 15 ? 'First 15 matches' : hits.length ? hits.length + (hits.length === 1 ? ' match' : ' matches') : 'No matching verses.'));
-    for (const { chapter, verse, lang, text } of hits.slice(0, 15)) {
-      const button = make('button', '');
-      button.type = 'button';
-      const excerpt = make('span', text);
-      excerpt.lang = lang;
-      excerpt.dir = lang === 'en' ? 'ltr' : 'rtl';
-      button.append(make('strong', reference({ chapter, verse })), excerpt);
+  function openReaderTools(savedOnly = false) {
+    if (focused) { focused = false; save('akhlaq.reader.focus', {enabled:false}); renderFocus(); }
+    byId('reader-tools').open = true;
+    if (savedOnly) {
+      byId('quran-saved').open = true;
+      byId('quran-saved-title').focus(); byId('quran-saved').scrollIntoView({block:'start'});
+    } else { byId('quran-query').focus(); byId('quran-search').scrollIntoView({block:'start'}); }
+  }
+  byId('reader-find').addEventListener('click', () => openReaderTools());
+  byId('reader-saved-open').addEventListener('click', () => openReaderTools(true));
+  function clearSearch() {
+    searchHits = []; searchPage = 0; results.replaceChildren(); results.hidden = true;
+    byId('quran-search-status').textContent = '';
+    for (const id of ['quran-search-pages','quran-search-return','quran-search-clear']) byId(id).hidden = true;
+  }
+  function renderSearch(focus = false) {
+    const start = searchPage * searchSize, end = Math.min(start + searchSize, searchHits.length);
+    results.replaceChildren(); results.hidden = false;
+    byId('quran-search-status').textContent = searchHits.length
+      ? searchHits.length.toLocaleString() + ' matches · showing ' + (start + 1) + '–' + end
+      : 'No matching verses. Try another phrase or a reference such as 2:255.';
+    byId('quran-search-pages').hidden = searchHits.length <= searchSize;
+    byId('quran-search-return').hidden = true;
+    byId('quran-search-previous').disabled = searchPage === 0;
+    byId('quran-search-next').disabled = end >= searchHits.length;
+    for (const {chapter, verse, lang, text} of searchHits.slice(start, end)) {
+      const button = make('button', ''); button.type = 'button';
+      const excerpt = make('span', text); excerpt.lang = lang; excerpt.dir = lang === 'en' ? 'ltr' : 'rtl';
+      button.append(make('strong', reference({chapter, verse})), excerpt);
       button.addEventListener('click', () => {
-        results.hidden = true;
-        if (!displayModes[language.value].includes(lang)) {
-          setReadingLanguage({ ar: 'arabic', ur: 'arabic-urdu', en: 'both' }[lang]);
-        }
-        selectVerse({ chapter, verse }, { focus: true });
+        results.hidden = true; byId('quran-search-pages').hidden = true; byId('quran-search-return').hidden = false;
+        if (!displayModes[language.value].includes(lang)) setReadingLanguage({ar:'arabic', ur:'arabic-urdu', en:'both'}[lang]);
+        selectVerse({chapter, verse}, {focus:true});
       });
       results.append(button);
     }
+    if (focus) { const target = results.querySelector('button') || byId('quran-query'); target.focus(); target.scrollIntoView({block:'start'}); }
+  }
+  for (const [id, delta] of [['quran-search-previous',-1],['quran-search-next',1]]) byId(id).addEventListener('click', () => {
+    searchPage = Math.max(0, Math.min(searchPage + delta, Math.ceil(searchHits.length / searchSize) - 1)); renderSearch(true);
+  });
+  byId('quran-search-return').addEventListener('click', () => renderSearch(true));
+  byId('quran-search-clear').addEventListener('click', () => { clearSearch(); byId('quran-query').value = ''; byId('quran-query').focus(); });
+  byId('quran-search').addEventListener('submit', event => {
+    event.preventDefault(); if (!data) return;
+    const query = byId('quran-query').value.trim(); clearSearch();
+    if (!query) return;
+    byId('quran-search-clear').hidden = false;
+    const direct = verseReference(query, data.chapters);
+    if (direct) { byId('quran-search-status').textContent = 'Opened ' + reference(direct); selectVerse(direct, {focus:true}); return; }
+    const verseQuery = /^\d+\s*:/.test(westernDigits(query));
+    if (verseQuery || searchText(query).length < 2) {
+      byId('quran-search-status').textContent = verseQuery ? 'No verse at that reference. Try 2:255.' : 'Enter at least two characters.'; return;
+    }
+    searchHits = findVerses(data.chapters, query, urdu); renderSearch();
+    if (!urdu && /\p{Script=Arabic}/u.test(query)) results.append(make('p', 'Select an Urdu option under What you read to include Urdu in search.'));
   });
 
   return {

@@ -95,3 +95,7 @@ A clearer phone interface with labelled navigation icons, compact prayer utiliti
 ### 2.5.0 deeper refinement
 
 Qibla gives one short confirmation buzz after a reliable steady match, with a saved off switch and protection against repeated buzzing. Counter/player layouts and keyboard overlays are more resilient, and reader/prayer options have clearer labels. The offline hadith library now has 1,018 records with paged browsing, title/reference search, English/Urdu switching, saves and source notices. See [deep refinement notes](docs/DEEP-REFINEMENT.md) and [content provenance](content/PROVENANCE.md).
+
+## 2.6.0 refinement
+
+[Research and verification](docs/REFINEMENT-2.6.md): complete paginated Quran search, direct saved-verse access with undoable removal, a compact audio player with guarded per-part seeking, clearer hadith reference search and direct prayer-calculation navigation. Existing Quran translations, 1,018 source-attributed hadiths, Qibla feedback and reminders are retained.

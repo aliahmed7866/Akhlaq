@@ -189,6 +189,15 @@ public class MainActivity extends Activity {
                     case "pause" -> controller.pause();
                     case "stop" -> { controller.stop(); controller.clearMediaItems(); }
                     case "speed" -> controller.setPlaybackSpeed(speed(command));
+                    case "seek" -> {
+                        MediaItem current = controller.getCurrentMediaItem();
+                        // A late WebView gesture must not seek a different verse or language.
+                        if (current == null || !current.mediaId.equals(command.optString("track"))) break;
+                        double seconds = command.optDouble("seconds", -1);
+                        long duration = controller.getDuration();
+                        if (!Double.isFinite(seconds) || seconds < 0 || seconds > 86400) throw new IllegalArgumentException("Invalid listening position");
+                        if (duration > 0) controller.seekTo(Math.min((long)(seconds * 1000), Math.max(0, duration - 100)));
+                    }
                     default -> throw new IllegalArgumentException("Unknown audio command");
                 }
             }

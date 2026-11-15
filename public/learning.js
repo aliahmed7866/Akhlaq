@@ -8,8 +8,20 @@ export function dailyIndex(day, length) {
 }
 export function normaliseSearch(value) {
   return String(value).normalize('NFKD').replace(/\p{M}/gu, '')
+    .replace(/ـ/g, '').replace(/ٱ/g, 'ا').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/ہ/g, 'ه')
     .replace(/[٠-٩۰-۹]/g, digit => String(digit.charCodeAt(0) - (digit <= '٩' ? 0x660 : 0x6f0)))
     .toLocaleLowerCase().trim();
+}
+export function matchesHadith(entry, query, text) {
+  const needle = normaliseSearch(query);
+  if (!needle) return true;
+  const numbered = /^(?:(bukhari|hadeethenc|hadithenc)\s*[:#]?\s*)?(\d+)$/.exec(needle);
+  if (numbered) {
+    const id = String(Number(numbered[2]));
+    return numbered[1] === 'bukhari' ? String(entry.bukhari) === id
+      : numbered[1] ? entry.id === id : entry.id === id || String(entry.bukhari) === id;
+  }
+  return needle.split(/\s+/).every(word => text.includes(word));
 }
 export function cleanLearningPreferences(value, hadiths, practices) {
   return {
@@ -140,12 +152,14 @@ export function setupLearning({ stored, save, today }) {
     const needle = normaliseSearch(query.value);
     const visible = catalog.hadiths.filter(h => (scope.value !== 'featured' || h.featured)
       && (!savedOnly.checked || preferences.saved.includes(h.id))
-      && (!needle || (/^\d+$/.test(needle) ? h.id === needle || String(h.bukhari) === needle : searches.get(h.id).includes(needle))));
+      && matchesHadith(h, needle, searches.get(h.id)));
     const selectedIndex = visible.findIndex(h => h.id === selected);
     if (selectedIndex >= 0) currentPage = Math.floor(selectedIndex / pageSize);
     const pages = Math.max(1, Math.ceil(visible.length / pageSize));
     currentPage = Math.max(0, Math.min(currentPage, pages - 1));
     get('learn-count').textContent = visible.length.toLocaleString() + ' of ' + catalog.hadiths.length.toLocaleString() + ' hadiths';
+    get('hadith-saved-shortcut').textContent = 'Saved hadiths · ' + preferences.saved.length;
+    get('hadith-saved-shortcut').setAttribute('aria-pressed', String(savedOnly.checked));
     const filters = [scope.value === 'featured' ? 'Everyday selection' : '', savedOnly.checked ? 'Saved only' : ''].filter(Boolean);
     get('learn-filters-label').textContent = filters.length ? 'Filters · ' + filters.join(' · ') : 'Browse selection or saved';
     get('learn-empty').hidden = visible.length !== 0;
@@ -188,7 +202,7 @@ export function setupLearning({ stored, save, today }) {
           if (savedOnly.checked) {
             renderHadiths(true);
             (get('hadith-list').querySelector('button') || get('learn-clear')).focus();
-          } else { button.textContent = saved.includes(h.id) ? 'Saved · remove' : 'Save hadith'; button.setAttribute('aria-pressed', String(saved.includes(h.id))); }
+          } else { button.textContent = saved.includes(h.id) ? 'Saved · remove' : 'Save hadith'; button.setAttribute('aria-pressed', String(saved.includes(h.id))); get('hadith-saved-shortcut').textContent = 'Saved hadiths · ' + saved.length; }
         }
       });
       card.append(detail, button);
@@ -286,6 +300,10 @@ export function setupLearning({ stored, save, today }) {
   function clearFilters() { selected = ''; query.value = ''; scope.value = 'all'; currentPage = 0; savedOnly.checked = false; if (collection) renderHadiths(); query.focus(); }
   get('learn-clear').addEventListener('click', clearFilters);
   get('learn-reset').addEventListener('click', clearFilters);
+  get('hadith-saved-shortcut').addEventListener('click', () => {
+    if (!collection) return;
+    selected = ''; query.value = ''; scope.value = 'all'; currentPage = 0; savedOnly.checked = !savedOnly.checked; renderHadiths();
+  });
   for (const [id, delta] of [['hadith-previous', -1], ['hadith-next', 1]]) get(id).addEventListener('click', () => {
     selected = ''; currentPage += delta; renderHadiths();
     const first = get('hadith-list').querySelector('summary');

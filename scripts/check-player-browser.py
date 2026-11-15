@@ -84,7 +84,12 @@ try:
         assert page.evaluate('playerElement === document.querySelector("#quran-audio")')
         assert page.evaluate('navigator.mediaSession.metadata.artist') == '2 of 2 · Urdu translation'
         assert page.evaluate('navigator.mediaSession.playbackState') == 'paused'
-        page.evaluate('phoneActions.seekto({seekTime: 1.1})')
+        page.locator('#player-expand').click()
+        expect(page.locator('#player-seek')).to_be_enabled()
+        page.locator('#player-seek').evaluate("e=>{e.value='1.1';e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));}")
+        assert page.locator('#quran-audio').evaluate('(a)=>a.paused')
+        page.locator('#player-expand').click()
+        assert page.evaluate('playerElement === document.querySelector("#quran-audio")')
         page.wait_for_function('() => Math.abs(JSON.parse(localStorage.getItem("akhlaq.listening.v1")).seconds - 1.1) < 0.1')
         page.reload()
         expect(page.locator('#player-toggle')).to_have_text('Resume')

@@ -54,6 +54,8 @@
       <details id="prayer-tools" class="utility-panel">
         <summary>Timetable &amp; calculation</summary>
         <p id="prayer-method" class="muted"></p>
+        <p class="muted">Calculated on your device. Prayer start times can differ from your mosque’s congregational (iqamah) times.</p>
+        <a class="small-button" href="#settings/prayer">Review prayer calculation</a>
         <h3>Next seven days</h3>
         <div class="table-wrap">
           <table id="week"><caption class="sr-only">Prayer start times for the next seven days</caption></table>
@@ -123,7 +125,8 @@
       <div id="learn-hadith">
         <h2>Hadith library</h2><p class="muted">Arabic, English and Urdu · available offline</p>
         <div class="learning-filters">
-          <label class="field">Find a hadith<input id="learn-query" type="search" maxlength="120" placeholder="Search titles or a reference" dir="auto"></label>
+          <label class="field">Find a hadith<input id="learn-query" type="search" maxlength="120" placeholder="Words or Bukhari 6114" aria-describedby="hadith-search-help" dir="auto"></label>
+          <p id="hadith-search-help" class="muted">Try Bukhari 6114 or HadeethEnc 5351. Search title words in any order, or the references shown on each card.</p>
           <label class="field">Hadith translation<select id="hadith-language"><option value="en">English</option><option value="ur">Urdu · اردو</option></select></label>
           <details id="learn-filters" class="utility-panel">
             <summary id="learn-filters-label">Browse selection or saved</summary>
@@ -131,7 +134,7 @@
             <label class="check-option"><input id="learn-saved-only" type="checkbox"> Saved hadiths only</label>
           </details>
         </div>
-        <div class="results-toolbar"><p id="learn-count" class="muted" role="status"></p><button id="learn-reset" type="button" hidden>Clear filters</button></div>
+        <div class="results-toolbar"><p id="learn-count" class="muted" role="status"></p><button id="hadith-saved-shortcut" type="button" aria-pressed="false">Saved hadiths · 0</button><button id="learn-reset" type="button" hidden>Clear filters</button></div>
         <div id="learn-empty" hidden><p>No matching hadiths. Try another phrase or clear your filters.</p><button id="learn-clear" type="button">Clear filters</button></div>
         <div id="hadith-list"></div><div id="hadith-pagination" class="reader-pagination" hidden><button id="hadith-previous" type="button">Previous page</button><span id="hadith-page" class="muted" role="status"></span><button id="hadith-next" type="button">Next page</button></div>
       </div>
@@ -161,17 +164,22 @@
         <div class="reader-controls">
           <label class="field">Surah<select id="quran-chapter"></select></label>
         </div>
+        <div class="reader-shortcuts" aria-label="Quran shortcuts"><button id="reader-find" type="button">Find a verse</button><button id="reader-saved-open" type="button">Saved verses · 0</button></div>
         <details id="reader-tools" class="utility-panel">
           <summary>Search, saved verses &amp; options</summary>
           <form id="quran-search" role="search">
             <label class="field">Find a verse<input id="quran-query" type="search" maxlength="120" placeholder="2:255 or a phrase" title="Search Arabic, English, or downloaded Urdu" dir="auto"></label>
             <button type="submit">Find</button>
           </form>
+        <p id="quran-search-status" role="status"></p>
         <div id="quran-results" role="region" aria-label="Verse search results" hidden></div>
+        <div id="quran-search-pages" class="search-pagination" hidden><button id="quran-search-previous" type="button">Previous results</button><button id="quran-search-next" type="button">Next results</button></div>
+        <div class="reader-actions"><button id="quran-search-return" type="button" hidden>Back to search results</button><button id="quran-search-clear" type="button" hidden>Clear search</button></div>
         <details id="quran-saved">
           <summary id="quran-saved-title">Saved verses</summary>
           <p id="quran-saved-empty" class="muted">Save a verse from the reader or Today to find it here.</p>
           <ul id="quran-saved-list"></ul>
+          <p id="saved-removal-status" role="status"></p><button id="saved-removal-undo" type="button" hidden>Undo removal</button>
         </details>
         <details class="reader-preferences">
           <summary>Text, size &amp; playback options</summary>
@@ -376,8 +384,9 @@
           <label class="field">Time zone<input name="zone" type="text" maxlength="80" placeholder="Europe/London" required></label>
           </div>
         </details>
-        <details class="prayer-settings">
+        <details id="prayer-calculation" class="prayer-settings">
           <summary>Prayer calculation</summary>
+          <p class="muted">Use the calculation method and Asr convention followed by your local mosque. If only Fajr and Isha differ, check the calculation method; if only Asr differs, check Asr below.</p>
           <div class="settings-grid">
           <label class="field">Calculation method
             <select name="method">
@@ -440,6 +449,8 @@
   <aside id="quran-player" class="mini-player" aria-label="Quran audio player" hidden>
     <div class="player-inner">
       <a id="playing-verse" href="#quran" class="player-verse"></a>
+      <button id="player-expand" type="button" aria-expanded="false">Expand</button>
+      <div class="player-position"><label for="player-seek">Position in this audio part</label><input id="player-seek" type="range" min="0" max="1" step="0.1" value="0" disabled><span id="player-time" class="muted"></span></div>
       <button id="player-previous" type="button" aria-label="Previous audio verse">Previous</button>
       <button id="player-toggle" class="primary" type="button">Pause</button>
       <button id="player-next" type="button" aria-label="Next audio verse">Next</button>
@@ -453,6 +464,7 @@
         <option value="arabic">Arabic only</option>
       </select>
       <p id="quran-audio-status" class="muted" role="status"></p>
+      <p id="player-view-status" class="muted" role="status"></p>
       <audio id="quran-audio" preload="none"></audio>
     </div>
   </aside>
