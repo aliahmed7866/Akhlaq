@@ -10,7 +10,9 @@ adb shell settings put global animator_duration_scale 0
 adb logcat -c
 # Preserve diagnostics even when a test fails, and keep the original exit status.
 set +e
-(cd android && ./gradlew --no-daemon connectedDebugAndroidTest)
+# Keep the test app installed until its private screenshot files are collected.
+# AGP otherwise uninstalls both APKs (and deletes those files) after testing.
+(cd android && ./gradlew --no-daemon connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true)
 result=$?
 set -e
 adb logcat -d > android/app/build/device-evidence/logcat.txt
@@ -26,6 +28,7 @@ captures=[]
 for path in sorted((root/'screenshots').glob('*.png')):
     data=path.read_bytes()
     if data[:8]!=b'\x89PNG\r\n\x1a\n':
+        print(f'Screenshot collection failed for {path.name}: {data[:200]!r}',file=sys.stderr)
         path.unlink(); continue
     w,h=struct.unpack('>II',data[16:24])
     captures.append({'file':path.name,'width':w,'height':h})
