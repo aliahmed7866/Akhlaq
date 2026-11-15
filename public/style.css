@@ -306,3 +306,49 @@ html:has(body.audio-open) { overscroll-behavior-y: contain; }
 .reading-focus #quran-audio-credit { font-size: .8rem; }
 .reading-focus .chapter-heading { margin-top: .25rem; }
 #reader-focus { min-height: 44px; font-size: .85rem; }
+/* Keep controls usable with large text, narrow screens and touch input. */
+button, .small-button, select, input:not([type="checkbox"]), .checks label, .check-option,
+.ayah-actions button, .prayers .quick-log, .player-inner button, .player-inner select,
+.reader-presets button, .reader-listen select, #reader-focus { min-height: 48px; }
+button, .small-button, .wordmark { min-width: 48px; min-height: 48px; }
+.week-practice { grid-template-columns: repeat(auto-fit, minmax(min(100%, 4rem), 1fr)); }
+button, .small-button, select, input, textarea { max-width: 100%; }
+button, .small-button { white-space: normal; overflow-wrap: anywhere; }
+summary { min-height: 48px; padding-block: .5rem; }
+.card-head, .next, .masthead { flex-wrap: wrap; }
+.home-reading, .practice-navigation, .update-notice { flex-wrap: wrap; }
+.prayers { grid-template-columns: repeat(auto-fit, minmax(min(100%, 6rem), 1fr)); }
+.prayers li { min-width: 0; white-space: normal; }
+.card-head > *, .next > *, .reader-listen, .player-inner > * { min-width: 0; }
+.tab-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 3.7rem), 1fr)); gap: .15rem; padding-inline: .25rem; }
+.tab-bar a { padding-inline: .1rem; }
+.masthead-actions { flex-wrap: wrap; }
+.masthead-actions > * { flex-shrink: 0; }
+.intro { padding-block: 1rem; }
+.intro h1 { font-size: 1.6rem; line-height: 1.25; }
+.intro .arabic { font-size: 1.1rem; }
+.tab-bar a { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: center; font-size: .85rem; overflow-wrap: anywhere; }
+.mini-player { bottom: var(--nav-height, 4rem); }
+footer, .audio-open footer { padding-bottom: calc(var(--nav-height, 4rem) + var(--player-height, 0px) + 1rem); }
+html { scroll-padding-bottom: calc(var(--nav-height, 4rem) + var(--player-height, 0px) + 1rem); }
+.audio-open .ayah { scroll-margin-bottom: calc(var(--nav-height, 4rem) + var(--player-height, 0px) + 1rem); }
+.skip-link { position: fixed; z-index: 20; top: .5rem; left: .5rem; padding: .8rem; color: var(--deep); background: var(--accent); transform: translateY(-200%); }
+.skip-link:focus { transform: translateY(0); }
+.learn-nav { display: flex; flex-wrap: wrap; gap: .4rem; margin-block: 1rem; }
+.learn-nav a { padding: .65rem .9rem; min-height: 48px; border: 1px solid var(--border); border-radius: 999px; }
+.learn-nav [aria-current] { color: var(--deep); background: var(--green); font-weight: 700; }
+.learning-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: .8rem; margin-block: 1rem; }
+.check-option { display: flex; gap: .5rem; align-items: center; }
+.learning-card { border: 1px solid var(--border); background: var(--deep); border-radius: 12px; padding: .8rem; margin-block: .8rem; }
+.learning-card > details { border: 0; margin: 0; padding: 0; }
+.learning-card summary { width: 100%; }
+.learning-card summary span { display: block; }
+.learning-card summary .muted { font-weight: 400; margin-top: .25rem; }
+.learning-card h3 { margin: .2rem 0 .6rem; }
+.learning-card p, .learning-method p, .hadith-body .reader-actions { margin-block: .7rem; }
+.source-text { white-space: pre-wrap; line-height: 1.8; overflow-wrap: anywhere; }
+.source-text[lang="ar"] { font-size: 1.35rem; line-height: 2; }
+.source-text[lang="ur"] { font-family: "Noto Nastaliq Urdu", "Noto Naskh Arabic", serif; font-size: 1.2rem; line-height: 2.2; }
+.learning-method pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
+#daily-hadith-text, #daily-practice-action { margin-block: .8rem; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }

@@ -20,6 +20,14 @@ Wait for **Ready for offline use** in the footer before stopping Termux. Once th
 
 In the Akhlaq folder, run `git pull --ff-only`. Stop the old Akhlaq server with Ctrl+C in its own Termux session if it is still running, then run `node server.mjs`. Akhlaq ships with its prayer engine built and starts without installing packages. Open Akhlaq on the same address. Use **Update & reload** when the app shows that the update is ready. If your installed version predates this button, close all Akhlaq windows and tabs, then relaunch. Using the same browser profile and address keeps your settings and practice entries.
 
+## Learn and reading comfort
+
+The standalone Android branch adds a **Learn** tab with 12 selected Bukhari-referenced hadiths in Arabic, English and Urdu, nine sourced daily practice ideas and eight Quran-based Prophet story summaries. Read the publisher explanations, search by word or reference (including Urdu numerals), save a hadith and follow source links. A daily hadith appears on Today. Choose one routine to keep it on your home page.
+
+Settings → Reading comfort adjusts app text through 200%; Quran retains its separate reader sizing. Learning content works offline after the browser's initial cache or immediately in the standalone APK. Saved hadiths and the chosen routine stay on the device; the existing practice-export format does not include these new preferences.
+
+See [content provenance and reuse conditions](content/PROVENANCE.md) and the [usability research and validation report](docs/USABILITY.md). The selected references and preserved publisher text are source-checked, not a claim of error-free translations or independent scholarly certification.
+
 ## Prayer times and reminders
 
 - Akhlaq starts with Manchester, the Moonsighting Committee method and Hanafi Asr. Choose a city, enter coordinates, or use GPS. Check the time zone when travelling.

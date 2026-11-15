@@ -37,6 +37,12 @@ cd android
 
 The output is `android/app/build/outputs/bundle/release/app-release.aab`. Enable Play App Signing in Play Console and use this upload key. Increment `versionCode` in `android/version.properties` for each new upload. Never replace an existing release signing identity casually. This release does not include native `.so` libraries; the archive check fails if that changes, requiring a 16 KB page-size review.
 
+## Content and usability release checks
+
+Read `content/PROVENANCE.md` and refresh the official HadeethEnc editions before a public release. Preserve source fields, edition transcripts and attribution. The current selection has twelve narrations; do not advertise a complete Bukhari library or 100% scholarly verification. Seek independent review of religious summaries and Urdu text.
+
+Read `docs/USABILITY.md` for evidence, tested tasks and remaining user/device research. Run `scripts/check-learning-browser.py` alongside the existing audio and native-bridge browser regressions. The app's saved-hadith, chosen-routine and reading-comfort preferences remain local and are not included in the practice-export format.
+
 ## Store material
 
 - Listing copy: `store/LISTING.md`.
@@ -55,7 +61,7 @@ Use the code inventory below when completing the declarations. These are prepara
 | --- | --- |
 | Account / ads / analytics | No accounts, ads, advertising ID permission, analytics or crash-reporting SDK |
 | Location | Optional foreground fine/coarse permission; local prayer/Qibla calculation, coordinates not sent by Akhlaq to providers |
-| Prayer records, reflections, bookmarks | App-private local storage; no app-operated server; explicit backup export |
+| Prayer records, reflections, saved verses/hadiths, chosen routine | App-private local storage; no app-operated server; explicit backup export |
 | Audio | HTTPS requests to `cdn.islamic.network`, `d.quranenc.com`, `everyayah.com`; providers see IP, requested verse URL and request metadata |
 | Downloaded recordings | Private local cache, user-removable; no automatic stream caching |
 | App deletion | Settings → About → Erase my data clears local app data after a native confirmation; exported files remain separately |

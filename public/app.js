@@ -4,8 +4,12 @@ import { setupPractice } from './practice.js';
 import { downloadFile, makeCalendar } from './calendar.js';
 import { setupQuran } from './quran.js';
 import { setupInstall } from './install.js';
+import { setupLearning } from './learning.js';
 
 const byId = id => document.getElementById(id);
+document.querySelector('.skip-link').addEventListener('click', event => {
+  event.preventDefault(); byId('main-content').focus();
+});
 if (window.AkhlaqNative?.version) {
   byId('app-version').textContent = 'Akhlaq · ' + window.AkhlaqNative.version();
 }
@@ -34,6 +38,27 @@ let clock;
 const renderCompass = setupCompass();
 const quran = setupQuran({ stored, save, today: todayForPractice });
 const practiceLog = setupPractice({ salah, stored, save, todayForPractice, shiftDate, dateLabel });
+const learning = setupLearning({ stored, save, today: todayForPractice });
+const textSize = byId('app-text-size');
+const savedSize = stored('akhlaq.comfort.v1').textSize;
+textSize.value = [100, 125, 150, 200].includes(savedSize) ? String(savedSize) : '100';
+function applyTextSize() { document.documentElement.style.fontSize = (16 * Number(textSize.value) / 100) + 'px'; }
+applyTextSize();
+textSize.addEventListener('change', () => {
+  applyTextSize();
+  byId('comfort-status').textContent = save('akhlaq.comfort.v1', { textSize: Number(textSize.value) }) ? 'Text size saved.' : 'Applied for now; your device could not save this preference.';
+});
+const measureOverlays = () => {
+  const nav = document.querySelector('.tab-bar');
+  const player = byId('quran-player');
+  document.documentElement.style.setProperty('--nav-height', nav.getBoundingClientRect().height + 'px');
+  document.documentElement.style.setProperty('--player-height', player.hidden ? '0px' : player.getBoundingClientRect().height + 'px');
+};
+if ('ResizeObserver' in window) {
+  const observer = new ResizeObserver(measureOverlays);
+  observer.observe(document.querySelector('.tab-bar')); observer.observe(byId('quran-player'));
+}
+measureOverlays();
 
 function stored(key) {
   try {
@@ -157,6 +182,7 @@ function showSchedule(data) {
   if (previous !== data.today) {
     practiceLog.refresh();
     quran.showDaily();
+    learning.refreshDaily();
   } else {
     practiceLog.renderTodayLog();
   }
@@ -322,7 +348,7 @@ let openPage;
 
 function navigate() {
   const [requested, target = ''] = location.hash.slice(1).split('/');
-  const page = ['quran', 'qibla', 'practice', 'dhikr', 'settings'].includes(requested) ? requested : 'home';
+  const page = ['quran', 'qibla', 'practice', 'dhikr', 'settings', 'learn'].includes(requested) ? requested : 'home';
   if (openPage !== page) {
     const initial = openPage === undefined;
     if (openPage === 'qibla' && byId('compass').textContent === 'Stop compass') byId('compass').click();
@@ -343,6 +369,7 @@ function navigate() {
     }
   }
   quran.navigate(page, target);
+  learning.navigate(page);
 }
 
 function start() {
@@ -364,6 +391,7 @@ function start() {
   for (const city of cities) byId('city').add(new Option(city.name, city.name));
   fillForm();
   practiceLog.refresh();
+  learning.refreshDaily();
   refresh();
   setupInstall(practiceLog.hasUnsavedReflection, quran.isPlaying);
   navigate();

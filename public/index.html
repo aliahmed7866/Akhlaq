@@ -13,6 +13,7 @@
   <title>Akhlaq</title>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="masthead">
     <a class="wordmark" href="#home" aria-label="Akhlaq home"><img src="/icons/akhlaq.svg" alt="" width="30" height="30"> Akhlaq</a>
     <div class="masthead-actions">
@@ -20,7 +21,7 @@
       <a class="small-button" href="#settings" data-route="settings">Settings</a>
     </div>
   </header>
-  <main>
+  <main id="main-content" tabindex="-1">
     <div class="update-notice" id="update-notice" hidden>
       <p id="update-status" role="status">An Akhlaq update is ready.</p>
       <button id="apply-update" type="button">Update &amp; reload</button>
@@ -94,6 +95,50 @@
       </div>
       <p id="daily-save-status" class="muted" role="status"></p>
       <p id="daily-credit" class="muted" hidden>English translation by Rowwad Translation Center</p>
+    </section>
+    <section data-page="home" class="card" aria-labelledby="daily-practice-label">
+      <p id="daily-practice-label" class="eyebrow">One small practice to try</p>
+      <h2 id="daily-practice-title">A moment for good</h2>
+      <p id="daily-practice-cue" class="muted"></p>
+      <p id="daily-practice-action"></p>
+      <div class="reader-actions"><a id="daily-practice-open" class="small-button" href="#practice">Open practice</a><a id="daily-practice-evidence" class="small-button" href="#learn">Read the evidence</a><a class="small-button" href="#learn/practices">Choose a routine</a></div>
+    </section>
+    <section data-page="home" class="card" aria-labelledby="daily-hadith-title">
+      <div class="card-head"><div><h2 id="daily-hadith-title">Hadith of the day</h2><p id="daily-hadith-reference"></p></div></div>
+      <p id="daily-hadith-text" class="source-text">Loading the selected hadith…</p>
+      <a id="daily-hadith-open" class="small-button" href="#learn">Read Arabic, explanation &amp; sources</a>
+    </section>
+    <section id="learn" data-page="learn" class="card learning" aria-labelledby="learn-title" hidden>
+      <div class="card-head"><div><h1 id="learn-title">Learn &amp; practise</h1><p>Small steps, with sources you can check.</p></div></div>
+      <nav class="learn-nav" aria-label="Learning topics">
+        <a href="#learn/hadith" data-learn="hadith" aria-current="page">Hadith</a>
+        <a href="#learn/practices" data-learn="practices">Daily practices</a>
+        <a href="#learn/stories" data-learn="stories">Prophets</a>
+      </nav>
+      <p id="learn-status" role="status"></p><button id="learn-retry" type="button" hidden>Retry loading</button>
+      <div id="learn-hadith">
+        <h2>Sahih al-Bukhari selection</h2>
+        <div class="learning-filters">
+          <label class="field">Find a hadith<input id="learn-query" type="search" maxlength="120" placeholder="Kindness, 6114, or a phrase" dir="auto"></label>
+          <label class="field">Hadith translation<select id="hadith-language"><option value="en">English</option><option value="ur">Urdu · اردو</option></select></label>
+          <label class="field">Topic<select id="learn-topic"><option value="">All topics</option></select></label>
+          <label class="check-option"><input id="learn-saved-only" type="checkbox"> Saved hadiths only</label>
+        </div>
+        <p id="learn-count" class="muted" role="status"></p>
+        <div id="learn-empty" hidden><p>No matching hadiths. Try another phrase or clear your filters.</p><button id="learn-clear" type="button">Clear filters</button></div>
+        <div id="hadith-list"></div>
+      </div>
+      <div id="learn-practices" hidden><h2>A practice you can return to</h2><p>Choose one manageable action and connect it to a familiar moment. Your choice stays on Today until you change it. These ideas add no prescribed counts or special rewards.</p><div id="practice-ideas"></div></div>
+      <div id="learn-stories" hidden><h2>Stories of the Prophets</h2><p>Brief English summaries of Quran passages. Open the cited verses to read the Arabic, English or Urdu in context.</p><div id="prophet-stories"></div></div>
+      <details class="learning-method"><summary>Sources, editions &amp; accuracy</summary>
+        <p id="learning-checked"></p>
+        <p>Arabic and translations are reproduced unchanged from HadeethEnc's official downloads, including publisher explanations and grading. Each selected teaching has a cross-checked Bukhari reference. Some publisher records combine parallel narrations; they are not presented as verbatim text from one Bukhari edition.</p>
+        <p id="learning-notice"></p>
+        <p>Source checking is not a guarantee that human translations or editorial summaries are error-free. No independent scholarly review of this app has been completed. Consult a qualified scholar for personal religious rulings.</p>
+        <p>HadeethEnc permits free reuse under its conditions: preserve content, credit the publisher, retain version and transcript information, report corrections, keep editions updated, and avoid inappropriate advertising. <a href="https://hadeethenc.com/en" target="_blank" rel="noopener noreferrer">Publisher and reuse terms ↗</a></p>
+        <details><summary>Publisher edition notices</summary><pre id="learning-editions"></pre></details>
+        <p>Report translation corrections to <a href="https://hadeethenc.com/en/home/contact" target="_blank" rel="noopener noreferrer">HadeethEnc</a>. Report an app reference or summary issue through <a href="https://github.com/aliahmed7866/Akhlaq/issues" target="_blank" rel="noopener noreferrer">Akhlaq support</a>. Please do not post private reflections.</p>
+      </details>
     </section>
     <section id="quran" data-page="quran" class="card reader" aria-labelledby="quran-title" hidden>
       <div class="card-head"><div><h1 id="quran-title">Quran</h1><p>Arabic, English and Urdu</p></div><button id="reader-focus" type="button" aria-pressed="false">Focus reading</button></div>
@@ -240,6 +285,7 @@
           <div class="practice-save"><button type="submit" class="primary">Save reflection</button><span id="save-status" class="muted" role="status"></span></div>
         </form>
         <a class="small-button practice-link" href="#dhikr">Open dhikr counter</a>
+      <a class="small-button practice-link" href="#learn/practices">Explore sourced daily practices</a>
         <details>
           <summary>Last seven days</summary>
           <p id="week-totals" class="muted"></p>
@@ -332,6 +378,7 @@
           <p id="settings-status" class="muted" role="status"></p>
         </div>
       </form>
+      <details><summary>Reading comfort</summary><label class="field">App text size<select id="app-text-size"><option value="100">Standard · 100%</option><option value="125">Larger · 125%</option><option value="150">Large · 150%</option><option value="200">Extra large · 200%</option></select></label><p id="comfort-status" class="muted" role="status"></p><p class="muted">Quran text also has its own size controls. Your preference stays on this device.</p></details>
       <details>
         <summary>Back up your practice</summary>
         <p class="muted">The file includes your prayer log, dhikr counts and private reflections. Restoring fills missing days and keeps entries already on this device.</p>
@@ -381,6 +428,7 @@
     <a href="#quran" data-route="quran">Quran</a>
     <a href="#qibla" data-route="qibla">Qibla</a>
     <a href="#practice" data-route="practice">Practice</a>
+    <a href="#learn" data-route="learn">Learn</a>
   </nav>
   <footer><span>Your location, prayer log and reflections stay on this device.</span><span id="offline-status"></span></footer>
 </body>

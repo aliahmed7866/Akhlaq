@@ -19,17 +19,23 @@ Calculate prayer times on your device using your chosen city, coordinates or opt
 BUILD A DAILY PRACTICE
 See a daily verse, save verses, resume your reading, log prayers, count dhikr and keep private reflections. Export your practice backup when you want to keep a copy.
 
+LEARN WITH SOURCES
+Explore 12 selected Bukhari-referenced hadiths in Arabic, English and Urdu, with publisher explanations and source links. Save a hadith, see a daily selection, and choose a manageable routine. Read eight brief Prophet story summaries and open their cited Quran passages. Story summaries and interface labels are in English. Adjust app text size up to 200% in Reading comfort.
+
 WORKS WITHOUT AN ACCOUNT
-Arabic, English and Urdu Quran text and prayer calculations are included for offline use. There are no ads or analytics. Your practice records and location are stored on your device. Streaming and audio downloads connect to the selected recording provider and may use mobile data.
+Arabic, English and Urdu Quran text, selected hadiths, stories and prayer calculations are included for offline use. There are no ads or analytics. Your practice records and location are stored on your device. Streaming and audio downloads connect to the selected recording provider and may use mobile data.
 
 SOURCES
-Arabic Uthmani text: Tanzil Project. English translation: Rowwad Translation Center via QuranEnc. Urdu translation: Muhammad Ibrahim Junagarhi via QuranEnc. Arabic recitation: Mishary Rashid Alafasy via Islamic Network. English audio: QuranEnc. Urdu audio: Shamshad Ali Khan via EveryAyah. Urdu audio wording may differ from the displayed Urdu translation. Source links and publisher notices are available inside the app.
+Arabic Uthmani text: Tanzil Project. English translation: Rowwad Translation Center via QuranEnc. Urdu translation: Muhammad Ibrahim Junagarhi via QuranEnc. Arabic recitation: Mishary Rashid Alafasy via Islamic Network. English audio: QuranEnc. Urdu audio: Shamshad Ali Khan via EveryAyah. Urdu audio wording may differ from the displayed Urdu translation. Selected hadith translations and explanations: HadeethEnc, with Bukhari reference cross-checks. Story summaries and practice suggestions are separate Akhlaq editorial content. Source links and publisher notices are available inside the app.
 
 Calculated prayer times should be checked against your local mosque. Compass accuracy depends on your device and surroundings. Calendar export requires importing the file into your calendar; Akhlaq does not provide automatic prayer alarms. Force-stopping the app or phone battery restrictions can stop background audio.
 
 Suggested category: Lifestyle. Confirm the audience and content-rating answers in Play Console based on the app's actual content; no rating has been assigned yet.
 
-Release notes:
+Release notes (2.1.0):
+
+- Learn: selected hadiths in Arabic, English and Urdu, cited Prophet stories and daily routines.
+- Larger touch controls, text scaling, saved hadiths and clearer reading flows.
 
 - Standalone Android app with bundled Quran text in Arabic, English and Urdu.
 - Verse-by-verse paired recitation, background playback and optional audio downloads.

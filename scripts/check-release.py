@@ -23,7 +23,7 @@ for forbidden in ['ACCESS_BACKGROUND_LOCATION', 'MANAGE_EXTERNAL_STORAGE', 'REQU
 with zipfile.ZipFile(sys.argv[1]) as bundle:
     names = set(bundle.namelist())
     assert 'base/manifest/AndroidManifest.xml' in names, 'Missing bundle manifest'
-    for asset in ['index.html', 'engine.js', 'privacy.html', 'licenses.html', 'quran.json', 'urdu.json']:
+    for asset in ['index.html', 'engine.js', 'privacy.html', 'licenses.html', 'quran.json', 'urdu.json', 'learning.js', 'hadith.json', 'learning-content.json']:
         assert 'base/assets/' + asset in names, 'Missing offline asset: ' + asset
     quran = json.loads(bundle.read('base/assets/quran.json'))
     urdu = json.loads(bundle.read('base/assets/urdu.json'))
@@ -31,6 +31,10 @@ with zipfile.ZipFile(sys.argv[1]) as bundle:
     assert sum(len(chapter['ayahs']) for chapter in quran['chapters']) == 6236
     assert len(urdu['verses']) == 6236
     assert quran['arabicNotice'] and quran['englishTranscript'] and urdu['transcript']
+    learning = json.loads(bundle.read('base/assets/learning-content.json'))
+    hadith = json.loads(bundle.read('base/assets/hadith.json'))
+    assert len(hadith['hadiths']) == 12 and len(learning['stories']) == 8
+    assert all(hadith['editions'][lang]['transcript'] for lang in ['en','ur'])
     native = [name for name in names if name.endswith('.so')]
     assert not native, 'Native libraries added: review 16 KB page-size compatibility: ' + str(native)
     assert not any(name.endswith(('.jks', '.keystore')) for name in names), 'Signing key in bundle'

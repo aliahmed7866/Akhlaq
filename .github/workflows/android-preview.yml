@@ -8,6 +8,7 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,6 +26,16 @@ jobs:
       - name: Build and check Android preview
         working-directory: android
         run: ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check learning, accessibility layouts and audio flows
+        run: |
+          python -m pip install playwright==1.62.0
+          python -m playwright install --with-deps chromium
+          python scripts/check-learning-browser.py
+          python scripts/check-player-browser.py
+          python scripts/check-android-bridge.py
       - uses: actions/upload-artifact@v4
         with:
           name: Akhlaq-Android-preview
