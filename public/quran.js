@@ -124,6 +124,8 @@ export function setupQuran({ stored, save, today }) {
   const dailyLanguage = byId('daily-language');
   const select = byId('quran-chapter');
   const audio = byId('quran-audio');
+  window.addEventListener('akhlaq-narration-start', () => { audio.pause(); });
+  audio.addEventListener('play', () => window.speechSynthesis?.cancel());
   const player = byId('quran-player');
   const playerToggle = byId('player-toggle');
   const playerNext = byId('player-next');

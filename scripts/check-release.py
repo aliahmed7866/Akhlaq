@@ -17,13 +17,13 @@ assert app.get(android + 'debuggable', 'false') == 'false', 'Debuggable producti
 assert app.get(android + 'usesCleartextTraffic') == 'false'
 assert app.get(android + 'allowBackup') == 'false'
 permissions = {p.get(android + 'name') for p in root.findall('uses-permission')}
-for forbidden in ['ACCESS_BACKGROUND_LOCATION', 'MANAGE_EXTERNAL_STORAGE', 'REQUEST_INSTALL_PACKAGES', 'USE_EXACT_ALARM', 'SCHEDULE_EXACT_ALARM']:
+for forbidden in ['ACCESS_BACKGROUND_LOCATION', 'MANAGE_EXTERNAL_STORAGE', 'REQUEST_INSTALL_PACKAGES', 'USE_EXACT_ALARM']:
     assert 'android.permission.' + forbidden not in permissions, 'Unexpected sensitive permission: ' + forbidden
 
 with zipfile.ZipFile(sys.argv[1]) as bundle:
     names = set(bundle.namelist())
     assert 'base/manifest/AndroidManifest.xml' in names, 'Missing bundle manifest'
-    for asset in ['index.html', 'engine.js', 'privacy.html', 'licenses.html', 'quran.json', 'urdu.json', 'learning.js', 'hadith.json', 'learning-content.json']:
+    for asset in ['index.html', 'engine.js', 'privacy.html', 'licenses.html', 'quran.json', 'urdu.json', 'learning.js', 'hadith.json', 'learning-content.json', 'companion.js', 'devotional.json', 'adhan.oga']:
         assert 'base/assets/' + asset in names, 'Missing offline asset: ' + asset
     quran = json.loads(bundle.read('base/assets/quran.json'))
     urdu = json.loads(bundle.read('base/assets/urdu.json'))

@@ -14,7 +14,7 @@ READ AND LISTEN
 Read the complete Quran in Arabic with English or Urdu translation. Focus reading hides the extra controls so you can concentrate on the verses. Choose Arabic followed by the translation, verse by verse, or listen in one language. Continue listening with your screen locked using Android media controls. Download recordings for offline listening when you have an internet connection.
 
 PRAYER AND QIBLA
-Calculate prayer times on your device using your chosen city, coordinates or optional location permission. Choose your calculation method and Asr convention, and adjust times to match your local mosque. Find the Qibla bearing with a sensor-assisted compass on supported phones.
+Calculate prayer times on your device using your optional location permission or manually entered coordinates. Choose your calculation method and Asr convention, and adjust times to match your local mosque. Find the Qibla bearing with a sensor-assisted compass on supported phones.
 
 BUILD A DAILY PRACTICE
 See a daily verse, save verses, resume your reading, log prayers, count dhikr and keep private reflections. Export your practice backup when you want to keep a copy.
@@ -28,7 +28,7 @@ Arabic, English and Urdu Quran text, selected hadiths, stories and prayer calcul
 SOURCES
 Arabic Uthmani text: Tanzil Project. English translation: Rowwad Translation Center via QuranEnc. Urdu translation: Muhammad Ibrahim Junagarhi via QuranEnc. Arabic recitation: Mishary Rashid Alafasy via Islamic Network. English audio: QuranEnc. Urdu audio: Shamshad Ali Khan via EveryAyah. Urdu audio wording may differ from the displayed Urdu translation. Selected hadith translations and explanations: HadeethEnc, with Bukhari reference cross-checks. Story summaries and practice suggestions are separate Akhlaq editorial content. Source links and publisher notices are available inside the app.
 
-Calculated prayer times should be checked against your local mosque. Compass accuracy depends on your device and surroundings. Calendar export requires importing the file into your calendar; Akhlaq does not provide automatic prayer alarms. Force-stopping the app or phone battery restrictions can stop background audio.
+Calculated prayer times should be checked against your local mosque. Compass accuracy depends on your device and surroundings. Calendar export requires importing the file into your calendar; Optional Android prayer alerts are available; calendar export remains available in the browser. Force-stopping the app or phone battery restrictions can stop background audio.
 
 Suggested category: Lifestyle. Confirm the audience and content-rating answers in Play Console based on the app's actual content; no rating has been assigned yet.
 
@@ -43,3 +43,8 @@ Release notes (2.1.0):
 - Privacy and data controls, Android 16 navigation and adaptive launcher icons.
 
 Do not claim endorsement by Quran publishers or Google. Replace draft screenshots with verified captures from the final Android build before submission.
+
+
+## Version 2.2 additions
+
+Location-first setup without a city dropdown; optional Android prayer alerts and advance reminders; attributed spoken adhan; Quranic dua directory; seven dhikr counters; six traditional kalimat learning cards; five pillars; estimated Hijri calendar, upcoming readings and private date notes; offline-device English narration of original cited stories. See `docs/FEATURE-RESEARCH.md` and `content/PROVENANCE.md` for the comparison, sources, reuse terms and limitations. Calendar notes, practice marks and narration progress remain local and are not included in the existing practice-export format.

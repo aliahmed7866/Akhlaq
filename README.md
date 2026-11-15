@@ -14,7 +14,7 @@ node server.mjs
 
 Open [http://127.0.0.1:8786](http://127.0.0.1:8786) in Android Chrome and tap **Install app**. If Chrome does not offer an in-page prompt, open its ⋮ menu, choose **Install and create shortcut** or **Add to Home screen**, then tap **Install**. Open Akhlaq again from its icon.
 
-Wait for **Ready for offline use** in the footer before stopping Termux. Once the app is cached, its timetable, city presets, compass, Quran text and practice tools work without internet or a running server. Termux is needed for the first load, app updates and the optional Termux GPS fallback.
+Wait for **Ready for offline use** in the footer before stopping Termux. Once the app is cached, its timetable, saved location, compass, Quran text and practice tools work without internet or a running server. Termux is needed for the first load, app updates and the optional Termux GPS fallback.
 
 ### Update an existing installation
 
@@ -30,7 +30,7 @@ See [content provenance and reuse conditions](content/PROVENANCE.md) and the [us
 
 ## Prayer times and reminders
 
-- Akhlaq starts with Manchester, the Moonsighting Committee method and Hanafi Asr. Choose a city, enter coordinates, or use GPS. Check the time zone when travelling.
+- Akhlaq starts with Manchester, the Moonsighting Committee method and Hanafi Asr. Use location access or enter coordinates if access is unavailable. Check the time zone when travelling.
 - [Adhan](https://github.com/batoulapps/adhan-js) calculates start times locally. Choose your mosque’s method and Asr convention and adjust individual minutes when needed. The [Islamic Relief Manchester timetable](https://www.islamic-relief.org.uk/resources/prayer-timetables/manchester/) is available for comparison. Check your mosque for congregational times or when the app shows unavailable solar times.
 - The Hijri date is a civil-calendar estimate. Local moon-sighting dates can differ.
 - **Prayer reminders in your calendar** downloads an ICS file for upcoming prayers in the seven-day timetable. Select the prayers and how early to be reminded. Import the file into a calendar that supports event alerts. If you change location or calculation settings, replace the previously imported events.
@@ -74,3 +74,8 @@ Optional browser regression: install Python Playwright and its Chromium browser,
 ## Standalone Android branch
 
 The `android-standalone` branch contains the independent Android APK project. See [Android setup and preview notes](android/README.md) for building, installing, offline downloads and device verification. The Termux web app remains usable from this source tree.
+
+
+## Version 2.2 additions
+
+Location-first setup without a city dropdown; optional Android prayer alerts and advance reminders; attributed spoken adhan; Quranic dua directory; seven dhikr counters; six traditional kalimat learning cards; five pillars; estimated Hijri calendar, upcoming readings and private date notes; offline-device English narration of original cited stories. See `docs/FEATURE-RESEARCH.md` and `content/PROVENANCE.md` for the comparison, sources, reuse terms and limitations. Calendar notes, practice marks and narration progress remain local and are not included in the existing practice-export format.

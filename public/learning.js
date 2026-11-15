@@ -1,3 +1,4 @@
+import { narrate } from './companion.js';
 const get = id => document.getElementById(id);
 export function dailyIndex(day, length) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !Number.isInteger(length) || length < 1) return 0;
@@ -164,7 +165,7 @@ export function setupLearning({ stored, save, today }) {
         detail.append(citations);
       }
       detail.append(node('p', 'Personal reflection: ' + story.reflection, 'reflection-prompt'));
-      detail.append(link('Write a reflection', '#practice'));
+      const listen = node('button', 'Listen to this story'); listen.type = 'button'; listen.addEventListener('click', () => narrate(story.name + ': ' + story.title, story.parts.map(p => p.text).join('\n\n'), 'story-' + story.id)); detail.append(listen, link('Write a reflection', '#practice'));
       return detail;
     }));
   }

@@ -130,6 +130,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                 publish();
             } catch (Exception error) { failure = "Could not connect to Android audio. Reopen Akhlaq."; publish(); }
         }, this::runOnUiThread);
+        PrayerAlerts.schedule(this);
         web.loadUrl(ORIGIN + "/");
     }
     private void notifications() {
@@ -220,6 +221,13 @@ public class MainActivity extends Activity implements SensorEventListener {
         } catch (Exception ignored) { }
     }
     private class Bridge {
+        @JavascriptInterface public void alerts(String value) {
+            if(value==null||value.length()>180000)return;
+            runOnUiThread(()->{try{JSONObject config=new JSONObject(value);if(config.optBoolean("explicit")&&!config.optString("mode").equals("off"))notifications();String result=PrayerAlerts.configure(MainActivity.this,value);web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-alert-status',{detail:"+JSONObject.quote(result)+"}))",null);}catch(Exception e){web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-alert-status',{detail:'Could not schedule alerts.'}))",null);}});
+        }
+        @JavascriptInterface public void alarmAccess(){runOnUiThread(()->{if(Build.VERSION.SDK_INT>=31&&!PrayerAlerts.precise(MainActivity.this))startActivity(new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,Uri.parse("package:"+getPackageName())));});}
+        @JavascriptInterface public String narrationStatus(){return NarrationService.state;}
+        @JavascriptInterface public void narrate(String value){if(value==null||value.length()>40000)return;runOnUiThread(()->{try{JSONObject v=new JSONObject(value);String action=v.getString("action");Intent i=new Intent(MainActivity.this,NarrationService.class).setAction(action);if(action.equals("play")){notifications();if(controller!=null)controller.pause();i.putExtra("title",v.getString("title")).putExtra("id",v.getString("id")).putExtra("text",v.getString("text"));startForegroundService(i);}else if(action.equals("toggle"))startService(i);else if(action.equals("stop")){NarrationService.state="{}";stopService(i);}}catch(Exception ignored){}});}
         @JavascriptInterface public String version() { return BuildConfig.VERSION_NAME; }
         @JavascriptInterface public void eraseData() {
             runOnUiThread(() -> new AlertDialog.Builder(MainActivity.this)
@@ -256,6 +264,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
     @Override public void onRequestPermissionsResult(int request, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(request, permissions, results);
+        if (request == 12) web.evaluateJavascript("window.dispatchEvent(new Event('akhlaq-alert-refresh'))", null);
         if (request == 10 && geoCallback != null) {
             geoCallback.invoke(geoOrigin, checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED, false);
             geoCallback = null;
@@ -292,7 +301,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         } catch (Exception ignored) { }
     }
     @Override public void onAccuracyChanged(Sensor sensor, int value) { accuracy = value; }
-    @Override protected void onResume() { super.onResume(); visible = true; if (web != null) web.onResume(); handler.post(tick); }
+    @Override protected void onResume() { super.onResume(); visible = true; if (web != null) { web.onResume(); web.evaluateJavascript("window.dispatchEvent(new Event('akhlaq-alert-refresh'))", null); } handler.post(tick); }
     @Override protected void onPause() { visible = false; handler.removeCallbacks(tick); sensors.unregisterListener(this); compass = false; if (web != null) web.onPause(); super.onPause(); }
     private void navigateBack() { if (web.canGoBack()) web.goBack(); else moveTaskToBack(true); }
     @Override public void onBackPressed() { navigateBack(); }

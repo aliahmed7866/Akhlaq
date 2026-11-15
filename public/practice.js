@@ -1,7 +1,7 @@
 import { downloadFile } from './calendar.js';
 
 const prefix = 'akhlaq.practice.v1.';
-const counters = ['subhanallah', 'alhamdulillah', 'allahu-akbar', 'astaghfirullah'];
+const counters = ['subhanallah', 'alhamdulillah', 'allahu-akbar', 'astaghfirullah', 'tahlil', 'hawqala', 'tasbih-praise'];
 const dayPattern = /^\d{4}-\d{2}-\d{2}$/;
 const prompts = [
   'What is one small deed you can do consistently this week?',

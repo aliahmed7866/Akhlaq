@@ -17,3 +17,7 @@ for (const name of ['quran', 'urdu']) {
   await writeFile(new URL(name + '.json', output), body);
 }
 console.log('Bundled app, calculation engine, Quran and Urdu translation.');
+
+const raw = new URL('../android/app/build/generated/res/raw/', import.meta.url);
+await mkdir(raw, { recursive: true });
+await cp(new URL('../public/adhan.oga', import.meta.url), new URL('adhan.ogg', raw));

@@ -22,6 +22,10 @@ try:
           window.nativeState = {ready:true}; window.commands = []; window.sensorCommands = [];
           window.AkhlaqNative = {
             version: () => '2.0.0-test',
+            alerts: value => { window.alertPlan = JSON.parse(value); },
+            alarmAccess: () => { window.alarmRequested = true; },
+            narrate: value => { window.storyCommand = JSON.parse(value); },
+            narrationStatus: () => '{}',
             eraseData: () => { window.eraseRequested = true; },
             status: () => JSON.stringify(nativeState),
             command: value => {
@@ -86,6 +90,28 @@ try:
         expect(page.get_by_role('heading',name='Akhlaq privacy policy')).to_be_visible()
         page.get_by_role('link',name='← Akhlaq settings').click()
         expect(page.locator('#settings-title')).to_be_visible()
+        page.context.grant_permissions(['geolocation'])
+        page.context.set_geolocation({'latitude': 53.4808, 'longitude': -2.2426})
+        page.get_by_role('link',name='Today',exact=True).click()
+        page.locator('#home-gps').click()
+        expect(page.locator('#schedule-location')).to_contain_text('My location')
+        page.get_by_role('link',name='Settings',exact=True).click()
+        page.locator('#reminder-settings summary').click()
+        page.locator('#alert-mode').select_option('adhan')
+        page.locator('#alert-lead').select_option('10')
+        page.locator('#alert-save').click()
+        assert page.evaluate('alertPlan.mode') == 'adhan'
+        assert page.evaluate('alertPlan.events.length') > 800
+        assert page.evaluate('alertPlan.events.every(e => !e.title.includes("Sunrise"))')
+        page.locator('#alert-permission').click()
+        assert page.evaluate('alarmRequested')
+        page.goto(f'http://127.0.0.1:{port}/#learn/stories/musa')
+        page.locator('#story-musa button').click()
+        assert page.evaluate('storyCommand.id') == 'story-musa'
+        page.locator('#story-pause').click()
+        assert page.evaluate('storyCommand.action') == 'toggle'
+        page.locator('#story-stop').click()
+        assert page.evaluate('storyCommand.action') == 'stop'
         assert not errors,errors
         print('Passed native bridge: offline Urdu, native-only audio, queue controls, in-place continuity changes, downloads, and compass data.')
         browser.close()

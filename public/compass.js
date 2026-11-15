@@ -64,6 +64,7 @@ export function setupCompass() {
   let previousTime = 0;
   let initialTimer;
   let alignmentTimer;
+  let staleTimer;
   let lastEvent;
   let aligned = false;
 
@@ -95,6 +96,8 @@ export function setupCompass() {
     const angle = window.screen.orientation?.angle ?? Number(window.orientation ?? 0);
     const measurement = readHeading(event.detail || event, native ? 0 : angle, position.declination);
     if (!measurement) return;
+    clearTimeout(staleTimer);
+    staleTimer = setTimeout(() => { resetHeading(); note.textContent = 'Compass readings paused. Move the phone gently or restart the compass.'; }, 2200);
     lastEvent = event;
     clearTimeout(initialTimer);
     if (measurement.issue) {
@@ -140,6 +143,7 @@ export function setupCompass() {
     if (native) { native.compass(false); window.removeEventListener('akhlaq-heading', read); }
     lastEvent = undefined;
     clearTimeout(initialTimer);
+    clearTimeout(staleTimer);
     for (const name of ['deviceorientationabsolute', 'deviceorientation']) window.removeEventListener(name, read);
     resetHeading();
     button.textContent = 'Start live compass';

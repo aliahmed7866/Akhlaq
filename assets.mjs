@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 
 const types = {
+  oga: 'audio/ogg',
   html: 'text/html; charset=utf-8',
   json: 'application/json; charset=utf-8',
   js: 'text/javascript; charset=utf-8',
@@ -14,7 +15,7 @@ const types = {
 const paths = [
   'index.html', 'privacy.html', 'licenses.html', 'app.js', 'style.css', 'compass.js', 'practice.js', 'calendar.js', 'install.js',
   'quran.js', 'media-session.js', 'engine.js', 'manifest.webmanifest', 'icons/akhlaq.svg', 'icons/icon-192.png', 'icons/icon-512.png',
-  'learning.js', 'hadith.json', 'learning-content.json',
+  'companion.js', 'devotional.json', 'adhan.oga', 'learning.js', 'hadith.json', 'learning-content.json',
 ];
 const load = path => readFile(new URL('./public/' + path, import.meta.url));
 

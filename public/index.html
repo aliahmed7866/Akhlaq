@@ -35,13 +35,13 @@
       <nav class="home-shortcuts" aria-label="Daily tools">
         <a class="small-button" href="#quran">Read Quran</a>
         <a class="small-button" href="#qibla">Find Qibla</a>
-        <a class="small-button" href="#dhikr">Count dhikr</a>
+        <a class="small-button" href="#dhikr">Count dhikr</a><a class="small-button" href="#essentials">Duas &amp; calendar</a>
       </nav>
     </div>
     <section id="salah" data-page="home" aria-labelledby="prayer-title" class="card prayer-card">
       <div class="card-head">
-        <div><h2 id="prayer-title">Prayer times</h2><p id="schedule-location"></p></div>
-        <a class="small-button" href="#settings">Change location</a>
+        <div><h2 id="prayer-title">Prayer times</h2><p id="schedule-location"></p><p id="location-freshness" class="muted"></p></div>
+        <button id="home-gps" class="small-button" type="button">Use current location</button>
       </div>
       <p id="prayer-error" role="status" hidden></p>
       <div class="next">
@@ -110,7 +110,7 @@
     </section>
     <section id="learn" data-page="learn" class="card learning" aria-labelledby="learn-title" hidden>
       <div class="card-head"><div><h1 id="learn-title">Learn &amp; practise</h1><p>Small steps, with sources you can check.</p></div></div>
-      <nav class="learn-nav" aria-label="Learning topics">
+      <p><a class="small-button" href="#essentials">Duas, six kalimat &amp; pillars</a></p><nav class="learn-nav" aria-label="Learning topics">
         <a href="#learn/hadith" data-learn="hadith" aria-current="page">Hadith</a>
         <a href="#learn/practices" data-learn="practices">Daily practices</a>
         <a href="#learn/stories" data-learn="stories">Prophets</a>
@@ -140,6 +140,13 @@
         <p>Report translation corrections to <a href="https://hadeethenc.com/en/home/contact" target="_blank" rel="noopener noreferrer">HadeethEnc</a>. Report an app reference or summary issue through <a href="https://github.com/aliahmed7866/Akhlaq/issues" target="_blank" rel="noopener noreferrer">Akhlaq support</a>. Please do not post private reflections.</p>
       </details>
     </section>
+    <section id="essentials" data-page="essentials" class="card" hidden>
+<h1>Your daily companion</h1><p>A little learning, at your own pace.</p>
+<nav class="learn-nav" aria-label="Companion topics"><a href="#essentials/duas">Duas</a><a href="#essentials/kalimat">Six kalimat</a><a href="#essentials/pillars">Pillars</a><a href="#essentials/calendar">Calendar</a></nav>
+<div id="companion-content"></div><p id="companion-status" role="status"></p>
+</section>
+<section data-page="home" class="card"><h2>On your Islamic calendar</h2><p id="calendar-today"></p><p id="calendar-event"></p><a class="small-button" href="#essentials/calendar">Explore dates &amp; keep a note</a></section>
+<aside id="story-reader" class="card" aria-label="Story narration" hidden><h2 id="story-reader-title">Story reader</h2><p id="story-reader-status" role="status"></p><div class="reader-actions"><button id="story-pause" type="button">Pause / resume</button><button id="story-stop" type="button">Stop narration</button></div><p class="muted">Device narration of Akhlaq’s original cited summaries, not a scholar’s recording. Pronunciation may vary. Android uses an installed offline English voice; browser background speech depends on the browser.</p></aside>
     <section id="quran" data-page="quran" class="card reader" aria-labelledby="quran-title" hidden>
       <div class="card-head"><div><h1 id="quran-title">Quran</h1><p>Arabic, English and Urdu</p></div><button id="reader-focus" type="button" aria-pressed="false">Focus reading</button></div>
       <p id="quran-status" role="status"></p>
@@ -305,7 +312,7 @@
               <option value="subhanallah">Subhanallah · سبحان الله</option>
               <option value="alhamdulillah">Alhamdulillah · الحمد لله</option>
               <option value="allahu-akbar">Allahu Akbar · الله أكبر</option>
-              <option value="astaghfirullah">Astaghfirullah · أستغفر الله</option>
+              <option value="astaghfirullah">Astaghfirullah · أستغفر الله</option><option value="tahlil">La ilaha illa Allah · لا إله إلا الله</option><option value="hawqala">La hawla wa la quwwata illa billah · لا حول ولا قوة إلا بالله</option><option value="tasbih-praise">Subhan Allah wa bihamdih · سبحان الله وبحمده</option>
             </select>
           </label>
           <label class="field">Personal target
@@ -316,7 +323,7 @@
             <p id="dhikr-progress-text" class="muted"></p>
           </div>
         </div>
-        <div class="dhikr-actions">
+        <p>Targets here are personal counters, not prescribed rewards. <a href="https://sunnah.com/muslim:597a">After-prayer remembrance</a> · <a href="https://sunnah.com/bukhari:6384">La hawla wa la quwwata illa billah</a> · <a href="https://sunnah.com/bukhari:6405">Subhan Allah wa bihamdih</a></p><div class="dhikr-actions">
           <button id="dhikr-minus" type="button" aria-label="Subtract one">−</button>
           <button id="dhikr-add" type="button" class="primary"><strong id="dhikr-count">0</strong><span>Tap to count</span></button>
           <button id="dhikr-reset" type="button">Reset</button>
@@ -335,15 +342,15 @@
       </dialog>
     </section>
     <section id="settings" data-page="settings" hidden class="card" aria-labelledby="settings-title">
-      <div class="card-head"><div><h2 id="settings-title">Location &amp; settings</h2><p>Set your location and match your local mosque’s prayer method.</p></div></div>
+      <div class="card-head"><div><h2 id="settings-title">Location &amp; settings</h2><p>Use location access and match your local mosque’s prayer method.</p></div></div>
       <form id="settings-form">
         <div class="location-tools">
-          <label class="field">Quick city<select id="city" name="city"><option value="">Custom coordinates</option></select></label>
+          <input id="city" name="city" type="hidden"><p>Use your current location. No city selection is needed.</p>
           <button type="button" id="gps" class="primary">Use my location</button>
         </div>
-        <p class="muted">Location is optional. Your coordinates stay on this device and are used for prayer times and Qibla. You can choose a city instead.</p>
+        <p class="muted">Location is optional. Your coordinates stay on this device and are used for prayer times and Qibla. If access is unavailable, you can enter coordinates below.</p>
         <details id="manual-location">
-          <summary>Coordinates &amp; time zone</summary>
+          <summary>Location details &amp; time zone</summary>
           <div class="settings-grid">
           <label class="field">Latitude<input name="latitude" type="number" min="-90" max="90" step="any" required></label>
           <label class="field">Longitude<input name="longitude" type="number" min="-180" max="180" step="any" required></label>
@@ -378,7 +385,14 @@
           <p id="settings-status" class="muted" role="status"></p>
         </div>
       </form>
-      <details><summary>Reading comfort</summary><label class="field">App text size<select id="app-text-size"><option value="100">Standard · 100%</option><option value="125">Larger · 125%</option><option value="150">Large · 150%</option><option value="200">Extra large · 200%</option></select></label><p id="comfort-status" class="muted" role="status"></p><p class="muted">Quran text also has its own size controls. Your preference stays on this device.</p></details>
+      <details id="reminder-settings"><summary>Prayer alerts &amp; adhan</summary>
+<p>Android alerts use your saved location and calculation settings. They do not need Termux or an open screen.</p>
+<label class="field">Alert style<select id="alert-mode"><option value="off">Off</option><option value="gentle">Gentle notification</option><option value="adhan">Spoken adhan notification</option></select></label>
+<label class="field">Before-prayer reminder<select id="alert-lead"><option value="0">At prayer time only</option><option value="5">5 minutes before</option><option value="10">10 minutes before</option><option value="15">15 minutes before</option></select></label>
+<div id="alert-prayers" class="checks"></div><div class="reader-actions"><button type="button" id="alert-save">Save alerts</button><button type="button" id="alert-permission">Allow precise timing</button></div>
+<p id="alert-status" role="status"></p><p>Alerts are prepared for 90 days and refreshed when you open the app. Reopen after travelling or changing your clock. Android notification, sound, battery and Do Not Disturb settings can affect delivery. Force-stopping prevents alerts until reopening.</p>
+<p>The adhan is a 27-second spoken reading by Jarih, unchanged, <a href="https://commons.wikimedia.org/wiki/File:Adhan_wiki.oga">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>. It is not a melodic recording or a Fajr-specific version; Android may shorten notification sounds.</p><audio id="adhan-preview" controls preload="none" src="/adhan.oga"></audio>
+</details><details><summary>Reading comfort</summary><label class="field">App text size<select id="app-text-size"><option value="100">Standard · 100%</option><option value="125">Larger · 125%</option><option value="150">Large · 150%</option><option value="200">Extra large · 200%</option></select></label><p id="comfort-status" class="muted" role="status"></p><p class="muted">Quran text also has its own size controls. Your preference stays on this device.</p></details>
       <details>
         <summary>Back up your practice</summary>
         <p class="muted">The file includes your prayer log, dhikr counts and private reflections. Restoring fills missing days and keeps entries already on this device.</p>

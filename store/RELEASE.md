@@ -72,7 +72,7 @@ Declare both foreground service types under App content:
 - `mediaPlayback`: user starts Quran audio; the media notification allows pause/resume; the native queue continues between verses and translations with screen off. Supply an actual screen recording showing this flow.
 - `dataSync`: user requests a surah download for offline use; the progress notification opens the app and the Offline audio panel can pause/remove downloads. The service pauses and stops on the Android background-time limit. Supply a recording of starting, monitoring and stopping a download.
 
-No background-location, exact-alarm or full-screen-intent permission is requested. Calendar export does not grant exact alarm access. App access needs no login. Complete the audience, ads and IARC content-rating forms truthfully; do not invent ratings or tester results.
+No background-location or full-screen-intent permission is requested. Optional prayer alerts request SCHEDULE_EXACT_ALARM access explicitly; they use approximate timing without it. Story narration is an additional mediaPlayback foreground-service use case. Calendar export does not grant exact alarm access. App access needs no login. Complete the audience, ads and IARC content-rating forms truthfully; do not invent ratings or tester results.
 
 ## Test before submission
 
@@ -105,3 +105,8 @@ Upload the signed AAB to an internal testing track, check Play's pre-launch repo
 - [Store graphics](https://support.google.com/googleplay/android-developer/answer/9866151)
 - [Personal account testing](https://support.google.com/googleplay/android-developer/answer/14151465)
 - [Data-sync time limits](https://developer.android.com/develop/background-work/services/fgs/timeout)
+
+
+## Version 2.2 additions
+
+Location-first setup without a city dropdown; optional Android prayer alerts and advance reminders; attributed spoken adhan; Quranic dua directory; seven dhikr counters; six traditional kalimat learning cards; five pillars; estimated Hijri calendar, upcoming readings and private date notes; offline-device English narration of original cited stories. See `docs/FEATURE-RESEARCH.md` and `content/PROVENANCE.md` for the comparison, sources, reuse terms and limitations. Calendar notes, practice marks and narration progress remain local and are not included in the existing practice-export format.

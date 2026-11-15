@@ -1,0 +1,191 @@
+{
+  "reviewedOn": "2026-11-15",
+  "notice": "Original English learning summaries, not new scripture translations or fatwas. Arabic kalimat are traditional devotional wording; variants exist. The six-part collection is a teaching aid, not a single six-part prophetic narration. No fixed recitation count or special reward is assigned here.",
+  "kalimaSource": "https://islamqa.org/hanafi/zamzam-academy/20483/",
+  "kalimat": [
+    {
+      "id": "1",
+      "title": "1. Tayyibah",
+      "arabic": "لا إله إلا الله محمد رسول الله",
+      "summary": "Affirming that Allah alone is worthy of worship and Muhammad is His messenger."
+    },
+    {
+      "id": "2",
+      "title": "2. Shahadah",
+      "arabic": "أشهد أن لا إله إلا الله وحده لا شريك له وأشهد أن محمدا عبده ورسوله",
+      "summary": "Bearing witness to Allah’s oneness and to Muhammad as His servant and messenger."
+    },
+    {
+      "id": "3",
+      "title": "3. Tamjid",
+      "arabic": "سبحان الله والحمد لله ولا إله إلا الله والله أكبر ولا حول ولا قوة إلا بالله العلي العظيم",
+      "summary": "Glorifying and praising Allah; affirming His greatness and our dependence on Him."
+    },
+    {
+      "id": "4",
+      "title": "4. Tawhid",
+      "arabic": "لا إله إلا الله وحده لا شريك له له الملك وله الحمد يحيي ويميت وهو حي لا يموت أبدا أبدا ذو الجلال والإكرام بيده الخير وهو على كل شيء قدير",
+      "summary": "Affirming Allah’s oneness, sovereignty, eternal life and power over everything."
+    },
+    {
+      "id": "5",
+      "title": "5. Istighfar",
+      "arabic": "أستغفر الله ربي من كل ذنب أذنبته عمدا أو خطأ سرا أو علانية وأتوب إليه من الذنب الذي أعلم ومن الذنب الذي لا أعلم إنك أنت علام الغيوب وستار العيوب وغفار الذنوب ولا حول ولا قوة إلا بالله العلي العظيم",
+      "summary": "Seeking forgiveness and turning back to Allah for known and unknown wrongdoing, in public and in private."
+    },
+    {
+      "id": "6",
+      "title": "6. Radd al-kufr",
+      "arabic": "اللهم إني أعوذ بك من أن أشرك بك شيئا وأنا أعلم به وأستغفرك لما لا أعلم به تبت عنه وتبرأت من الكفر والشرك والكذب والغيبة والبدعة والنميمة والفواحش والبهتان والمعاصي كلها وأسلمت وأقول لا إله إلا الله محمد رسول الله",
+      "summary": "Seeking protection from associating partners with Allah, renouncing wrongdoing and renewing commitment to Islam."
+    }
+  ],
+  "pillars": [
+    {
+      "title": "Shahadah",
+      "summary": "Faith in Allah’s oneness and Muhammad’s messengership.",
+      "source": "https://sunnah.com/bukhari:8"
+    },
+    {
+      "title": "Salah",
+      "summary": "The five obligatory daily prayers.",
+      "source": "https://sunnah.com/bukhari:8"
+    },
+    {
+      "title": "Zakah",
+      "summary": "The obligatory giving due on qualifying wealth; its conditions matter.",
+      "source": "https://sunnah.com/bukhari:8"
+    },
+    {
+      "title": "Sawm",
+      "summary": "Fasting Ramadan, with the exemptions and accommodations taught in Islam.",
+      "source": "https://sunnah.com/bukhari:8"
+    },
+    {
+      "title": "Hajj",
+      "summary": "Pilgrimage to the Sacred House for those able to undertake it.",
+      "source": "https://sunnah.com/bukhari:8"
+    }
+  ],
+  "duas": [
+    {
+      "title": "Good in this life and the next",
+      "ref": "2:201"
+    },
+    {
+      "title": "Forgiveness and mercy",
+      "ref": "7:23"
+    },
+    {
+      "title": "For parents",
+      "ref": "17:24"
+    },
+    {
+      "title": "Increase in knowledge",
+      "ref": "20:114"
+    },
+    {
+      "title": "Ease in a difficult task",
+      "ref": "20:25"
+    },
+    {
+      "title": "Calling to Allah in distress",
+      "ref": "21:87"
+    },
+    {
+      "title": "A family that brings joy",
+      "ref": "25:74"
+    },
+    {
+      "title": "A heart that stays guided",
+      "ref": "3:8"
+    }
+  ],
+  "events": [
+    {
+      "id": "ashura",
+      "month": 1,
+      "from": 10,
+      "to": 10,
+      "title": "Ashura: Musa and deliverance",
+      "text": "The report in Bukhari connects Ashura with gratitude for Allah saving Musa and his people. Read the Quran account of their rescue and reflect on gratitude. The hadith gives the connection with Ashura; the Quran passage itself does not name that calendar date.",
+      "refs": [
+        "https://sunnah.com/bukhari:2004",
+        "#quran/26:61"
+      ],
+      "story": "musa"
+    },
+    {
+      "id": "ramadan",
+      "month": 9,
+      "from": 1,
+      "to": 30,
+      "title": "Ramadan: the month of the Quran",
+      "text": "Surah al-Baqarah links Ramadan with the revelation of the Quran and explains fasting, ease and the completion of the month. Make room for a manageable reading practice, and learn the exemptions rather than assuming every person must fast in every circumstance.",
+      "refs": [
+        "#quran/2:183",
+        "#quran/2:185"
+      ]
+    },
+    {
+      "id": "qadr",
+      "month": 9,
+      "from": 21,
+      "to": 30,
+      "title": "The last ten nights",
+      "text": "Surah al-Qadr describes the honour of the Night of Decree. The Prophet instructed believers to seek it in the odd nights of Ramadan’s last ten nights. This calendar does not identify one night as certain.",
+      "refs": [
+        "#quran/97:1",
+        "https://sunnah.com/bukhari:2017"
+      ]
+    },
+    {
+      "id": "fitr",
+      "month": 10,
+      "from": 1,
+      "to": 1,
+      "title": "Eid al-Fitr",
+      "text": "Eid al-Fitr marks the end of Ramadan. Fasting on Eid is prohibited. Confirm the date with your local community because a calculated calendar cannot settle a moon-sighting decision.",
+      "refs": [
+        "https://sunnah.com/bukhari:1992",
+        "#quran/2:185"
+      ]
+    },
+    {
+      "id": "dhulhijjah",
+      "month": 12,
+      "from": 1,
+      "to": 10,
+      "title": "The first ten days of Dhul Hijjah",
+      "text": "A report in Bukhari highlights the value of good deeds in these days. Learn the story of Ibrahim’s obedience in Surah al-Saffat. This is a seasonal thematic reading; the Quran does not assign that account an exact Gregorian or Hijri date.",
+      "refs": [
+        "https://sunnah.com/bukhari:969",
+        "#quran/37:100"
+      ]
+    },
+    {
+      "id": "arafah",
+      "month": 12,
+      "from": 9,
+      "to": 9,
+      "title": "The day of Arafah",
+      "text": "The report in Sahih Muslim describes the virtue of fasting on Arafah. Guidance differs for pilgrims standing at Arafah; consult qualified guidance for your circumstances. Confirm the observance with your community.",
+      "refs": [
+        "https://sunnah.com/muslim:1162a"
+      ]
+    },
+    {
+      "id": "adha",
+      "month": 12,
+      "from": 10,
+      "to": 13,
+      "title": "Eid al-Adha and the days of Tashriq",
+      "text": "These are days associated with worship, remembrance and the pilgrimage. Eid is not a fasting day, and the days of Tashriq are described as days of eating, drinking and remembering Allah. Specific pilgrimage exceptions require qualified guidance.",
+      "refs": [
+        "https://sunnah.com/bukhari:1992",
+        "https://sunnah.com/muslim:1141a",
+        "#quran/22:37"
+      ]
+    }
+  ]
+}

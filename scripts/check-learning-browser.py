@@ -51,7 +51,21 @@ try:
         page.locator('#story-yusuf a').first.click()
         expect(page.locator('#quran')).to_be_visible()
         assert page.url.endswith('#quran/12:89')
+        page.goto(base + '#essentials/kalimat')
+        expect(page.locator('#companion-content details')).to_have_count(6)
+        page.locator('#companion-content summary').first.click()
+        page.locator('#companion-content button').first.click()
+        expect(page.locator('#companion-content button').first).to_have_attribute('aria-pressed','true')
+        page.reload()
+        expect(page.locator('#companion-content button').first).to_have_attribute('aria-pressed','true')
+        page.goto(base + '#essentials/calendar')
+        page.locator('#companion-content input[type=date]').fill('2024-04-10')
+        expect(page.locator('#companion-content')).to_contain_text('Eid al-Fitr')
+        page.locator('#companion-content textarea').fill('Family visit')
+        page.get_by_role('button',name='Save date note',exact=True).click()
+        expect(page.locator('#companion-status')).to_contain_text('saved')
         page.goto(base + '#settings')
+        expect(page.locator('select#city')).to_have_count(0)
         page.get_by_text('Reading comfort', exact=True).click()
         page.locator('#app-text-size').select_option('200')
         page.reload()
@@ -62,7 +76,7 @@ try:
             page.evaluate('(n) => document.documentElement.style.fontSize = (16*n/100) + "px"', size)
             for width in [320, 390, 768]:
                 page.set_viewport_size({'width': width, 'height': 844})
-                for route in ['', 'quran/1:1', 'qibla', 'practice', 'dhikr', 'settings', 'learn/hadith/5351', 'learn/practices', 'learn/stories/yusuf']:
+                for route in ['', 'quran/1:1', 'qibla', 'practice', 'dhikr', 'settings', 'learn/hadith/5351', 'learn/practices', 'learn/stories/yusuf', 'essentials/duas', 'essentials/kalimat', 'essentials/pillars', 'essentials/calendar']:
                     page.evaluate('(r) => location.hash = r', route)
                     if route == 'settings':
                         page.locator('#settings details').evaluate_all('(items) => items.forEach(d => d.open = true)')
@@ -135,6 +149,6 @@ try:
         page.locator('[data-learn="stories"]').click()
         expect(page.locator('#prophet-stories > details')).to_have_count(8)
         browser.close()
-        print('Passed learning tasks, saved preferences, Urdu, references, and 54 route/width/text-size layouts.')
+        print('Passed learning tasks, saved preferences, Urdu, references, and 78 route/width/text-size layouts.')
 finally:
     server.terminate(); server.wait(timeout=10)

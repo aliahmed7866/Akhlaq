@@ -1,10 +1,11 @@
-import { calculate, cities } from './engine.js';
+import { calculate } from './engine.js';
 import { setupCompass } from './compass.js';
 import { setupPractice } from './practice.js';
 import { downloadFile, makeCalendar } from './calendar.js';
 import { setupQuran } from './quran.js';
 import { setupInstall } from './install.js';
 import { setupLearning } from './learning.js';
+import { setupCompanion } from './companion.js';
 
 const byId = id => document.getElementById(id);
 document.querySelector('.skip-link').addEventListener('click', event => {
@@ -39,6 +40,7 @@ const renderCompass = setupCompass();
 const quran = setupQuran({ stored, save, today: todayForPractice });
 const practiceLog = setupPractice({ salah, stored, save, todayForPractice, shiftDate, dateLabel });
 const learning = setupLearning({ stored, save, today: todayForPractice });
+const companion = setupCompanion({ stored, save, today: todayForPractice, getSettings: () => settings, calculate });
 const textSize = byId('app-text-size');
 const savedSize = stored('akhlaq.comfort.v1').textSize;
 textSize.value = [100, 125, 150, 200].includes(savedSize) ? String(savedSize) : '100';
@@ -137,6 +139,8 @@ function showSchedule(data) {
   } catch {
     byId('hijri-date').textContent = '';
   }
+  byId('location-freshness').textContent = settings.locatedAt ? 'Location checked ' + new Date(settings.locatedAt).toLocaleString() + '. Refresh after travelling; check your device time zone.' : 'Example location only. Use location access to get times for where you are.';
+  companion.refresh(data);
   byId('schedule-location').textContent = (settings.city || 'Custom location') + ' · ' + schedule.zone.replaceAll('_', ' ');
   const select = form.elements.method;
   const method = Array.from(select.options).find(option => option.value === settings.method).textContent;
@@ -230,7 +234,7 @@ function findLocation() {
 
 function readSettings() {
   return {
-    city: byId('city').value,
+    city: byId('city').value, locatedAt: Number(byId('city').dataset.locatedAt || 0),
     latitude: form.elements.latitude.valueAsNumber,
     longitude: form.elements.longitude.valueAsNumber,
     zone: form.elements.zone.value.trim(), method: form.elements.method.value,
@@ -258,6 +262,7 @@ function applySettings() {
   }
 }
 
+byId('home-gps').addEventListener('click', () => byId('gps').click());
 byId('gps').addEventListener('click', async event => {
   const button = event.currentTarget;
   button.disabled = true;
@@ -274,29 +279,22 @@ byId('gps').addEventListener('click', async event => {
         throw error;
       }
     });
-    byId('city').value = '';
+    byId('city').value = 'My location';
+    byId('city').dataset.locatedAt = String(Date.now());
     form.elements.latitude.value = latitude;
     form.elements.longitude.value = longitude;
     form.elements.zone.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
     applySettings();
   } catch (error) {
-    settingsStatus.textContent = error.message + ' You can also choose a city.';
+    settingsStatus.textContent = error.message + ' You can retry location access or enter coordinates under Location details.';
   } finally {
     button.disabled = false;
+    byId('location-freshness').textContent = settingsStatus.textContent + ' Refresh location after travelling.';
   }
 });
 
-byId('city').addEventListener('change', event => {
-  const city = cities.find(entry => entry.name === event.target.value);
-  if (!city) {
-    byId('manual-location').open = true;
-    return;
-  }
-  for (const name of ['latitude', 'longitude', 'zone']) form.elements[name].value = city[name];
-  applySettings();
-});
 for (const name of ['latitude', 'longitude', 'zone']) {
-  form.elements[name].addEventListener('input', () => { byId('city').value = ''; });
+  form.elements[name].addEventListener('input', () => { byId('city').value = 'Manual coordinates'; byId('city').dataset.locatedAt = '';  });
 }
 form.elements.method.addEventListener('change', updateMethodNote);
 function openField(field) {
@@ -348,14 +346,14 @@ let openPage;
 
 function navigate() {
   const [requested, target = ''] = location.hash.slice(1).split('/');
-  const page = ['quran', 'qibla', 'practice', 'dhikr', 'settings', 'learn'].includes(requested) ? requested : 'home';
+  const page = ['quran', 'qibla', 'practice', 'dhikr', 'settings', 'learn', 'essentials'].includes(requested) ? requested : 'home';
   if (openPage !== page) {
     const initial = openPage === undefined;
     if (openPage === 'qibla' && byId('compass').textContent === 'Stop compass') byId('compass').click();
     openPage = page;
     for (const section of document.querySelectorAll('[data-page]')) section.hidden = section.dataset.page !== page;
     for (const link of document.querySelectorAll('[data-route]')) {
-      const active = link.dataset.route === (page === 'dhikr' ? 'practice' : page);
+      const active = link.dataset.route === (page === 'dhikr' ? 'practice' : page === 'essentials' ? 'learn' : page);
       if (active) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     }
@@ -370,6 +368,7 @@ function navigate() {
   }
   quran.navigate(page, target);
   learning.navigate(page);
+  companion.navigate(page);
 }
 
 function start() {
@@ -388,7 +387,7 @@ function start() {
     choice.append(input, ' ' + label);
     byId('calendar-prayers').querySelector('.checks').append(choice);
   }
-  for (const city of cities) byId('city').add(new Option(city.name, city.name));
+  byId('city').dataset.locatedAt = String(settings.locatedAt || 0);
   fillForm();
   practiceLog.refresh();
   learning.refreshDaily();
