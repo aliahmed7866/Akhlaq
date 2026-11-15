@@ -104,6 +104,20 @@ export function savedListening(value, chapters) {
 
 export function setupQuran({ stored, save, today }) {
   const native = window.AkhlaqNative;
+  const focusButton = byId('reader-focus');
+  let focused = stored('akhlaq.reader.focus').enabled === true;
+  function renderFocus() {
+    byId('quran').classList.toggle('reading-focus', focused);
+    focusButton.setAttribute('aria-pressed', String(focused));
+    focusButton.textContent = focused ? 'Show controls' : 'Focus reading';
+  }
+  focusButton.addEventListener('click', () => {
+    focused = !focused;
+    save('akhlaq.reader.focus', { enabled: focused });
+    renderFocus();
+    byId('quran').scrollIntoView({ block: 'start' });
+  });
+  renderFocus();
   let nativeState = {};
   const status = byId('quran-status');
   const dailyText = byId('daily-text');

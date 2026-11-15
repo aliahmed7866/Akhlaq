@@ -299,3 +299,10 @@ footer { padding-bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom))); }
 .audio-open .ayah { scroll-margin-bottom: calc(14rem + env(safe-area-inset-bottom)); }
 /* Prevent an accidental pull-to-refresh from destroying the active player. */
 html:has(body.audio-open) { overscroll-behavior-y: contain; }
+.privacy-policy { max-width: 760px; margin: 0 auto; line-height: 1.7; }
+.privacy-policy h2 { margin-top: 1.8rem; }
+.privacy-policy pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; }
+.reading-focus :is(.reader-controls, #quran-saved, .reader-presets, .reader-preferences, #native-downloads, .reader-listen .field) { display: none; }
+.reading-focus #quran-audio-credit { font-size: .8rem; }
+.reading-focus .chapter-heading { margin-top: .25rem; }
+#reader-focus { min-height: 44px; font-size: .85rem; }

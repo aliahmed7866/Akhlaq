@@ -2,6 +2,8 @@ package uk.akhlaq.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ActivityManager;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.hardware.*;
@@ -63,12 +65,16 @@ public class MainActivity extends Activity implements SensorEventListener {
         frame.addView(web, new FrameLayout.LayoutParams(-1, -1));
         frame.setOnApplyWindowInsetsListener((view, insets) -> {
             if (Build.VERSION.SDK_INT >= 30) {
-                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout() | WindowInsets.Type.ime());
                 view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
             } else view.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(), insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
             return insets;
         });
         setContentView(frame);
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::navigateBack);
+        }
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -214,6 +220,17 @@ public class MainActivity extends Activity implements SensorEventListener {
         } catch (Exception ignored) { }
     }
     private class Bridge {
+        @JavascriptInterface public String version() { return BuildConfig.VERSION_NAME; }
+        @JavascriptInterface public void eraseData() {
+            runOnUiThread(() -> new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Erase all Akhlaq data?")
+                .setMessage("This stops audio and deletes settings, saved verses, listening history, prayer logs, reflections and downloaded audio. Export a practice backup first if you want to keep it. Files you exported outside Akhlaq are not deleted. The app will close.")
+                .setNegativeButton("Keep my data", null)
+                .setPositiveButton("Erase data", (dialog, which) -> {
+                    if (controller != null) { controller.stop(); controller.clearMediaItems(); }
+                    ((ActivityManager)getSystemService(ACTIVITY_SERVICE)).clearApplicationUserData();
+                }).show());
+        }
         @JavascriptInterface public String status() { return state; }
         @JavascriptInterface public void command(String json) {
             if (json == null || json.length() > 4096) return;
@@ -277,7 +294,8 @@ public class MainActivity extends Activity implements SensorEventListener {
     @Override public void onAccuracyChanged(Sensor sensor, int value) { accuracy = value; }
     @Override protected void onResume() { super.onResume(); visible = true; if (web != null) web.onResume(); handler.post(tick); }
     @Override protected void onPause() { visible = false; handler.removeCallbacks(tick); sensors.unregisterListener(this); compass = false; if (web != null) web.onPause(); super.onPause(); }
-    @Override public void onBackPressed() { if (web.canGoBack()) web.goBack(); else moveTaskToBack(true); }
+    private void navigateBack() { if (web.canGoBack()) web.goBack(); else moveTaskToBack(true); }
+    @Override public void onBackPressed() { navigateBack(); }
     @Override protected void onDestroy() {
         visible = false; handler.removeCallbacksAndMessages(null); sensors.unregisterListener(this);
         if (fileCallback != null) fileCallback.onReceiveValue(null);

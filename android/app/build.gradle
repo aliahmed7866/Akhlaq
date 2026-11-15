@@ -1,17 +1,41 @@
 plugins { id 'com.android.application' }
+def releaseVersion = new Properties()
+file('../version.properties').withInputStream { releaseVersion.load(it) }
+def signingNames = ['AKHLAQ_KEYSTORE_PATH', 'AKHLAQ_KEYSTORE_PASSWORD', 'AKHLAQ_KEY_ALIAS', 'AKHLAQ_KEY_PASSWORD']
+def signingValues = signingNames.collect { System.getenv(it) }
+if (signingValues.any { it } && !signingValues.every { it }) {
+    throw new GradleException('Release signing is incomplete. Set all four AKHLAQ signing environment variables.')
+}
 android {
     namespace 'uk.akhlaq.app'
-    compileSdk 35
+    compileSdk 36
     defaultConfig {
         applicationId 'uk.akhlaq.app'
         minSdk 26
-        targetSdk 35
-        versionCode 1
-        versionName '2.0.0-preview1'
+        targetSdk 36
+        versionCode releaseVersion.getProperty('versionCode').toInteger()
+        versionName releaseVersion.getProperty('versionName')
     }
     compileOptions { coreLibraryDesugaringEnabled true; sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     buildFeatures { buildConfig true }
-    buildTypes { debug { applicationIdSuffix '.preview' }; release { minifyEnabled false } }
+    signingConfigs {
+        if (signingValues.every { it }) {
+            upload {
+                storeFile file(signingValues[0])
+                storePassword signingValues[1]
+                keyAlias signingValues[2]
+                keyPassword signingValues[3]
+            }
+        }
+    }
+    buildTypes {
+        debug { applicationIdSuffix '.preview'; versionNameSuffix '-preview' }
+        release {
+            debuggable false
+            minifyEnabled false
+            if (signingValues.every { it }) signingConfig signingConfigs.upload
+        }
+    }
     sourceSets.main.assets.srcDirs = ['build/generated/assets']
 }
 tasks.register('prepareWeb', Exec) {
@@ -19,6 +43,8 @@ tasks.register('prepareWeb', Exec) {
     commandLine 'node', 'scripts/prepare-android.mjs'
     inputs.dir '../../public'
     inputs.dir '../../data'
+    inputs.file '../../scripts/prepare-android.mjs'
+    inputs.file '../../urdu.mjs'
     outputs.dir 'build/generated/assets'
 }
 preBuild.dependsOn prepareWeb

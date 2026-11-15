@@ -29,9 +29,10 @@ Automated checks do not replace these physical-device tests.
 
 ## Build
 
-Install JDK 17, Node 20+ and Android SDK platform/build tools 35. From the repository root:
+Install JDK 17, Node 20+ and Android SDK platform 36 / build tools 35. From the repository root:
 
 ```sh
+npm ci --include=dev --ignore-scripts
 npm test
 cd android
 ./gradlew testDebugUnitTest lintDebug assembleDebug
@@ -40,6 +41,12 @@ cd android
 The APK is `app/build/outputs/apk/debug/app-debug.apk`. The first build fetches the official QuranEnc Urdu CSV, validates all 6,236 verse references, and packages the edition and notices. Subsequent local builds reuse `data/urdu.json.gz`; delete that generated file to refresh from the publisher. Build dependencies and the initial translation fetch need internet; the installed app does not fetch Quran text.
 
 The branch’s GitHub Actions workflow builds the same preview and uploads an APK artifact. A production release requires a retained private release signing key and installation/update testing. Do not commit signing keys. The local preview debug key should be retained privately if updates to that exact preview are needed.
+
+## Play release preparation
+
+The separate `Android release bundle` workflow builds and checks the production `uk.akhlaq.app` AAB. Without upload-key secrets its artifact is clearly labelled `unsigned-for-inspection`; it is not uploadable to Play. Configure all four signing secrets described in [the release guide](../store/RELEASE.md) to produce an upload-signed bundle. This workflow never publishes to Play. Release versioning is in `android/version.properties`.
+
+Android 16 Back navigation, keyboard/system insets, adaptive launcher icons, a packaged privacy policy, confirmed local-data deletion, and graceful data-sync timeouts are included. Physical Android testing, public policy hosting, developer identity/contact details and the Play Console declarations remain release gates; see the guide and test matrix.
 
 ## Privacy and integration
 

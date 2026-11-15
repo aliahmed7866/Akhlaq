@@ -21,6 +21,8 @@ try:
         page.add_init_script('''
           window.nativeState = {ready:true}; window.commands = []; window.sensorCommands = [];
           window.AkhlaqNative = {
+            version: () => '2.0.0-test',
+            eraseData: () => { window.eraseRequested = true; },
             status: () => JSON.stringify(nativeState),
             command: value => {
               const command = JSON.parse(value); commands.push(command);
@@ -39,6 +41,12 @@ try:
         expect(page.locator('#install')).to_be_hidden()
         page.locator('[data-reader-preset="arabic-urdu"]').click()
         expect(page.locator('.ayah-urdu').first).to_be_visible()
+        page.locator('#reader-focus').click()
+        expect(page.locator('#quran-chapter')).to_be_hidden()
+        expect(page.locator('#reader-focus')).to_have_text('Show controls')
+        expect(page.locator('.ayah-urdu').first).to_be_visible()
+        page.locator('#reader-focus').click()
+        expect(page.locator('#quran-chapter')).to_be_visible()
         page.locator('#quran-play').click()
         assert page.evaluate('commands.at(-1).mode') == 'arabic-urdu'
         assert page.evaluate('commands.at(-1).part') == 'arabic'
@@ -69,6 +77,15 @@ try:
         page.locator('#player-close').click()
         assert page.evaluate('commands.at(-1).action') == 'stop'
         expect(page.locator('#quran-player')).to_be_hidden()
+        page.get_by_role('link',name='Settings',exact=True).click()
+        page.get_by_text('About, privacy & help',exact=True).click()
+        expect(page.locator('#app-version')).to_have_text('Akhlaq · 2.0.0-test')
+        page.locator('#erase-app-data').click()
+        assert page.evaluate('window.eraseRequested') is True
+        page.get_by_role('link',name='Privacy policy',exact=True).click()
+        expect(page.get_by_role('heading',name='Akhlaq privacy policy')).to_be_visible()
+        page.get_by_role('link',name='← Akhlaq settings').click()
+        expect(page.locator('#settings-title')).to_be_visible()
         assert not errors,errors
         print('Passed native bridge: offline Urdu, native-only audio, queue controls, in-place continuity changes, downloads, and compass data.')
         browser.close()

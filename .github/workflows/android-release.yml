@@ -1,0 +1,76 @@
+name: Android release bundle
+on:
+  push:
+    branches: [android-standalone]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --include=dev --ignore-scripts
+      - run: npm test
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Prepare upload signing if configured
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.AKHLAQ_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.AKHLAQ_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.AKHLAQ_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.AKHLAQ_KEY_PASSWORD }}
+        run: |
+          if [[ -z "$KEYSTORE_BASE64$STORE_PASSWORD$KEY_ALIAS$KEY_PASSWORD" ]]; then
+            echo "label=unsigned-for-inspection" >> "$GITHUB_OUTPUT"
+            echo "No signing secrets configured. This bundle cannot be uploaded to Play yet." >> "$GITHUB_STEP_SUMMARY"
+          elif [[ -z "$KEYSTORE_BASE64" || -z "$STORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
+            echo "::error::Configure all four AKHLAQ signing secrets, or remove partial configuration."
+            exit 1
+          else
+            umask 077
+            printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/akhlaq-upload.jks"
+            echo "AKHLAQ_KEYSTORE_PATH=$RUNNER_TEMP/akhlaq-upload.jks" >> "$GITHUB_ENV"
+            echo "label=upload-signed" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Test and build production bundle
+        working-directory: android
+        env:
+          AKHLAQ_KEYSTORE_PASSWORD: ${{ secrets.AKHLAQ_KEYSTORE_PASSWORD }}
+          AKHLAQ_KEY_ALIAS: ${{ secrets.AKHLAQ_KEY_ALIAS }}
+          AKHLAQ_KEY_PASSWORD: ${{ secrets.AKHLAQ_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon testReleaseUnitTest lintRelease bundleRelease
+      - name: Inspect release archive
+        run: python3 scripts/check-release.py android/app/build/outputs/bundle/release/app-release.aab
+      - name: Verify signed bundle
+        if: steps.signing.outputs.label == 'upload-signed'
+        run: |
+          jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
+          unzip -l android/app/build/outputs/bundle/release/app-release.aab | grep -E 'META-INF/[^/]+\.(RSA|EC|DSA)'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Akhlaq-Play-${{ steps.signing.outputs.label }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+      - name: Upload test and lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-release-reports
+          path: android/app/build/reports/
+          if-no-files-found: ignore
+      - name: Remove temporary upload key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/akhlaq-upload.jks"

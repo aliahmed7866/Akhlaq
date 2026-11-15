@@ -96,7 +96,7 @@
       <p id="daily-credit" class="muted" hidden>English translation by Rowwad Translation Center</p>
     </section>
     <section id="quran" data-page="quran" class="card reader" aria-labelledby="quran-title" hidden>
-      <div class="card-head"><div><h1 id="quran-title">Quran</h1><p>Arabic, English and Urdu</p></div></div>
+      <div class="card-head"><div><h1 id="quran-title">Quran</h1><p>Arabic, English and Urdu</p></div><button id="reader-focus" type="button" aria-pressed="false">Focus reading</button></div>
       <p id="quran-status" role="status"></p>
       <div id="quran-tools" hidden>
         <div class="reader-controls">
@@ -295,6 +295,7 @@
           <label class="field">Quick city<select id="city" name="city"><option value="">Custom coordinates</option></select></label>
           <button type="button" id="gps" class="primary">Use my location</button>
         </div>
+        <p class="muted">Location is optional. Your coordinates stay on this device and are used for prayer times and Qibla. You can choose a city instead.</p>
         <details id="manual-location">
           <summary>Coordinates &amp; time zone</summary>
           <div class="settings-grid">
@@ -340,6 +341,18 @@
           <button id="import-backup" type="button" disabled>Restore missing days</button>
         </div>
         <p id="backup-status" class="muted" role="status"></p>
+      </details>
+      <details>
+        <summary>About, privacy &amp; help</summary>
+        <p id="app-version">Akhlaq · Prayer, Quran and daily practice</p>
+        <p>No account, ads or analytics. Prayer times and Qibla are calculated on your device. Quran text is included in the Android app; streaming and audio downloads need internet.</p>
+        <p>For background listening, press Play, then lock your screen. Use the Android media notification to pause or resume. Force stop, restart or phone battery restrictions can stop playback.</p>
+        <p><a href="/privacy.html">Privacy policy</a> · <a href="/licenses.html">Open-source notices</a> · <a href="https://github.com/aliahmed7866/Akhlaq/issues" target="_blank" rel="noopener noreferrer">Help &amp; report a problem ↗</a></p>
+        <p class="muted">Quran → Sources lists text editions, audio providers and publisher notices. Compare calculated prayer times with your mosque. Keep the compass away from metal and calibrate it before use.</p>
+        <div id="native-data-controls" hidden>
+          <button id="erase-app-data" type="button">Erase my data…</button>
+          <p class="muted">Delete this app’s local records and downloads. You’ll be asked to confirm. Export a practice backup above first if needed.</p>
+        </div>
       </details>
       <a href="https://www.islamic-relief.org.uk/resources/prayer-timetables/manchester/" target="_blank" rel="noopener noreferrer" class="reference">Islamic Relief Manchester timetable ↗</a>
     </section>

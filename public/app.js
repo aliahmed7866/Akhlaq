@@ -6,6 +6,13 @@ import { setupQuran } from './quran.js';
 import { setupInstall } from './install.js';
 
 const byId = id => document.getElementById(id);
+if (window.AkhlaqNative?.version) {
+  byId('app-version').textContent = 'Akhlaq · ' + window.AkhlaqNative.version();
+}
+if (window.AkhlaqNative?.eraseData) {
+  byId('native-data-controls').hidden = false;
+  byId('erase-app-data').addEventListener('click', () => window.AkhlaqNative.eraseData());
+}
 const prayers = [
   ['fajr', 'Fajr'], ['sunrise', 'Sunrise'], ['dhuhr', 'Dhuhr'],
   ['asr', 'Asr'], ['maghrib', 'Maghrib'], ['isha', 'Isha'],

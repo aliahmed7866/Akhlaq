@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500"><rect width="1024" height="500" fill="#10241e"/><circle cx="865" cy="250" r="330" fill="#17352b"/><circle cx="865" cy="250" r="275" fill="none" stroke="#2e5141"/><g transform="translate(690 95) scale(.6)">
+
+  <circle cx="256" cy="256" r="170" fill="#1d3b31"/>
+  <circle cx="256" cy="256" r="155" fill="none" stroke="#426757" stroke-width="3"/>
+  <path d="M256 109l19 120 119-20-103 65 57 106-92-82-92 82 57-106-103-65 119 20z"
+        fill="#203b33" stroke="#557c68" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M339 167l-57 117-109 61 57-117z" fill="#edc98a" stroke="#10241e" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M339 167l-83 89-26-28z" fill="#ffe7b3"/>
+  <path d="M173 345l83-89 26 28z" fill="#a9dfc5"/>
+  <circle cx="256" cy="256" r="12" fill="#10241e"/>
+</g><g font-family="Arial, sans-serif"><text x="70" y="130" font-size="18" letter-spacing="5" fill="#a9dfc5">A MOMENT FOR YOUR FAITH</text><text x="66" y="238" font-size="91" font-weight="700" fill="#f5f0e5">Akhlaq</text><text x="70" y="308" font-size="30" fill="#edc98a">Prayer. Quran. Daily practice.</text><text x="70" y="370" font-size="20" fill="#b9cbc1">Read and listen in Arabic, English and Urdu</text></g></svg>
