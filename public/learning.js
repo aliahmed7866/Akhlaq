@@ -40,11 +40,13 @@ function disclosure(title, text, language) {
 
 export function setupLearning({ stored, save, today }) {
   const key = 'akhlaq.learning.preferences.v1';
-  let collection, content, preferences, loading;
+  let collection, catalog, content, preferences, loading;
+  let currentPage = 0;
+  const pageSize = 20, chunks = new Map(), pendingChunks = new Map(), searches = new Map();
   let section = 'hadith', selected = '', lastRoute = '';
   const language = get('hadith-language');
   const query = get('learn-query');
-  const topic = get('learn-topic');
+  const scope = get('learn-scope');
   const savedOnly = get('learn-saved-only');
   function remember(next) {
     if (!save(key, next)) {
@@ -60,16 +62,16 @@ export function setupLearning({ stored, save, today }) {
     if (loading) return loading;
     loading = (async () => {
       try {
-        const responses = await Promise.all(['/hadith.json', '/learning-content.json'].map(url => fetch(url)));
+        const responses = await Promise.all(['/hadith.json', '/learning-content.json', '/hadith-index.json'].map(url => fetch(url)));
         if (responses.some(response => !response.ok)) throw new Error('Unavailable content');
-        [collection, content] = await Promise.all(responses.map(response => response.json()));
-        preferences = cleanLearningPreferences(stored(key), collection.hadiths, content.practices);
+        [collection, content, catalog] = await Promise.all(responses.map(response => response.json()));
+        preferences = cleanLearningPreferences(stored(key), catalog.hadiths, content.practices);
+        for (const h of catalog.hadiths) searches.set(h.id, normaliseSearch([h.label, ...Object.values(h.titles), collection.hadiths.find(f => f.id === h.id)?.translations.en.hadith_text || ''].join(' ')));
         language.value = preferences.language;
-        for (const label of new Set(collection.hadiths.map(h => h.topic))) topic.add(new Option(label, label));
         get('learning-notice').textContent = content.editorialNotice;
         get('learning-editions').textContent = Object.entries(collection.editions)
           .map(([lang, edition]) => (lang === 'en' ? 'English' : 'Urdu') + ' ' + edition.version + '\n' + edition.transcript).join('\n\n');
-        get('learning-checked').textContent = 'References checked ' + collection.checkedOn + '. ' + collection.hadiths.length + ' selected narrations; this is not the complete collection.';
+        get('learning-checked').textContent = 'Packaged ' + catalog.checkedOn + ' · ' + catalog.hadiths.length.toLocaleString() + ' publisher-graded sahih narrations attributed to Bukhari, including agreed-upon narrations. The 12 everyday selections also have separately checked Bukhari numbers. This is not a complete Bukhari edition.';
         get('learn-status').textContent = '';
         get('learn-retry').hidden = true;
         return true;
@@ -90,35 +92,93 @@ export function setupLearning({ stored, save, today }) {
     body.lang = preferences.language;
     body.dir = preferences.language === 'ur' ? 'rtl' : 'ltr';
     box.append(body, disclosure('Arabic text', record.hadith_text_ar, 'ar'));
-    const explanation = disclosure('Publisher explanation', record.explanation, preferences.language);
-    explanation.append(node('h4', 'Publisher benefits'));
-    const benefits = node('p', record.benefits, 'source-text');
-    benefits.lang = preferences.language; benefits.dir = preferences.language === 'ur' ? 'rtl' : 'ltr';
-    explanation.append(benefits);
-    explanation.append(disclosure('Arabic explanation', record.explanation_ar, 'ar'), disclosure('Arabic benefits', record.benefits_ar, 'ar'));
+    const explanation = node('details');
+    explanation.append(node('summary', 'Publisher explanation'));
+    const translated = node('p', record.explanation || 'No explanation supplied in this language edition.', 'source-text');
+    if (record.explanation) { translated.lang = preferences.language; translated.dir = preferences.language === 'ur' ? 'rtl' : 'ltr'; }
+    explanation.append(translated);
+    if (record.benefits) {
+      explanation.append(node('h4', 'Publisher benefits'));
+      const benefits = node('p', record.benefits, 'source-text');
+      benefits.lang = preferences.language; benefits.dir = preferences.language === 'ur' ? 'rtl' : 'ltr';
+      explanation.append(benefits);
+    }
+    if (record.explanation_ar) explanation.append(disclosure('Arabic explanation', record.explanation_ar, 'ar'));
+    if (record.benefits_ar) explanation.append(disclosure('Arabic benefits', record.benefits_ar, 'ar'));
     box.append(explanation);
     const refs = node('div', undefined, 'reader-actions');
-    refs.append(link('Publisher source ↗', record.link, true), link('Bukhari ' + hadith.bukhari + ' ↗', hadith.bukhariUrl, true));
+    refs.append(link('Publisher source ↗', record.link, true));
+    if (hadith.bukhari) refs.append(link('Bukhari ' + hadith.bukhari + ' ↗', 'https://sunnah.com/bukhari:' + hadith.bukhari, true));
     box.append(refs, node('p', 'HadeethEnc · ' + collection.editions[preferences.language].version + ' · Publisher grade: ' + record.grade + ' · ' + record.takhrij, 'muted'));
-    box.append(node('p', 'Bukhari reference cross-checked. HadeethEnc wording can include parallel narrations; the publisher text is preserved.', 'muted'));
+    box.append(node('p', (hadith.bukhari ? 'Numbered Bukhari reference cross-checked. ' : 'Collection attribution and grade are supplied by HadeethEnc; no Bukhari number is inferred. ') + 'Publisher wording can include parallel narrations and is preserved.', 'muted'));
     return box;
+  }
+  async function recordFor(entry) {
+    const featured = collection.hadiths.find(h => h.id === entry.id);
+    if (featured) return featured;
+    if (!chunks.has(entry.chunk)) {
+      if (!pendingChunks.has(entry.chunk)) pendingChunks.set(entry.chunk, (async () => {
+        const response = await fetch('/hadith/' + entry.chunk + '.json');
+        if (!response.ok) throw Error('Unavailable');
+        const data = await response.json();
+        if (data.schema !== 1 || !Array.isArray(data.hadiths)) throw Error('Invalid content');
+        chunks.set(entry.chunk, data.hadiths);
+        if (chunks.size > 4) chunks.delete(chunks.keys().next().value);
+        return data.hadiths;
+      })().finally(() => pendingChunks.delete(entry.chunk)));
+      const rows = await pendingChunks.get(entry.chunk);
+      const row = rows.find(h => h.id === entry.id);
+      if (!row) throw Error('Missing narration');
+      return {...entry, ...row};
+    }
+    const row = chunks.get(entry.chunk).find(h => h.id === entry.id);
+    if (!row) throw Error('Missing narration');
+    return {...entry, ...row};
   }
   function renderHadiths(preserveOpen = false) {
     const opened = new Set(preserveOpen ? [...get('hadith-list').querySelectorAll('article > details[open]')].map(d => d.id) : []);
     const needle = normaliseSearch(query.value);
-    const visible = collection.hadiths.filter(h => (!topic.value || h.topic === topic.value)
+    const visible = catalog.hadiths.filter(h => (scope.value !== 'featured' || h.featured)
       && (!savedOnly.checked || preferences.saved.includes(h.id))
-      && (!needle || normaliseSearch([h.label, h.bukhari, ...Object.values(h.translations).flatMap(t => [t.title, t.hadith_text, t.hadith_text_ar])].join(' ')).includes(needle)));
-    get('learn-count').textContent = visible.length + ' of ' + collection.hadiths.length + ' hadiths';
-    const filters = [topic.value, savedOnly.checked ? 'Saved only' : ''].filter(Boolean);
-    get('learn-filters-label').textContent = filters.length ? 'Filters · ' + filters.join(' · ') : 'Filter by topic or saved';
+      && (!needle || (/^\d+$/.test(needle) ? h.id === needle || String(h.bukhari) === needle : searches.get(h.id).includes(needle))));
+    const selectedIndex = visible.findIndex(h => h.id === selected);
+    if (selectedIndex >= 0) currentPage = Math.floor(selectedIndex / pageSize);
+    const pages = Math.max(1, Math.ceil(visible.length / pageSize));
+    currentPage = Math.max(0, Math.min(currentPage, pages - 1));
+    get('learn-count').textContent = visible.length.toLocaleString() + ' of ' + catalog.hadiths.length.toLocaleString() + ' hadiths';
+    const filters = [scope.value === 'featured' ? 'Everyday selection' : '', savedOnly.checked ? 'Saved only' : ''].filter(Boolean);
+    get('learn-filters-label').textContent = filters.length ? 'Filters · ' + filters.join(' · ') : 'Browse selection or saved';
     get('learn-empty').hidden = visible.length !== 0;
-    get('hadith-list').replaceChildren(...visible.map(h => {
+    get('hadith-pagination').hidden = pages <= 1;
+    get('hadith-page').textContent = 'Page ' + (currentPage + 1) + ' of ' + pages;
+    get('hadith-previous').disabled = currentPage === 0;
+    get('hadith-next').disabled = currentPage + 1 === pages;
+    get('learn-reset').hidden = !needle && !filters.length;
+    get('hadith-list').replaceChildren(...visible.slice(currentPage * pageSize, (currentPage + 1) * pageSize).map(h => {
       const card = node('article', undefined, 'learning-card');
       const detail = node('details'); detail.id = 'hadith-' + h.id; detail.open = selected === h.id || opened.has(detail.id);
       const summary = node('summary');
-      summary.append(node('span', h.label), node('span', 'Bukhari ' + h.bukhari + ' · ' + h.topic, 'muted'));
-      detail.append(summary, sourceDetails(h));
+      const title = node('span', h.featured ? h.label : h.titles[preferences.language]);
+      if (!h.featured) { title.lang = preferences.language; title.dir = preferences.language === 'ur' ? 'rtl' : 'ltr'; }
+      summary.append(title, node('span', (h.bukhari ? 'Bukhari ' + h.bukhari : h.collection + ' · HadeethEnc ' + h.id) + (h.topic ? ' · ' + h.topic : ''), 'muted'));
+      const body = node('div', undefined, 'hadith-content');
+      let ready = false, fetching = false;
+      async function fill() {
+        if (ready || fetching || !detail.open) return;
+        fetching = true; const language = preferences.language;
+        body.replaceChildren(node('p', 'Opening narration…', 'muted'));
+        try {
+          const record = await recordFor(h);
+          if (!detail.isConnected || language !== preferences.language) return;
+          body.replaceChildren(sourceDetails(record)); ready = true;
+        } catch {
+          if (!detail.isConnected || language !== preferences.language) return;
+          const retry = node('button', 'Retry narration'); retry.type = 'button'; retry.onclick = fill;
+          body.replaceChildren(node('p', 'This narration could not open. Try again.', 'muted'), retry);
+        } finally { fetching = false; }
+      }
+      detail.addEventListener('toggle', fill);
+      detail.append(summary, body);
       const button = node('button', preferences.saved.includes(h.id) ? 'Saved · remove' : 'Save hadith');
       button.type = 'button'; button.dataset.saveHadith = h.id;
       button.setAttribute('aria-pressed', String(preferences.saved.includes(h.id)));
@@ -128,11 +188,11 @@ export function setupLearning({ stored, save, today }) {
           if (savedOnly.checked) {
             renderHadiths(true);
             (get('hadith-list').querySelector('button') || get('learn-clear')).focus();
-          }
-          else { button.textContent = saved.includes(h.id) ? 'Saved · remove' : 'Save hadith'; button.setAttribute('aria-pressed', String(saved.includes(h.id))); }
+          } else { button.textContent = saved.includes(h.id) ? 'Saved · remove' : 'Save hadith'; button.setAttribute('aria-pressed', String(saved.includes(h.id))); }
         }
       });
       card.append(detail, button);
+      if (detail.open) queueMicrotask(fill);
       return card;
     }));
   }
@@ -205,7 +265,7 @@ export function setupLearning({ stored, save, today }) {
     const [, requested, id = ''] = location.hash.slice(1).split('/');
     section = ['hadith', 'practices', 'stories'].includes(requested) ? requested : 'hadith';
     selected = id;
-    if (selected) { query.value = ''; topic.value = ''; savedOnly.checked = false; }
+    if (selected) { query.value = ''; scope.value = 'all'; currentPage = 0; savedOnly.checked = false; }
     render();
     if (lastRoute !== location.hash) {
       const target = selected ? get((section === 'stories' ? 'story-' : 'hadith-') + selected)?.querySelector('summary') : get('learn-' + section).querySelector('h2');
@@ -222,8 +282,15 @@ export function setupLearning({ stored, save, today }) {
     if (remember({ ...preferences, language: language.value })) { renderHadiths(true); refreshDaily(); }
     else language.value = preferences.language;
   });
-  for (const control of [query, topic, savedOnly]) control.addEventListener(control === query ? 'input' : 'change', () => { if (collection) { selected = ''; renderHadiths(); } });
-  get('learn-clear').addEventListener('click', () => { query.value = ''; topic.value = ''; savedOnly.checked = false; if (collection) renderHadiths(); query.focus(); });
+  for (const control of [query, scope, savedOnly]) control.addEventListener(control === query ? 'input' : 'change', () => { if (collection) { selected = ''; currentPage = 0; renderHadiths(); } });
+  function clearFilters() { selected = ''; query.value = ''; scope.value = 'all'; currentPage = 0; savedOnly.checked = false; if (collection) renderHadiths(); query.focus(); }
+  get('learn-clear').addEventListener('click', clearFilters);
+  get('learn-reset').addEventListener('click', clearFilters);
+  for (const [id, delta] of [['hadith-previous', -1], ['hadith-next', 1]]) get(id).addEventListener('click', () => {
+    selected = ''; currentPage += delta; renderHadiths();
+    const first = get('hadith-list').querySelector('summary');
+    first?.focus(); first?.scrollIntoView({block:'start'});
+  });
   get('learn-retry').addEventListener('click', async () => { await refreshDaily(); navigate('learn'); });
   return { refreshDaily, navigate };
 }

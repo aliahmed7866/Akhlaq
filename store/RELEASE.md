@@ -39,7 +39,7 @@ The output is `android/app/build/outputs/bundle/release/app-release.aab`. Enable
 
 ## Content and usability release checks
 
-Read `content/PROVENANCE.md` and refresh the official HadeethEnc editions before a public release. Preserve source fields, edition transcripts and attribution. The current selection has twelve narrations; do not advertise a complete Bukhari library or 100% scholarly verification. Seek independent review of religious summaries and Urdu text.
+Read `content/PROVENANCE.md` and refresh the official HadeethEnc editions before a public release. Preserve source fields, edition transcripts and attribution. The library has 1,018 publisher-attributed narrations, including twelve everyday selections with checked numbered references; do not advertise a complete Bukhari library or 100% scholarly verification. Seek independent review of religious summaries and Urdu text.
 
 Read `docs/USABILITY.md` for evidence, tested tasks and remaining user/device research. Run `scripts/check-learning-browser.py` alongside the existing audio and native-bridge browser regressions. The app's saved-hadith, chosen-routine and reading-comfort preferences remain local and are not included in the practice-export format.
 

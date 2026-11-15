@@ -38,6 +38,7 @@ public class MainActivity extends Activity {
     private boolean visible;
     private JSONObject pendingCommand;
     private long lastDownloads;
+    private long lastQiblaBuzz = -4000;
     private CompassSensors compassSensors;
     private CurrentLocation currentLocation;
     private String pendingLocation;
@@ -279,6 +280,14 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void compass(boolean enabled) {
             runOnUiThread(() -> { if (enabled && visible) compassSensors.start(); else compassSensors.stop(); });
+        }
+        @JavascriptInterface public void qiblaAligned() {
+            runOnUiThread(() -> {
+                long now = SystemClock.elapsedRealtime();
+                if (!visible || web == null || !web.isShown() || !compassSensors.isRunning() || now - lastQiblaBuzz < 4000) return;
+                lastQiblaBuzz = now;
+                web.performHapticFeedback(Build.VERSION.SDK_INT >= 30 ? HapticFeedbackConstants.CONFIRM : HapticFeedbackConstants.VIRTUAL_KEY);
+            });
         }
 
         @JavascriptInterface public void exportFile(String name, String text, String mime) {

@@ -46,7 +46,7 @@ export function setupPractice({ salah, stored, save, todayForPractice, shiftDate
       const checked = entry[button.dataset.logPrayer] === true;
       button.setAttribute('aria-pressed', String(checked));
       const label = button.querySelector('.prayer-log-label');
-      if (label) label.textContent = checked ? '✓ Logged' : 'Tap to log';
+      if (label) label.textContent = checked ? '✓ Prayed' : 'Mark prayed';
       else button.textContent = checked ? '✓ Logged' : 'Log';
     }
     get('today-prayer-progress').textContent = logged + ' of ' + salah.length + ' prayers logged';
@@ -100,6 +100,7 @@ export function setupPractice({ salah, stored, save, todayForPractice, shiftDate
     const goal = state?.goal ?? 33;
     dhikrGoal.value = String(goal);
     get('dhikr-count').textContent = count;
+    get('dhikr-add').dataset.digits = String(count).length;
     const progress = get('dhikr-progress');
     progress.max = goal;
     progress.value = Math.min(goal, count);

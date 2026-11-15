@@ -55,3 +55,44 @@ bundle = {'schema': 1, 'checkedOn': args.checked_on,
     'termsUrl': 'https://hadeethenc.com/en', 'editions': editions, 'hadiths': hadiths}
 (repo / 'public/hadith.json').write_text(json.dumps(bundle, ensure_ascii=False, indent=2) + '\n')
 print(f'Imported {len(hadiths)} selected narrations with complete records and publisher notices.')
+
+# Expand browsing only from exact publisher grades/attributions present in BOTH editions.
+# Numbered Bukhari cross-references remain limited to the reviewed selection above.
+import gzip
+reviewed = {item['id']: item for item in selection}
+eligible = [id for id in records['en'] if id in records['ur'] and all(
+    records[language][id]['grade_ar'] == 'صحيح'
+    and records[language][id]['takhrij_ar'] in ('رواه البخاري', 'متفق عليه')
+    for language in ['en', 'ur'])]
+# Two reviewed entries combine parallel narrations and have longer publisher attributions.
+# Their existing numbered cross-checks and complete wording are retained above.
+ordered = list(reviewed) + sorted(set(eligible) - set(reviewed), key=int)
+folder = repo / 'data/hadith'
+folder.mkdir(parents=True, exist_ok=True)
+index = {'schema': 1, 'checkedOn': args.checked_on, 'editions': editions, 'chunks': {}, 'hadiths': []}
+for offset in range(0, len(ordered), 64):
+    chunk = f'{offset // 64 + 1:02}'
+    entries = []
+    for id in ordered[offset:offset+64]:
+        translations = {language: records[language][id] for language in ['en','ur']}
+        for language, record in translations.items():
+            assert record['lang'] == language and record['hadith_text'] and record['hadith_text_ar']
+            assert record['link'] == f'https://hadeethenc.com/{language}/browse/hadith/{id}'
+        canonical = json.dumps(translations, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+        digest = hashlib.sha256(canonical.encode()).hexdigest()
+        metadata = reviewed.get(id, {})
+        index['hadiths'].append({'id': id, 'chunk': chunk, 'featured': id in reviewed,
+            'label': metadata.get('label', translations['en']['title']),
+            'titles': {'en': translations['en']['title'], 'ur': translations['ur']['title'], 'ar': translations['en']['title_ar']},
+            'topic': metadata.get('topic', ''), 'bukhari': metadata.get('bukhari'),
+            'collection': 'Bukhari & Muslim' if all(r['takhrij_ar'] == 'متفق عليه' for r in translations.values()) else 'Bukhari',
+            'sourceRecordSha256': digest})
+        entries.append({'id': id, 'sourceRecordSha256': digest, 'translations': translations})
+    body = json.dumps({'schema':1, 'editions':editions, 'hadiths':entries}, ensure_ascii=False, separators=(',',':')).encode()
+    (folder / f'{chunk}.json.gz').write_bytes(gzip.compress(body, mtime=0))
+    index['chunks'][chunk] = {'count':len(entries), 'sha256':hashlib.sha256(body).hexdigest()}
+(repo / 'data/hadith-index.json.gz').write_bytes(gzip.compress(json.dumps(index, ensure_ascii=False, separators=(',',':')).encode(), mtime=0))
+# Only remove obsolete generated chunks from this exact output folder.
+for file in folder.glob('*.json.gz'):
+    if file.name.removesuffix('.json.gz') not in index['chunks']: file.unlink()
+print(f'Bundled {len(ordered)} publisher-graded sahih Bukhari-attributed records in {len(index["chunks"])} offline chunks.')

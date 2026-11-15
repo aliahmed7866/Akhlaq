@@ -19,7 +19,7 @@ try:
         errors=[]; page.on('pageerror',lambda error:errors.append(str(error)))
         page.route('**/urdu.json',lambda route:route.fulfill(body=gzip.decompress((repo/'data/urdu.json.gz').read_bytes()),content_type='application/json'))
         page.add_init_script('''
-          window.nativeState = {ready:true}; window.commands = []; window.sensorCommands = [];
+          window.nativeState = {ready:true}; window.commands = []; window.sensorCommands = []; window.qiblaBuzzes = 0;
           window.locationRequests = []; window.locationCancellations = []; window.locationMode = 'success'; window.browserLocationCalls = 0;
           navigator.geolocation.getCurrentPosition = (ok,fail) => { browserLocationCalls++; fail({code:2}); };
           window.AkhlaqNative = {
@@ -47,6 +47,7 @@ try:
               window.dispatchEvent(new CustomEvent('akhlaq-native-state',{detail:nativeState}));
             },
             compass: enabled => sensorCommands.push(enabled),
+            qiblaAligned: () => qiblaBuzzes++,
             exportFile: (name,text,mime) => { window.exported={name,text,mime}; }
           };
         ''')
@@ -127,6 +128,9 @@ try:
           for(let i=0;i<15;i++){compassSample();await new Promise(r=>setTimeout(r,80));}
         }""")
         expect(page.locator('#compass-dial')).to_have_attribute('data-aligned','true')
+        assert page.evaluate('qiblaBuzzes') == 1
+        page.evaluate('''async () => {for(let i=0;i<15;i++){compassSample();await new Promise(r=>setTimeout(r,80));}}''')
+        assert page.evaluate('qiblaBuzzes') == 1, 'A held direction must not buzz continuously'
         page.evaluate('compassSample({magneticStrength:120})')
         expect(page.locator('#needle')).to_be_hidden()
         expect(page.locator('#compass-note')).to_contain_text('interference')
@@ -137,8 +141,12 @@ try:
         page.wait_for_timeout(1600)
         expect(page.locator('#needle')).to_be_hidden()
         expect(page.locator('#compass-quality')).to_have_text('Readings paused')
+        assert page.evaluate('qiblaBuzzes') == 1, 'Unknown accuracy or interference must not buzz'
+        page.locator('#qibla-vibrate').uncheck()
         page.locator('#compass-recheck').click()
         assert page.evaluate('sensorCommands.slice(-2)') == [False,True]
+        page.evaluate('''async () => {for(let i=0;i<15;i++){compassSample();await new Promise(r=>setTimeout(r,80));}}''')
+        assert page.evaluate('qiblaBuzzes') == 1, 'Turning buzz off is respected'
         page.evaluate('compassSample({screenRotation:1})')
         expect(page.locator('#compass-dial')).to_have_attribute('data-aligned','false')
         page.locator('#compass').click()

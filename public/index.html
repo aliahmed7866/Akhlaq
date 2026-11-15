@@ -121,25 +121,25 @@
       </nav>
       <p id="learn-status" role="status"></p><button id="learn-retry" type="button" hidden>Retry loading</button>
       <div id="learn-hadith">
-        <h2>Sahih al-Bukhari selection</h2>
+        <h2>Hadith library</h2><p class="muted">Arabic, English and Urdu · available offline</p>
         <div class="learning-filters">
-          <label class="field">Find a hadith<input id="learn-query" type="search" maxlength="120" placeholder="Kindness, 6114, or a phrase" dir="auto"></label>
+          <label class="field">Find a hadith<input id="learn-query" type="search" maxlength="120" placeholder="Search titles or a reference" dir="auto"></label>
           <label class="field">Hadith translation<select id="hadith-language"><option value="en">English</option><option value="ur">Urdu · اردو</option></select></label>
           <details id="learn-filters" class="utility-panel">
-            <summary id="learn-filters-label">Filter by topic or saved</summary>
-            <label class="field">Topic<select id="learn-topic"><option value="">All topics</option></select></label>
+            <summary id="learn-filters-label">Browse selection or saved</summary>
+            <label class="field">Browse<select id="learn-scope"><option value="all">Full library</option><option value="featured">Everyday selection · 12</option></select></label>
             <label class="check-option"><input id="learn-saved-only" type="checkbox"> Saved hadiths only</label>
           </details>
         </div>
-        <p id="learn-count" class="muted" role="status"></p>
+        <div class="results-toolbar"><p id="learn-count" class="muted" role="status"></p><button id="learn-reset" type="button" hidden>Clear filters</button></div>
         <div id="learn-empty" hidden><p>No matching hadiths. Try another phrase or clear your filters.</p><button id="learn-clear" type="button">Clear filters</button></div>
-        <div id="hadith-list"></div>
+        <div id="hadith-list"></div><div id="hadith-pagination" class="reader-pagination" hidden><button id="hadith-previous" type="button">Previous page</button><span id="hadith-page" class="muted" role="status"></span><button id="hadith-next" type="button">Next page</button></div>
       </div>
       <div id="learn-practices" hidden><h2>A practice you can return to</h2><p>Choose one manageable action and connect it to a familiar moment. Your choice stays on Today until you change it. These ideas add no prescribed counts or special rewards.</p><div id="practice-ideas"></div></div>
       <div id="learn-stories" hidden><h2>Stories of the Prophets</h2><p>Brief English summaries of Quran passages. Open the cited verses to read the Arabic, English or Urdu in context.</p><div id="prophet-stories"></div></div>
       <details class="learning-method"><summary>Sources, editions &amp; accuracy</summary>
         <p id="learning-checked"></p>
-        <p>Arabic and translations are reproduced unchanged from HadeethEnc's official downloads, including publisher explanations and grading. Each selected teaching has a cross-checked Bukhari reference. Some publisher records combine parallel narrations; they are not presented as verbatim text from one Bukhari edition.</p>
+        <p>Arabic and translations are reproduced unchanged from HadeethEnc's official downloads, including publisher explanations and grading. The full library uses the publisher’s sahih grade and Bukhari attribution in both editions. The 12 everyday selections also have separately checked numbered references. HadeethEnc IDs are publisher identifiers, not Bukhari numbers. Some records combine parallel narrations; this is not a complete Bukhari edition.</p>
         <p id="learning-notice"></p>
         <p>Source checking is not a guarantee that human translations or editorial summaries are error-free. No independent scholarly review of this app has been completed. Consult a qualified scholar for personal religious rulings.</p>
         <p>HadeethEnc permits free reuse under its conditions: preserve content, credit the publisher, retain version and transcript information, report corrections, keep editions updated, and avoid inappropriate advertising. <a href="https://hadeethenc.com/en" target="_blank" rel="noopener noreferrer">Publisher and reuse terms ↗</a></p>
@@ -176,7 +176,7 @@
         <details class="reader-preferences">
           <summary>Text, size &amp; playback options</summary>
           <div class="reader-display">
-            <label class="field">Show text
+            <label class="field">What you read
               <select id="quran-language">
                 <option value="both">Arabic + English</option>
                 <option value="arabic-urdu">Arabic + Urdu</option>
@@ -188,7 +188,7 @@
             </label>
           </div>
           <div class="reader-option-fields">
-            <label class="field">Playback mode
+            <label class="field">What you hear
               <select id="quran-voice">
                 <option value="both">Arabic → English</option>
                 <option value="arabic-urdu">Arabic → Urdu</option>
@@ -268,6 +268,8 @@
           <div class="compass-actions"><button id="compass" type="button" class="primary" aria-pressed="false" disabled>Start compass</button><button id="compass-recheck" type="button" hidden>Recheck</button></div>
           <p id="compass-note" class="compass-note muted" role="status">Start the compass, then point the top of your phone towards the arrow.</p>
         </div>
+        <label class="check-option qibla-vibration"><input id="qibla-vibrate" type="checkbox" checked> Buzz when facing Qibla</label>
+        <p id="qibla-vibration-help" class="muted"></p>
         <details>
           <summary>Improve the reading</summary>
           <ol class="compass-help"><li>Remove magnetic cases. Move away from metal, speakers and chargers.</li><li>Slowly trace a figure eight with your phone.</li><li>Hold it flat, screen up. Tap Recheck and turn slowly.</li></ol>
@@ -330,7 +332,7 @@
               <option value="astaghfirullah">Astaghfirullah · أستغفر الله</option><option value="tahlil">La ilaha illa Allah · لا إله إلا الله</option><option value="hawqala">La hawla wa la quwwata illa billah · لا حول ولا قوة إلا بالله</option><option value="tasbih-praise">Subhan Allah wa bihamdih · سبحان الله وبحمده</option>
             </select>
           </label>
-          <label class="field">Personal target
+          <label class="field">Counter target
             <select id="dhikr-goal"><option>33</option><option>99</option><option>100</option></select>
           </label>
           <div>
@@ -340,8 +342,8 @@
         </div>
         <div class="dhikr-phrase"><p id="dhikr-arabic" lang="ar" dir="rtl"></p><p id="dhikr-transliteration" class="muted"></p></div>
         <div class="dhikr-actions">
-          <button id="dhikr-minus" type="button" aria-label="Subtract one">−</button>
-          <button id="dhikr-add" type="button" class="primary"><strong id="dhikr-count">0</strong><span>Tap to count</span></button>
+          <button id="dhikr-minus" type="button" aria-label="Subtract one">Undo one</button>
+          <button id="dhikr-add" type="button" class="primary"><strong id="dhikr-count">0</strong><span>Tap to add one</span></button>
           <button id="dhikr-reset" type="button">Reset</button>
         </div>
       </div>
@@ -438,7 +440,7 @@
   <aside id="quran-player" class="mini-player" aria-label="Quran audio player" hidden>
     <div class="player-inner">
       <a id="playing-verse" href="#quran" class="player-verse"></a>
-      <button id="player-previous" type="button" aria-label="Previous audio verse">Prev</button>
+      <button id="player-previous" type="button" aria-label="Previous audio verse">Previous</button>
       <button id="player-toggle" class="primary" type="button">Pause</button>
       <button id="player-next" type="button" aria-label="Next audio verse">Next</button>
       <button id="player-close" type="button" aria-label="Stop Quran audio">Stop</button>

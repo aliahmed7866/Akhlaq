@@ -1,6 +1,7 @@
 import { mkdir, cp, readFile, writeFile } from 'node:fs/promises';
 import { downloadUrdu } from '../urdu.mjs';
 import { gunzipSync, gzipSync } from 'node:zlib';
+import { loadHadithAssets } from '../hadith-assets.mjs';
 const output = new URL('../android/app/build/generated/assets/', import.meta.url);
 await mkdir(output, { recursive: true });
 await cp(new URL('../public/', import.meta.url), output, { recursive: true });
@@ -21,3 +22,7 @@ console.log('Bundled app, calculation engine, Quran and Urdu translation.');
 const raw = new URL('../android/app/build/generated/akhlaq-res/raw/', import.meta.url);
 await mkdir(raw, { recursive: true });
 await cp(new URL('../public/adhan.oga', import.meta.url), new URL('adhan.ogg', raw));
+
+await mkdir(new URL('hadith/', output), {recursive:true});
+for (const [path, {body}] of await loadHadithAssets()) await writeFile(new URL(path.slice(1), output), body);
+console.log('Bundled the complete attributed hadith library for offline browsing.');

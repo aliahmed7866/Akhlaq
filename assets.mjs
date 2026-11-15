@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { loadHadithAssets } from './hadith-assets.mjs';
 import { gunzipSync } from 'node:zlib';
 
 const types = {
@@ -28,7 +29,7 @@ export async function loadAssets() {
     ])),
     readFile(new URL('./data/quran.json.gz', import.meta.url)),
   ]);
-  const assets = new Map(files);
+  const assets = new Map([...files, ...await loadHadithAssets()]);
   assets.set('/quran.json', { body: gunzipSync(quran), compressed: quran, type: types.json });
   const hash = createHash('sha256').update(worker);
   for (const [path, { body }] of assets) hash.update(path).update(body);

@@ -23,7 +23,7 @@ for forbidden in ['ACCESS_BACKGROUND_LOCATION', 'MANAGE_EXTERNAL_STORAGE', 'REQU
 with zipfile.ZipFile(sys.argv[1]) as bundle:
     names = set(bundle.namelist())
     assert 'base/manifest/AndroidManifest.xml' in names, 'Missing bundle manifest'
-    for asset in ['index.html', 'location.js', 'interface.js', 'engine.js', 'privacy.html', 'licenses.html', 'quran.json', 'urdu.json', 'learning.js', 'hadith.json', 'learning-content.json', 'companion.js', 'devotional.json', 'adhan.oga']:
+    for asset in ['index.html', 'location.js', 'interface.js', 'engine.js', 'privacy.html', 'licenses.html', 'quran.json', 'urdu.json', 'learning.js', 'hadith.json', 'hadith-index.json', 'learning-content.json', 'companion.js', 'devotional.json', 'adhan.oga']:
         assert 'base/assets/' + asset in names, 'Missing offline asset: ' + asset
     quran = json.loads(bundle.read('base/assets/quran.json'))
     urdu = json.loads(bundle.read('base/assets/urdu.json'))
@@ -34,6 +34,13 @@ with zipfile.ZipFile(sys.argv[1]) as bundle:
     learning = json.loads(bundle.read('base/assets/learning-content.json'))
     hadith = json.loads(bundle.read('base/assets/hadith.json'))
     assert len(hadith['hadiths']) == 12 and len(learning['stories']) == 8
+    catalog = json.loads(bundle.read('base/assets/hadith-index.json'))
+    assert len(catalog['hadiths']) == 1018
+    import hashlib
+    for chunk, meta in catalog['chunks'].items():
+        body = bundle.read('base/assets/hadith/' + chunk + '.json')
+        assert hashlib.sha256(body).hexdigest() == meta['sha256']
+        assert len(json.loads(body)['hadiths']) == meta['count']
     assert all(hadith['editions'][lang]['transcript'] for lang in ['en','ur'])
     native = [name for name in names if name.endswith('.so')]
     assert not native, 'Native libraries added: review 16 KB page-size compatibility: ' + str(native)

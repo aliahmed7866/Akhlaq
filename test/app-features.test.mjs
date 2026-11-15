@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { loadAssets } from '../assets.mjs';
 import { makeCalendar } from '../public/calendar.js';
-import { readHeading, smoothHeading, turnAngle, createHeadingTracker } from '../public/compass.js';
+import { readHeading, smoothHeading, turnAngle, createHeadingTracker, createAlignmentCue } from '../public/compass.js';
 import { validateBackup } from '../public/practice.js';
 import { calculate } from '../prayer.mjs';
 
@@ -102,4 +102,21 @@ test('direction confirmation requires fresh samples over time, handles north, an
   for (let i = 0; i < 12; i++) assert.equal(tracker.update(i % 2 ? 350 : 10, i * 100), false);
   assert.equal(tracker.update(0, 3000), false, 'a gap cannot preserve confirmation');
   assert.equal(tracker.update(0, 3000), false, 'duplicate timestamps cannot count as steady time');
+});
+
+
+test('Qibla buzz fires once per confirmed approach and ignores jitter or unreliable readings', () => {
+  const cue = createAlignmentCue();
+  const sample = (now, turn, aligned = false, reliable = true) => cue.update({now, turn, aligned, reliable});
+  assert.equal(sample(0, 0), false);
+  assert.equal(sample(800, 0, true), true);
+  for (let at = 900; at < 5000; at += 100) assert.equal(sample(at, at % 200 ? 3 : 5, true), false);
+  assert.equal(sample(5000, 30, false, false), false);
+  assert.equal(sample(5100, 0, true), false);
+  for (let at = 5200; at <= 5900; at += 100) assert.equal(sample(at, 20), false);
+  assert.equal(sample(6800, 0, true), true);
+  assert.equal(sample(6900, 0, true), false);
+  cue.reset();
+  assert.equal(sample(7000, 0, true, false), false);
+  assert.equal(sample(8000, 0, true), true);
 });

@@ -12,6 +12,25 @@ export function smoothHeading(previous, next, weight) {
   return previous === null ? next : previous + turnAngle(previous, next) * weight;
 }
 
+// A confirmed match is a single event, not a vibration on every sensor sample.
+export function createAlignmentCue() {
+  let armed = true, awaySince = null, lastSample = null, lastBuzz = -Infinity;
+  return {
+    reset() { armed = true; awaySince = lastSample = null; lastBuzz = -Infinity; },
+    update({ aligned, reliable, turn, now }) {
+      if (!reliable || !Number.isFinite(turn) || !Number.isFinite(now)) { awaySince = lastSample = null; return false; }
+      if (lastSample !== null && (now <= lastSample || now - lastSample > 400)) awaySince = null;
+      lastSample = now;
+      if (Math.abs(turn) >= 12) {
+        awaySince ??= now;
+        if (now - awaySince >= 600) armed = true;
+      } else awaySince = null;
+      if (!aligned || !armed || now - lastBuzz < 4000) return false;
+      armed = false; lastBuzz = now; return true;
+    },
+  };
+}
+
 // Sensor error estimates and stability serve different purposes: a steady wrong heading is possible.
 export function createHeadingTracker() {
   let samples = [];
@@ -65,6 +84,15 @@ export function setupCompass() {
   const button = get('compass'), note = get('compass-note'), dial = get('compass-dial');
   const rose = get('dial-rose'), needle = get('needle'), quality = get('compass-quality');
   const tracker = createHeadingTracker();
+  const cue = createAlignmentCue(), vibration = get('qibla-vibrate');
+  try { vibration.checked = localStorage.getItem('akhlaq.qibla.buzz') !== 'off'; } catch { }
+  const supportsBuzz = !!native?.qiblaAligned || (!native && typeof navigator.vibrate === 'function');
+  vibration.disabled = !supportsBuzz;
+  get('qibla-vibration-help').textContent = supportsBuzz ? 'One short buzz after a steady match. Your phone’s vibration settings apply.' : 'Vibration is unavailable here. The compass still shows a visual match.';
+  vibration.addEventListener('change', () => {
+    try { localStorage.setItem('akhlaq.qibla.buzz', vibration.checked ? 'on' : 'off'); }
+    catch { get('qibla-vibration-help').textContent = 'Applied for now; this preference could not be saved.'; }
+  });
   let position, listening = false, promptPending = false, heading = null, previousTime = 0;
   let initialTimer, staleTimer, absoluteReceived = false, rotation;
   function draw() {
@@ -76,7 +104,7 @@ export function setupCompass() {
     dial.dataset.live = String(heading !== null);
   }
   function resetHeading() {
-    heading = null; previousTime = 0; tracker.reset(); dial.dataset.aligned = 'false';
+    heading = null; previousTime = 0; tracker.reset(); cue.update({reliable:false}); dial.dataset.aligned = 'false';
     get('compass-turn').textContent = '—'; draw();
   }
   const issues = {
@@ -115,6 +143,9 @@ export function setupCompass() {
     if (locationError > 3) quality.textContent = 'Location too approximate · refresh GPS';
     get('compass-source').textContent = detail.source || 'Browser compass';
     const aligned = stable && reliable && Math.abs(turn) <= 4 && Math.abs(rawTurn) <= 4;
+    if (cue.update({ aligned, reliable, turn: rawTurn, now }) && vibration.checked && supportsBuzz && !document.hidden && !get('qibla').hidden) {
+      try { if (native) native.qiblaAligned(); else navigator.vibrate(35); } catch { /* Visual confirmation remains available. */ }
+    }
     dial.dataset.aligned = String(aligned);
     get('compass-turn').textContent = aligned ? 'Facing Qibla' : Math.abs(turn) <= 4 ? 'Hold steady' : Math.round(Math.abs(turn)) + '° ' + (turn > 0 ? 'right' : 'left');
     note.textContent = aligned ? 'Keep the top of your phone pointing this way. The sensor estimate is not a guarantee.'
@@ -135,7 +166,7 @@ export function setupCompass() {
     try {
       if (!native && typeof window.DeviceOrientationEvent?.requestPermission === 'function' && await window.DeviceOrientationEvent.requestPermission(true) !== 'granted') return stop('Motion access was denied. Use Direction details with a separate compass.');
       if (document.hidden || get('qibla').hidden) return;
-      listening = true; absoluteReceived = false; rotation = undefined;
+      listening = true; absoluteReceived = false; rotation = undefined; cue.reset();
       button.textContent = 'Stop compass'; button.setAttribute('aria-pressed', 'true'); get('compass-recheck').hidden = false;
       quality.textContent = 'Checking sensor…'; note.textContent = 'Hold flat, screen up, away from magnets and metal.';
       initialTimer = setTimeout(() => stop('No compass reading. Check motion permissions or use Direction details.'), 8500);

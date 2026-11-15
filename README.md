@@ -22,7 +22,7 @@ In the Akhlaq folder, run `git pull --ff-only`. Stop the old Akhlaq server with 
 
 ## Learn and reading comfort
 
-The standalone Android branch adds a **Learn** tab with 12 selected Bukhari-referenced hadiths in Arabic, English and Urdu, nine sourced daily practice ideas and eight Quran-based Prophet story summaries. Read the publisher explanations, search by word or reference (including Urdu numerals), save a hadith and follow source links. A daily hadith appears on Today. Choose one routine to keep it on your home page.
+The standalone Android branch adds a **Learn** tab with 1,018 publisher-graded sahih Bukhari-attributed narrations in Arabic, English and Urdu, including 12 everyday selections with checked numbered references, nine sourced daily practice ideas and eight Quran-based Prophet story summaries. Read the publisher explanations, search by word or reference (including Urdu numerals), save a hadith and follow source links. A daily hadith appears on Today. Choose one routine to keep it on your home page.
 
 Settings → Reading comfort adjusts app text through 200%; Quran retains its separate reader sizing. Learning content works offline after the browser's initial cache or immediately in the standalone APK. Saved hadiths and the chosen routine stay on the device; the existing practice-export format does not include these new preferences.
 
@@ -91,3 +91,7 @@ Use current location now calls Android location providers directly in the APK. I
 ### 2.4.0 interface refinement
 
 A clearer phone interface with labelled navigation icons, compact prayer utilities, a Quran toolbox for search/saved verses/advanced options, visible playback language, and expandable learning filters. Dhikr now has a larger count button and displays the selected Arabic phrase and transliteration. Settings → Reading comfort offers Night, Day and Follow phone appearance; text size remains independent. No content editions, prayer calculations or location permissions changed. See [UI review](docs/UI-REFINEMENT.md) for checks and limitations.
+
+### 2.5.0 deeper refinement
+
+Qibla gives one short confirmation buzz after a reliable steady match, with a saved off switch and protection against repeated buzzing. Counter/player layouts and keyboard overlays are more resilient, and reader/prayer options have clearer labels. The offline hadith library now has 1,018 records with paged browsing, title/reference search, English/Urdu switching, saves and source notices. See [deep refinement notes](docs/DEEP-REFINEMENT.md) and [content provenance](content/PROVENANCE.md).

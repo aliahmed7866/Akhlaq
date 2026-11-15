@@ -23,6 +23,7 @@ final class CompassSensors implements SensorEventListener {
         manager = activity.getSystemService(SensorManager.class);
     }
     void stop() { running = false; manager.unregisterListener(this); }
+    boolean isRunning() { return running; }
     private void issue(String value) {
         try { emit.accept(new JSONObject().put("issue", value)); } catch (JSONException ignored) { }
     }
