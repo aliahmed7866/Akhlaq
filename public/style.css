@@ -361,3 +361,38 @@ html { scroll-padding-bottom: calc(var(--nav-height, 4rem) + var(--player-height
 #companion-content p { margin-block: .8rem; }
 #adhan-preview { width: 100%; max-width: 100%; }
 #story-reader { margin: 1rem; }
+
+/* The daily essentials are visible first; supporting details stay one tap away. */
+.intro { padding-block: 1rem .85rem; }
+.intro .arabic { float: right; margin-left: .75rem; }
+.intro #today-label { margin-top: .45rem; }
+.intro #hijri-date { font-size: .8rem; }
+.prayer-card .card-head { margin-bottom: .85rem; }
+.prayer-card #location-freshness { font-size: .8rem; }
+.prayer-card .next { padding: 1rem; }
+.prayers li { padding: 0; overflow: hidden; }
+.prayers .prayer-tile { display: grid; gap: .18rem; width: 100%; height: 100%; padding: .7rem .25rem; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-weight: 400; }
+.prayers .prayer-tile[aria-pressed="true"] { background: #254036; color: var(--green); }
+.prayer-log-label { font-size: .72rem; }
+.prayers .sunrise-tile { padding: .7rem .25rem; align-content: start; gap: .18rem; }
+.prayer-progress a { min-height: 48px; display: inline-flex; align-items: center; }
+.prayer-progress { align-items: center; margin-block: .25rem; }
+.reminder-shortcut { width: 100%; justify-content: space-between; margin-bottom: .7rem; color: var(--green); }
+.home-shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 0 1rem; gap: .6rem; }
+.home-shortcuts a { display: grid; justify-content: start; text-align: left; padding: .85rem 1rem; background: var(--surface); border-radius: 14px; }
+.home-shortcuts strong { font-size: 1rem; }
+.home-shortcuts span { color: var(--muted); font-size: .78rem; }
+.compass-stage { text-align: center; padding-block: .5rem; }
+.compass-top { font-size: .78rem; margin-bottom: .65rem; }
+.dial { width: min(100%, 17rem); background: radial-gradient(circle, #264d40, #142b23 68%); }
+.dial[data-live="false"] .dial-rose { opacity: .45; }
+.compass-direction { font: 1.65rem/1.3 Georgia, serif; margin: 1rem 0 .5rem; }
+.quality-badge { display: inline-block; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: .35rem .65rem; font-size: .8rem; }
+.compass-actions { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin-top: .85rem; }
+#compass { margin: 0; min-width: min(100%, 10rem); }
+#compass-note { max-width: 34rem; margin-inline: auto; min-height: 3em; }
+#qibla-location-status:empty { display: none; }
+#compass-source { font-size: .85rem; }
+.compass-help { padding-left: 1.3rem; color: var(--muted); }
+.compass-help li { margin-block: .45rem; }
+@media (max-width: 370px) { .intro .arabic { float: none; } }

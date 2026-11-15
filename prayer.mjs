@@ -111,9 +111,10 @@ export function calculate(query, now = new Date()) {
   const days = Array.from({ length: 7 }, (_, index) => timesFor(shiftDate(date, index)));
   const previous = timesFor(shiftDate(date, -1));
 
-  let declination = null;
+  let declination = null, magneticStrength = null;
   try {
     const magnetic = geomagnetism.model(now).point([latitude, longitude]);
+    if (Number.isFinite(magnetic.f)) magneticStrength = magnetic.f / 1000;
     if (Number.isFinite(magnetic.decl) && magnetic.h >= 6000) declination = magnetic.decl;
   } catch (error) {
     if (!/date/i.test(error.message)) throw error;
@@ -128,5 +129,5 @@ export function calculate(query, now = new Date()) {
   const distanceKm = 6371 * arc;
   const bearing = Math.abs(latitude) === 90 || distanceKm < 0.015 || Math.PI - arc < 0.000002
     ? null : Qibla(coordinates);
-  return { days, previous, today, zone, bearing, declination, distanceKm };
+  return { days, previous, today, zone, bearing, declination, distanceKm, magneticStrength };
 }

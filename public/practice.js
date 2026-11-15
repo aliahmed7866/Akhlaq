@@ -45,7 +45,9 @@ export function setupPractice({ salah, stored, save, todayForPractice, shiftDate
     for (const button of document.querySelectorAll('[data-log-prayer]')) {
       const checked = entry[button.dataset.logPrayer] === true;
       button.setAttribute('aria-pressed', String(checked));
-      button.textContent = checked ? '✓ Logged' : 'Log';
+      const label = button.querySelector('.prayer-log-label');
+      if (label) label.textContent = checked ? '✓ Logged' : 'Tap to log';
+      else button.textContent = checked ? '✓ Logged' : 'Log';
     }
     get('today-prayer-progress').textContent = logged + ' of ' + salah.length + ' prayers logged';
   }

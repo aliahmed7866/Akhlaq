@@ -85,7 +85,7 @@ Record device model, Android version, build version, date and result for every r
 | Screen lock / Recents dismissal | Audio transitions continue, controls pause/resume; Stop stops audio | Pending device test |
 | Offline audio | Download a short surah, disable network, play every selected part | Pending device test |
 | Calls / headset disconnect | Audio focus and noisy-audio behavior are correct | Pending device test |
-| Location denied / approximate / granted | City fallback works; correct coordinates and time zone are shown | Pending device test |
+| Location denied / approximate / granted | Location setup or manual-coordinate fallback works; correct coordinates and time zone are shown | Pending device test |
 | Qibla / missing sensors | Calibrated bearing sensible; unsupported sensor behavior explained | Pending device test |
 | Android 16 navigation / keyboard | Back works; keyboard and system bars do not cover controls | Pending device test |
 | Download timeout / no network / low storage | No crash or runaway service; retry/pause is usable | Pending device test |

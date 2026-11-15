@@ -32,11 +32,7 @@
       <h1>Assalamu alaikum</h1>
       <p id="today-label"></p>
       <p id="hijri-date" class="muted"></p>
-      <nav class="home-shortcuts" aria-label="Daily tools">
-        <a class="small-button" href="#quran">Read Quran</a>
-        <a class="small-button" href="#qibla">Find Qibla</a>
-        <a class="small-button" href="#dhikr">Count dhikr</a><a class="small-button" href="#essentials">Duas &amp; calendar</a>
-      </nav>
+
     </div>
     <section id="salah" data-page="home" aria-labelledby="prayer-title" class="card prayer-card">
       <div class="card-head">
@@ -51,8 +47,9 @@
       <ul id="prayers" class="prayers" aria-label="Today’s prayer times"></ul>
       <div class="prayer-progress">
         <p id="today-prayer-progress" class="muted" role="status"></p>
-        <a href="#practice">Prayer log</a>
+        <a href="#practice">View log</a>
       </div>
+      <a class="small-button reminder-shortcut" href="#settings/reminders">Prayer alerts &amp; adhan →</a>
       <p id="prayer-method" class="muted"></p>
       <p id="unavailable" class="muted" hidden>Some solar events are unavailable at this latitude. Check your local mosque’s timetable for those prayers.</p>
       <details>
@@ -76,6 +73,12 @@
         </form>
       </details>
     </section>
+    <nav class="home-shortcuts" data-page="home" aria-label="Daily tools">
+      <a class="small-button" href="#quran"><strong>Quran</strong><span>Read &amp; listen</span></a>
+      <a class="small-button" href="#dhikr"><strong>Dhikr</strong><span>A quiet moment</span></a>
+      <a class="small-button" href="#essentials/duas"><strong>Duas</strong><span>Words for your day</span></a>
+      <a class="small-button" href="#essentials/calendar"><strong>Calendar</strong><span>Dates &amp; reflections</span></a>
+    </nav>
     <section class="card home-reading" id="home-reading" data-page="home" aria-labelledby="home-reading-title" hidden>
       <div><h2 id="home-reading-title">Continue reading</h2><p id="home-reading-reference" class="muted"></p></div>
       <a class="small-button" id="home-resume" href="#quran">Open Quran</a>
@@ -241,28 +244,33 @@
       </div>
     </section>
       <section id="qibla" data-page="qibla" hidden class="card" aria-labelledby="qibla-title">
-        <div class="card-head"><div><h2 id="qibla-title">Qibla</h2><p>Direction of the Kaaba in Makkah</p></div></div>
-        <div class="dial" id="compass-dial" aria-hidden="true">
-          <div class="aim-mark"></div>
-          <div id="dial-rose" class="dial-rose">
-            <span class="point north">N</span><span class="point east">E</span>
-            <span class="point south">S</span><span class="point west">W</span>
+        <div class="card-head"><div><h2 id="qibla-title">Find your Qibla</h2><p id="qibla-location">Use your location to begin.</p></div><button id="qibla-gps" type="button">Use current location</button></div>
+        <p id="qibla-location-status" class="muted" role="status"></p>
+        <div class="compass-stage">
+          <p class="compass-top muted">Top of your phone ↑</p>
+          <div class="dial" id="compass-dial" aria-hidden="true" data-live="false">
+            <div class="aim-mark"></div>
+            <div id="dial-rose" class="dial-rose">
+              <span class="point north">N</span><span class="point east">E</span>
+              <span class="point south">S</span><span class="point west">W</span>
+            </div>
+            <div id="needle" class="needle" hidden></div><div class="dial-centre"></div>
           </div>
-          <div id="needle" class="needle" hidden></div>
-          <div class="dial-centre"></div>
+          <p id="compass-turn" class="compass-direction">—</p>
+          <p id="compass-quality" class="quality-badge">Compass off</p>
+          <div class="compass-actions"><button id="compass" type="button" class="primary" aria-pressed="false" disabled>Start compass</button><button id="compass-recheck" type="button" hidden>Recheck</button></div>
+          <p id="compass-note" class="compass-note muted" role="status">Start the compass, then point the top of your phone towards the arrow.</p>
         </div>
-        <p class="bearing" id="bearing">—</p>
-        <p id="magnetic" class="compass-note muted" hidden></p>
-        <p id="qibla-distance" class="compass-note muted"></p>
-        <dl class="compass-readout">
-          <div><dt>Phone heading</dt><dd id="phone-heading">—</dd></div>
-          <div><dt>Turn to Qibla</dt><dd id="compass-turn">—</dd></div>
-        </dl>
-        <button id="compass" type="button" class="primary" disabled>Start live compass</button>
-        <p id="compass-note" class="compass-note muted" role="status">The dial shows north at the top. Start the live compass to align it with your phone.</p>
         <details>
-          <summary>Compass help</summary>
-          <p class="muted">Hold the phone screen-up and point its top edge where you want to face. Remove magnetic cases and step away from metal. If the reading jumps, move the phone in a figure eight. You can also use the magnetic bearing with a separate compass.</p>
+          <summary>Improve the reading</summary>
+          <ol class="compass-help"><li>Remove magnetic cases. Move away from metal, speakers and chargers.</li><li>Slowly trace a figure eight with your phone.</li><li>Hold it flat, screen up. Tap Recheck and turn slowly.</li></ol>
+          <p class="muted">A steady reading can still be wrong near interference. GPS finds your position; the phone sensor finds your direction. Compare with a trusted compass or the direction at your local prayer space.</p>
+        </details>
+        <details id="compass-details">
+          <summary>Direction details</summary>
+          <p class="bearing" id="bearing">—</p><p id="magnetic" class="compass-note muted" hidden></p><p id="qibla-distance" class="compass-note muted"></p>
+          <dl class="compass-readout"><div><dt>Phone heading</dt><dd id="phone-heading">—</dd></div><div><dt>Sensor</dt><dd id="compass-source">Not started</dd></div></dl>
+          <p class="muted">True-north correction uses the bundled World Magnetic Model. Accuracy estimates come from the device when available; they do not include every local source of error.</p>
         </details>
       </section>
       <section id="practice" data-page="practice" hidden class="card" aria-labelledby="practice-title">

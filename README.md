@@ -79,3 +79,7 @@ The `android-standalone` branch contains the independent Android APK project. Se
 ## Version 2.2 additions
 
 Location-first setup without a city dropdown; optional Android prayer alerts and advance reminders; attributed spoken adhan; Quranic dua directory; seven dhikr counters; six traditional kalimat learning cards; five pillars; estimated Hijri calendar, upcoming readings and private date notes; offline-device English narration of original cited stories. See `docs/FEATURE-RESEARCH.md` and `content/PROVENANCE.md` for the comparison, sources, reuse terms and limitations. Calendar notes, practice marks and narration progress remain local and are not included in the existing practice-export format.
+
+### 2.3.0 refinement
+
+The compass now uses reported sensor accuracy, north-referenced fallbacks, fresh-sample confirmation and magnetic-interference checks. Today has simpler prayer logging and direct reminder access. See [compass and UI review](docs/COMPASS-REFINEMENT.md) for decisions, checks and physical-device limits.

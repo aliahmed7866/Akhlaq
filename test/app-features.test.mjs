@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { loadAssets } from '../assets.mjs';
 import { makeCalendar } from '../public/calendar.js';
-import { readHeading, smoothHeading, turnAngle } from '../public/compass.js';
+import { readHeading, smoothHeading, turnAngle, createHeadingTracker } from '../public/compass.js';
 import { validateBackup } from '../public/practice.js';
 import { calculate } from '../prayer.mjs';
 
@@ -12,8 +12,9 @@ const sample = { absolute: true, alpha: 330, beta: 0, gamma: 0 };
 test('compass uses magnetic correction and projects the top edge in landscape', () => {
   almost(readHeading(sample, 0, 2).heading, 32);
   almost(readHeading(sample, 90, -2).heading, 118);
-  almost(readHeading({ ...sample, beta: 45 }, 0, 2).heading, 32);
-  almost(readHeading({ ...sample, beta: 30, gamma: 25 }, 90, 0).heading, 106.88);
+  almost(readHeading({ ...sample, beta: 25 }, 0, 2).heading, 32);
+  assert.deepEqual(readHeading({ ...sample, beta: 30, gamma: 25 }, 90, 0), { issue: 'tilt' });
+  almost(readHeading({ ...sample, gamma: 25 }, 90, 0).heading, 120);
   assert.deepEqual(readHeading({ ...sample, beta: 89 }, 0, 0), { issue: 'tilt' });
   assert.deepEqual(readHeading(sample, 0, null), { issue: 'correction' });
   assert.equal(readHeading({ ...sample, absolute: false }, 0, 0), null);
@@ -78,4 +79,27 @@ test('offline package contains install assets and the same prayer engine as Term
   assert.deepEqual(engine.calculate(query, now), calculate(query, now));
   const { distanceKm } = engine.calculate(query, now);
   assert.ok(distanceKm > 4900 && distanceKm < 5400);
+});
+
+
+test('native compass uses reported angular error and rejects poor quality or magnetic interference', () => {
+  const event = { magneticHeading: 358, beta: 0, gamma: 0, accuracyStatus: 3, headingAccuracy: 6, magneticStrength: 48 };
+  assert.deepEqual(readHeading(event, 0, 4, 49), { heading: 2, accuracy: 6 });
+  assert.equal(readHeading({ ...event, headingAccuracy: null }, 0, 4).accuracy, null);
+  assert.equal(readHeading({ ...event, accuracyStatus: 1 }, 0, 4).issue, 'calibration');
+  assert.equal(readHeading({ ...event, headingAccuracy: 28 }, 0, 4).issue, 'calibration');
+  assert.equal(readHeading({ ...event, magneticStrength: 95 }, 0, 4, 49).issue, 'interference');
+  assert.equal(readHeading({ ...event, gamma: 50 }, 0, 4).issue, 'tilt');
+  assert.equal(readHeading({ issue: 'unsupported' }, 0, 4).issue, 'unsupported');
+});
+
+test('direction confirmation requires fresh samples over time, handles north, and rejects jitter', () => {
+  const tracker = createHeadingTracker();
+  for (let i = 0; i < 8; i++) assert.equal(tracker.update(i % 2 ? 359 : 1, i * 100), false);
+  assert.equal(tracker.update(0, 800), true);
+  assert.equal(tracker.update(25, 900), false);
+  tracker.reset();
+  for (let i = 0; i < 12; i++) assert.equal(tracker.update(i % 2 ? 350 : 10, i * 100), false);
+  assert.equal(tracker.update(0, 3000), false, 'a gap cannot preserve confirmation');
+  assert.equal(tracker.update(0, 3000), false, 'duplicate timestamps cannot count as steady time');
 });

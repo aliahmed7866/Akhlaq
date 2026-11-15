@@ -139,7 +139,7 @@ function showSchedule(data) {
   } catch {
     byId('hijri-date').textContent = '';
   }
-  byId('location-freshness').textContent = settings.locatedAt ? 'Location checked ' + new Date(settings.locatedAt).toLocaleString() + '. Refresh after travelling; check your device time zone.' : 'Example location only. Use location access to get times for where you are.';
+  byId('location-freshness').textContent = settings.locatedAt ? 'Location saved · refresh after travelling.' : settings.city === 'Manual coordinates' ? 'Using your saved coordinates.' : 'Example times · use your location to personalise.';
   companion.refresh(data);
   byId('schedule-location').textContent = (settings.city || 'Custom location') + ' · ' + schedule.zone.replaceAll('_', ' ');
   const select = form.elements.method;
@@ -152,16 +152,15 @@ function showSchedule(data) {
     item.dataset.prayer = key;
     const time = document.createElement('strong');
     time.textContent = timeLabel(schedule.days[0].times[key]);
-    item.append(label, time);
     if (key !== 'sunrise') {
       const log = document.createElement('button');
-      log.className = 'quick-log';
-      log.type = 'button';
-      log.dataset.logPrayer = key;
-      log.setAttribute('aria-label', 'Log ' + label);
+      log.className = 'prayer-tile'; log.type = 'button'; log.dataset.logPrayer = key;
+      const name = document.createElement('span'); name.textContent = label;
+      const status = document.createElement('span'); status.className = 'prayer-log-label';
+      log.append(name, time, status);
       log.addEventListener('click', () => practiceLog.toggleTodayPrayer(key));
       item.append(log);
-    }
+    } else { item.append(label, time); item.classList.add('sunrise-tile'); }
     return item;
   }));
   const table = byId('week');
@@ -181,7 +180,7 @@ function showSchedule(data) {
     prayers.forEach(([key]) => { row.insertCell().textContent = timeLabel(day.times[key]); });
   }
   updateCountdown();
-  renderCompass(data);
+  renderCompass({ ...data, locationReady: !!settings.locatedAt || settings.city === 'Manual coordinates', locatedAt: settings.locatedAt, locationAccuracy: settings.locationAccuracy });
   calendarButton.disabled = false;
   if (previous !== data.today) {
     practiceLog.refresh();
@@ -234,7 +233,7 @@ function findLocation() {
 
 function readSettings() {
   return {
-    city: byId('city').value, locatedAt: Number(byId('city').dataset.locatedAt || 0),
+    city: byId('city').value, locatedAt: Number(byId('city').dataset.locatedAt || 0), locationAccuracy: Number(byId('city').dataset.accuracy || 0),
     latitude: form.elements.latitude.valueAsNumber,
     longitude: form.elements.longitude.valueAsNumber,
     zone: form.elements.zone.value.trim(), method: form.elements.method.value,
@@ -262,13 +261,12 @@ function applySettings() {
   }
 }
 
-byId('home-gps').addEventListener('click', () => byId('gps').click());
-byId('gps').addEventListener('click', async event => {
-  const button = event.currentTarget;
-  button.disabled = true;
-  settingsStatus.textContent = 'Getting your location…';
+for (const id of ['home-gps', 'qibla-gps']) byId(id).addEventListener('click', () => byId('gps').click());
+byId('gps').addEventListener('click', async () => {
+  for (const id of ['gps', 'home-gps', 'qibla-gps']) byId(id).disabled = true;
+  settingsStatus.textContent = byId('location-freshness').textContent = byId('qibla-location-status').textContent = 'Getting your location…';
   try {
-    const { latitude, longitude } = await findLocation().catch(async () => {
+    const { latitude, longitude, accuracy } = await findLocation().catch(async () => {
       if (window.AkhlaqNative) throw new Error('Location unavailable. Allow location for Akhlaq in Android settings.');
       try {
         return await fetchJson('/api/gps', { method: 'POST', signal: AbortSignal.timeout(22000) });
@@ -281,6 +279,7 @@ byId('gps').addEventListener('click', async event => {
     });
     byId('city').value = 'My location';
     byId('city').dataset.locatedAt = String(Date.now());
+    byId('city').dataset.accuracy = String(Number.isFinite(accuracy) && accuracy >= 0 ? accuracy : 0);
     form.elements.latitude.value = latitude;
     form.elements.longitude.value = longitude;
     form.elements.zone.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -288,13 +287,13 @@ byId('gps').addEventListener('click', async event => {
   } catch (error) {
     settingsStatus.textContent = error.message + ' You can retry location access or enter coordinates under Location details.';
   } finally {
-    button.disabled = false;
-    byId('location-freshness').textContent = settingsStatus.textContent + ' Refresh location after travelling.';
+    for (const id of ['gps', 'home-gps', 'qibla-gps']) byId(id).disabled = false;
+    byId('location-freshness').textContent = byId('qibla-location-status').textContent = settingsStatus.textContent;
   }
 });
 
 for (const name of ['latitude', 'longitude', 'zone']) {
-  form.elements[name].addEventListener('input', () => { byId('city').value = 'Manual coordinates'; byId('city').dataset.locatedAt = '';  });
+  form.elements[name].addEventListener('input', () => { byId('city').value = 'Manual coordinates'; byId('city').dataset.locatedAt = ''; byId('city').dataset.accuracy = ''; });
 }
 form.elements.method.addEventListener('change', updateMethodNote);
 function openField(field) {
@@ -349,7 +348,7 @@ function navigate() {
   const page = ['quran', 'qibla', 'practice', 'dhikr', 'settings', 'learn', 'essentials'].includes(requested) ? requested : 'home';
   if (openPage !== page) {
     const initial = openPage === undefined;
-    if (openPage === 'qibla' && byId('compass').textContent === 'Stop compass') byId('compass').click();
+    if (openPage === 'qibla' && byId('compass').getAttribute('aria-pressed') === 'true') byId('compass').click();
     openPage = page;
     for (const section of document.querySelectorAll('[data-page]')) section.hidden = section.dataset.page !== page;
     for (const link of document.querySelectorAll('[data-route]')) {
@@ -365,6 +364,10 @@ function navigate() {
         heading.focus({ preventScroll: true });
       }
     }
+  }
+  if (page === 'settings' && target === 'reminders') {
+    const panel = byId('reminder-settings'); panel.open = true;
+    panel.querySelector('summary').focus(); panel.scrollIntoView({ block: 'start' });
   }
   quran.navigate(page, target);
   learning.navigate(page);
@@ -388,6 +391,7 @@ function start() {
     byId('calendar-prayers').querySelector('.checks').append(choice);
   }
   byId('city').dataset.locatedAt = String(settings.locatedAt || 0);
+  byId('city').dataset.accuracy = String(settings.locationAccuracy || 0);
   fillForm();
   practiceLog.refresh();
   learning.refreshDaily();

@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 @androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
-public class MainActivity extends Activity implements SensorEventListener {
+public class MainActivity extends Activity {
     private static final String ORIGIN = "https://appassets.androidplatform.net";
     private WebView web;
     private MediaController controller;
@@ -38,10 +38,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     private boolean visible;
     private JSONObject pendingCommand;
     private long lastDownloads;
-    private SensorManager sensors;
-    private boolean compass;
-    private int accuracy = SensorManager.SENSOR_STATUS_UNRELIABLE;
-    private long lastHeading;
+    private CompassSensors compassSensors;
     private GeolocationPermissions.Callback geoCallback;
     private String geoOrigin;
     private ValueCallback<Uri[]> fileCallback;
@@ -59,7 +56,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         try {
             catalog = new QuranQueue(AssetText.read(this, "quran.json"));
         } catch (Exception error) { throw new IllegalStateException("Bundled Quran unavailable", error); }
-        sensors = (SensorManager)getSystemService(SENSOR_SERVICE);
+        compassSensors = new CompassSensors(this, value -> { if (visible && web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-heading',{detail:" + value + "}))", null); });
         FrameLayout frame = new FrameLayout(this);
         web = new WebView(this);
         frame.addView(web, new FrameLayout.LayoutParams(-1, -1));
@@ -245,12 +242,9 @@ public class MainActivity extends Activity implements SensorEventListener {
             runOnUiThread(() -> { try { execute(new JSONObject(json)); } catch (JSONException ignored) { } });
         }
         @JavascriptInterface public void compass(boolean enabled) {
-            runOnUiThread(() -> {
-                sensors.unregisterListener(MainActivity.this); compass = enabled && visible;
-                Sensor sensor = sensors.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-                if (compass && sensor != null) sensors.registerListener(MainActivity.this, sensor, SensorManager.SENSOR_DELAY_UI);
-            });
+            runOnUiThread(() -> { if (enabled && visible) compassSensors.start(); else compassSensors.stop(); });
         }
+
         @JavascriptInterface public void exportFile(String name, String text, String mime) {
             if (text == null || text.length() > 2000000 || !(mime.startsWith("application/json") || mime.startsWith("text/calendar"))) return;
             runOnUiThread(() -> {
@@ -281,32 +275,12 @@ public class MainActivity extends Activity implements SensorEventListener {
             });
         }
     }
-    @Override public void onSensorChanged(SensorEvent event) {
-        if (!compass || !visible || SystemClock.elapsedRealtime() - lastHeading < 70) return;
-        lastHeading = SystemClock.elapsedRealtime();
-        float[] matrix = new float[9], adjusted = new float[9], orientation = new float[3];
-        SensorManager.getRotationMatrixFromVector(matrix, event.values);
-        int rotation = getWindowManager().getDefaultDisplay().getRotation();
-        int x = SensorManager.AXIS_X, y = SensorManager.AXIS_Y;
-        if (rotation == Surface.ROTATION_90) { x = SensorManager.AXIS_Y; y = SensorManager.AXIS_MINUS_X; }
-        else if (rotation == Surface.ROTATION_180) { x = SensorManager.AXIS_MINUS_X; y = SensorManager.AXIS_MINUS_Y; }
-        else if (rotation == Surface.ROTATION_270) { x = SensorManager.AXIS_MINUS_Y; y = SensorManager.AXIS_X; }
-        SensorManager.remapCoordinateSystem(matrix, x, y, adjusted);
-        SensorManager.getOrientation(adjusted, orientation);
-        try {
-            JSONObject heading = new JSONObject().put("webkitCompassHeading", (Math.toDegrees(orientation[0]) + 360) % 360)
-                .put("beta", Math.toDegrees(orientation[1])).put("gamma", Math.toDegrees(orientation[2]))
-                .put("webkitCompassAccuracy", accuracy >= SensorManager.SENSOR_STATUS_ACCURACY_HIGH ? 5 : accuracy == SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM ? 15 : 30);
-            web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-heading',{detail:" + heading + "}))", null);
-        } catch (Exception ignored) { }
-    }
-    @Override public void onAccuracyChanged(Sensor sensor, int value) { accuracy = value; }
     @Override protected void onResume() { super.onResume(); visible = true; if (web != null) { web.onResume(); web.evaluateJavascript("window.dispatchEvent(new Event('akhlaq-alert-refresh'))", null); } handler.post(tick); }
-    @Override protected void onPause() { visible = false; handler.removeCallbacks(tick); sensors.unregisterListener(this); compass = false; if (web != null) web.onPause(); super.onPause(); }
+    @Override protected void onPause() { visible = false; handler.removeCallbacks(tick); compassSensors.stop(); if (web != null) web.onPause(); super.onPause(); }
     private void navigateBack() { if (web.canGoBack()) web.goBack(); else moveTaskToBack(true); }
     @Override public void onBackPressed() { navigateBack(); }
     @Override protected void onDestroy() {
-        visible = false; handler.removeCallbacksAndMessages(null); sensors.unregisterListener(this);
+        visible = false; handler.removeCallbacksAndMessages(null); compassSensors.stop();
         if (fileCallback != null) fileCallback.onReceiveValue(null);
         if (geoCallback != null) geoCallback.invoke(geoOrigin, false, false);
         MediaController.releaseFuture(controllerFuture);

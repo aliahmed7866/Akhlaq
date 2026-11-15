@@ -72,10 +72,37 @@ try:
         assert page.evaluate('commands.at(-1).action') == 'download'
         assert page.evaluate('commands.at(-1).verse') == 1
         page.get_by_role('link',name='Qibla',exact=True).click()
+        expect(page.locator('#compass')).to_be_disabled()
+        page.context.grant_permissions(['geolocation'])
+        page.context.set_geolocation({'latitude':53.4808,'longitude':-2.2426,'accuracy':20})
+        page.locator('#qibla-gps').click()
+        expect(page.locator('#compass')).to_be_enabled()
         page.locator('#compass').click()
         assert page.evaluate('sensorCommands.at(-1)') is True
-        page.evaluate("dispatchEvent(new CustomEvent('akhlaq-heading',{detail:{webkitCompassHeading:100,webkitCompassAccuracy:5,beta:0,gamma:0}}))")
+        page.evaluate("dispatchEvent(new CustomEvent('akhlaq-heading',{detail:{magneticHeading:100,headingAccuracy:5,accuracyStatus:3,beta:0,gamma:0}}))")
         expect(page.locator('#phone-heading')).not_to_have_text('—')
+        expect(page.locator('#compass-quality')).to_contain_text('±5°')
+        page.evaluate("""async () => {
+          const {calculate} = await import('/engine.js');
+          const p=calculate(new URLSearchParams('lat=53.4808&lon=-2.2426&zone=Europe%2FLondon'));
+          window.compassSample = (overrides={}) => dispatchEvent(new CustomEvent('akhlaq-heading',{detail:{magneticHeading:p.bearing-p.declination,headingAccuracy:5,accuracyStatus:3,beta:0,gamma:0,screenRotation:0,...overrides}}));
+          for(let i=0;i<15;i++){compassSample();await new Promise(r=>setTimeout(r,80));}
+        }""")
+        expect(page.locator('#compass-dial')).to_have_attribute('data-aligned','true')
+        page.evaluate('compassSample({magneticStrength:120})')
+        expect(page.locator('#needle')).to_be_hidden()
+        expect(page.locator('#compass-note')).to_contain_text('interference')
+        expect(page.locator('#compass-dial')).to_have_attribute('data-aligned','false')
+        page.evaluate("""async () => {for(let i=0;i<15;i++){compassSample({headingAccuracy:null});await new Promise(r=>setTimeout(r,80));}}""")
+        expect(page.locator('#compass-dial')).to_have_attribute('data-aligned','false')
+        expect(page.locator('#compass-quality')).to_contain_text('accuracy not reported')
+        page.wait_for_timeout(1600)
+        expect(page.locator('#needle')).to_be_hidden()
+        expect(page.locator('#compass-quality')).to_have_text('Readings paused')
+        page.locator('#compass-recheck').click()
+        assert page.evaluate('sensorCommands.slice(-2)') == [False,True]
+        page.evaluate('compassSample({screenRotation:1})')
+        expect(page.locator('#compass-dial')).to_have_attribute('data-aligned','false')
         page.locator('#compass').click()
         assert page.evaluate('sensorCommands.at(-1)') is False
         page.locator('#player-close').click()
