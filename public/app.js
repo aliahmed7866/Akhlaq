@@ -313,7 +313,7 @@ function todayForPractice() {
 }
 
 function refresh() {
-  if (schedule && schedule.today === dateInZoneFor(new Date(), settings.zone)) return updateCountdown();
+  if (schedule && schedule.today === dateInZoneFor(new Date(), settings.zone)) { updateCountdown(); companion.refresh(schedule); return; }
   try {
     showSchedule(requestSchedule(settings));
   } catch (error) {

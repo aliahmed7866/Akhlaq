@@ -37,7 +37,7 @@ android {
         }
     }
     sourceSets.main.assets.srcDirs = ['build/generated/assets']
-    sourceSets.main.res.srcDirs += ['build/generated/res']
+    sourceSets.main.res.srcDirs += ['build/generated/akhlaq-res']
 }
 tasks.register('prepareWeb', Exec) {
     workingDir '../..'
@@ -47,7 +47,7 @@ tasks.register('prepareWeb', Exec) {
     inputs.file '../../scripts/prepare-android.mjs'
     inputs.file '../../urdu.mjs'
     outputs.dir 'build/generated/assets'
-    outputs.dir 'build/generated/res'
+    outputs.dir 'build/generated/akhlaq-res'
 }
 preBuild.dependsOn prepareWeb
 dependencies {

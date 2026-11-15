@@ -10,12 +10,13 @@ import org.json.*;
 /** Offline device narration of original app summaries. Resume repeats the current sentence. */
 public class NarrationService extends Service {
     private TextToSpeech speech;private boolean ready,paused=true;private String title="",id="";private String[] chunks={};private int index;private int generation;
+    private final BroadcastReceiver noisy=new BroadcastReceiver(){@Override public void onReceive(Context c,Intent i){if(!paused)pause();}};
     private AudioManager audio;private AudioFocusRequest focus;
     private final Handler handler=new Handler(Looper.getMainLooper());
     public static volatile String state="{}";
     private void publish(String status){try{state=new JSONObject().put("title",title).put("status",status).toString();}catch(JSONException ignored){}}
     private void checkpoint(){getSharedPreferences("narration",MODE_PRIVATE).edit().putString("id",id).putInt("index",index).apply();}
-    @Override public void onCreate(){super.onCreate();audio=getSystemService(AudioManager.class);
+    @Override public void onCreate(){super.onCreate();if(Build.VERSION.SDK_INT>=33)registerReceiver(noisy,new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY),Context.RECEIVER_NOT_EXPORTED);else registerReceiver(noisy,new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));audio=getSystemService(AudioManager.class);
         focus=new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()).setOnAudioFocusChangeListener(change->{if(change<0)pause();}).build();
         speech=new TextToSpeech(this,result->handler.post(()->{if(result!=TextToSpeech.SUCCESS){publish("Speech engine unavailable.");stopSelf();return;}Voice v=(speech.getVoices()==null?java.util.Collections.<Voice>emptySet():speech.getVoices()).stream().filter(x->x.getLocale().getLanguage().equals("en")&&!x.isNetworkConnectionRequired()&&(x.getFeatures()==null||!x.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED))).findFirst().orElse(null);if(v==null){publish("Install an offline English voice in Android text-to-speech settings.");stopSelf();return;}speech.setVoice(v);ready=true;if(!paused)speak();}));
         speech.setOnUtteranceProgressListener(new UtteranceProgressListener(){public void onStart(String value){}public void onError(String value){handler.post(()->{pause();publish("Narration unavailable. Check your device voice.");});}public void onDone(String value){handler.post(()->{if(!value.equals(generation+":"+index)||paused)return;index++;checkpoint();speak();});}});
@@ -35,5 +36,5 @@ public class NarrationService extends Service {
         return START_NOT_STICKY;
     }
     @Override public IBinder onBind(Intent intent){return null;}
-    @Override public void onDestroy(){paused=true;generation++;if(speech!=null){speech.stop();speech.shutdown();}audio.abandonAudioFocusRequest(focus);stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();}
+    @Override public void onDestroy(){paused=true;generation++;if(speech!=null){speech.stop();speech.shutdown();}audio.abandonAudioFocusRequest(focus);stopForeground(STOP_FOREGROUND_REMOVE);unregisterReceiver(noisy);super.onDestroy();}
 }

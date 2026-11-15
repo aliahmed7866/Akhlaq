@@ -37,7 +37,7 @@ export function setupCompanion({stored,save,today,getSettings,calculate}) {
   if(!Array.isArray(prefs.prayers))prefs.prayers=[];
   async function load() { if(data)return data; if(!loading)loading=fetch('/devotional.json').then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>data=d).finally(()=>loading=null);return loading; }
   function message(t){$('companion-status').textContent=t;}
-  function hlabel(day){const h=hijriDay(day,calendar.offset);return `${h.day} / ${h.month} / ${h.year} AH · calculated estimate`;}
+  function hlabel(day){const h=hijriDay(day,calendar.offset);const months=['Muharram','Safar','Rabi al-Awwal','Rabi al-Thani','Jumada al-Ula','Jumada al-Thani','Rajab','Shaban','Ramadan','Shawwal','Dhul Qadah','Dhul Hijjah'];return `${h.day} ${months[h.month-1]} ${h.year} AH · calculated estimate`;}
   function eventCard(e){const card=el('article');card.className='learning-card'; card.append(el('h3',e.title),el('p',e.text));const actions=el('div');actions.className='reader-actions';e.refs.forEach(r=>actions.append(source(r)));const listen=el('button','Listen to this reading');listen.onclick=()=>narrate(e.title,e.text,'event-'+e.id);actions.append(listen); if(e.story)actions.append(source('#learn/stories/'+e.story,'Read the Prophet story'));card.append(actions);return card;}
   async function navigate(page) {
     if(page!=='essentials')return;
@@ -75,7 +75,7 @@ export function setupCompanion({stored,save,today,getSettings,calculate}) {
       window.AkhlaqNative.alerts(JSON.stringify({mode:prefs.mode,events,explicit}));lastAlerts=key;
     }catch{$('alert-status').textContent='Could not prepare alerts. Check location and prayer settings.';}
   }
-  async function refresh(next) {schedule=next;try{await load();let day=today();const maghrib=Date.parse(schedule?.days?.[0]?.times?.maghrib);if(Number.isFinite(maghrib)&&Date.now()>=maghrib)day=shift(day,1);$('calendar-today').textContent=hlabel(day);$('calendar-event').textContent=eventsFor(day,data.events,calendar.offset).map(e=>e.title).join(' · ')||'Explore upcoming dates or keep a private note.';}catch{$('calendar-event').textContent='Calendar content unavailable. Reopen to retry.';}syncAlerts();}
+  async function refresh(next) {schedule=next;try{await load();let day=today();const maghrib=Date.parse(schedule?.days?.[0]?.times?.maghrib);if(Number.isFinite(maghrib)&&Date.now()>=maghrib)day=shift(day,1);$('calendar-today').textContent=hlabel(day);$('hijri-date').textContent=hlabel(day);$('calendar-event').textContent=eventsFor(day,data.events,calendar.offset).map(e=>e.title).join(' · ')||'Explore upcoming dates or keep a private note.';}catch{$('calendar-event').textContent='Calendar content unavailable. Reopen to retry.';}syncAlerts();}
   window.addEventListener('akhlaq-alert-refresh',()=>{lastAlerts='';syncAlerts();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){lastAlerts='';syncAlerts();}});
   $('alert-mode').value=prefs.mode;$('alert-lead').value=String(prefs.lead);
