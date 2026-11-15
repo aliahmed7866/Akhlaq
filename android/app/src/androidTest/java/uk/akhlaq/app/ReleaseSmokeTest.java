@@ -48,9 +48,12 @@ public class ReleaseSmokeTest {
     @Before public void launch() throws Exception {
         activity=ActivityScenario.launch(MainActivity.class);
         until("document.querySelectorAll('#prayers li').length===6");
-        // Clear only this test application's Web storage, then reload its bundled page.
-        js("localStorage.clear();window.__reloading=true;location.replace('/#home')");
-        until("document.querySelectorAll('#prayers li').length===6 && location.hash==='#home' && !window.__reloading");
+        // A fragment-only location.replace does not reload the document. Recreate
+        // the activity so every test gets fresh JS state after clearing Web storage.
+        js("localStorage.clear();window.__previousTestDocument=true");
+        activity.recreate();
+        until("document.querySelectorAll('#prayers li').length===6 && !window.__previousTestDocument");
+        route("home");
     }
     @After public void close() { if (activity!=null) activity.close(); }
     @Test public void offlineReaderHadithAndPrivacy() throws Exception {
