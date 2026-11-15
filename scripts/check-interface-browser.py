@@ -94,6 +94,21 @@ try:
             if not page.locator('#reading-comfort').evaluate('(e)=>e.open'):
                 page.locator('#reading-comfort > summary').click()
             page.locator('#app-theme').select_option(theme)
+            page.goto(base+'#learn')
+            expect(page.locator('#learn-query')).to_be_visible()
+            # Search hints have readable contrast in both explicitly chosen themes.
+            ratio = page.locator('#learn-query').evaluate('''input => {
+              const luminance = color => {
+                const channels = color.match(/[\\d.]+/g).slice(0,3).map(n => Number(n)/255)
+                  .map(v => v<=.04045 ? v/12.92 : ((v+.055)/1.055)**2.4);
+                return channels.reduce((sum,v,i) => sum + v*[.2126,.7152,.0722][i],0);
+              };
+              const background = luminance(getComputedStyle(input).backgroundColor);
+              const text = luminance(getComputedStyle(input,'::placeholder').color);
+              return (Math.max(background,text)+.05)/(Math.min(background,text)+.05);
+            }''')
+            assert ratio >= 4.5, (theme, 'placeholder contrast', ratio)
+            assert page.evaluate('getComputedStyle(document.body).backgroundImage !== "none"')
             for route in ['home','quran','qibla','practice','dhikr','learn','essentials','settings']:
                 page.goto(base+'#'+route)
                 page.wait_for_timeout(80)

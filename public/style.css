@@ -422,6 +422,7 @@ html { scroll-padding-bottom: calc(var(--nav-height, 4rem) + var(--player-height
   --shadow: 0 8px 30px #183a2510;
 }
 .ui-icon { width: 22px; height: 22px; flex: 0 0 22px; }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; font-weight: 400; }
 .masthead { min-height: 64px; border-bottom-color: transparent; }
 .wordmark { letter-spacing: -.035em; }
 .masthead-actions .small-button { gap: .4rem; border-color: transparent; background: transparent; }
