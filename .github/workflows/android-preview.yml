@@ -33,6 +33,7 @@ jobs:
         run: |
           python -m pip install playwright==1.62.0
           python -m playwright install --with-deps chromium
+          python scripts/check-interface-browser.py
           python scripts/check-learning-browser.py
           python scripts/check-player-browser.py
           python scripts/check-android-bridge.py

@@ -92,6 +92,9 @@ export function setupPractice({ salah, stored, save, todayForPractice, shiftDate
   }
 
   function renderDhikr(entry = dbEntry()) {
+    const [transliteration, arabic] = dhikrType.selectedOptions[0].textContent.split(' · ');
+    get('dhikr-arabic').textContent = arabic;
+    get('dhikr-transliteration').textContent = transliteration;
     const state = entry.counters?.[dhikrType.value];
     const count = state?.count ?? 0;
     const goal = state?.goal ?? 33;

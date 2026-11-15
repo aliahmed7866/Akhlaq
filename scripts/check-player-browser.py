@@ -56,8 +56,12 @@ try:
         page.on('pageerror', lambda error: errors.append(str(error)))
         url = f'http://127.0.0.1:{port}/#quran/1:1'
         page.goto(url)
+        page.locator('#reader-tools > summary').click()
+        page.locator('.reader-preferences > summary').click()
         expect(page.locator('#quran-voice')).to_be_visible()
         page.locator('#quran-voice').select_option('arabic-urdu')
+        page.locator('#reader-tools > summary').click()
+        expect(page.locator('#reader-mode-label')).to_have_text('Arabic → Urdu')
         page.evaluate('''() => {
           window.playerElement = document.querySelector('#quran-audio');
           window.tracks = [];

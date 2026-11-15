@@ -110,6 +110,8 @@ export function setupLearning({ stored, save, today }) {
       && (!savedOnly.checked || preferences.saved.includes(h.id))
       && (!needle || normaliseSearch([h.label, h.bukhari, ...Object.values(h.translations).flatMap(t => [t.title, t.hadith_text, t.hadith_text_ar])].join(' ')).includes(needle)));
     get('learn-count').textContent = visible.length + ' of ' + collection.hadiths.length + ' hadiths';
+    const filters = [topic.value, savedOnly.checked ? 'Saved only' : ''].filter(Boolean);
+    get('learn-filters-label').textContent = filters.length ? 'Filters · ' + filters.join(' · ') : 'Filter by topic or saved';
     get('learn-empty').hidden = visible.length !== 0;
     get('hadith-list').replaceChildren(...visible.map(h => {
       const card = node('article', undefined, 'learning-card');

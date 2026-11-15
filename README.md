@@ -87,3 +87,7 @@ The compass now uses reported sensor accuracy, north-referenced fallbacks, fresh
 ### 2.3.1 location repair
 
 Use current location now calls Android location providers directly in the APK. It supports approximate permission, bounded requests, cancellation, and distinct permission/service-off recovery actions. Location updates no longer depend on validating unrelated draft settings. See [location repair and tests](docs/LOCATION-FIX.md).
+
+### 2.4.0 interface refinement
+
+A clearer phone interface with labelled navigation icons, compact prayer utilities, a Quran toolbox for search/saved verses/advanced options, visible playback language, and expandable learning filters. Dhikr now has a larger count button and displays the selected Arabic phrase and transliteration. Settings → Reading comfort offers Night, Day and Follow phone appearance; text size remains independent. No content editions, prayer calculations or location permissions changed. See [UI review](docs/UI-REFINEMENT.md) for checks and limitations.

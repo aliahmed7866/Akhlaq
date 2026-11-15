@@ -187,6 +187,7 @@ export function setupQuran({ stored, save, today }) {
       button.setAttribute('aria-pressed', String(language.value === mode && voiceSelect.value === mode));
     }
     byId('quran-audio-credit').hidden = !['urdu', 'arabic-urdu'].includes(voiceSelect.value);
+    byId('reader-mode-label').textContent = voiceSelect.selectedOptions[0].textContent;
   }
   renderPresets();
 

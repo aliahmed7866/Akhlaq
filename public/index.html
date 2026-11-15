@@ -18,7 +18,7 @@
     <a class="wordmark" href="#home" aria-label="Akhlaq home"><img src="/icons/akhlaq.svg" alt="" width="30" height="30"> Akhlaq</a>
     <div class="masthead-actions">
       <button id="install" class="small-button" type="button" aria-controls="install-note" hidden>Install app</button>
-      <a class="small-button" href="#settings" data-route="settings">Settings</a>
+      <a class="small-button" href="#settings" data-route="settings"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg><span>Settings</span></a>
     </div>
   </header>
   <main id="main-content" tabindex="-1">
@@ -50,14 +50,14 @@
         <a href="#practice">View log</a>
       </div>
       <a class="small-button reminder-shortcut" href="#settings/reminders">Prayer alerts &amp; adhan →</a>
-      <p id="prayer-method" class="muted"></p>
       <p id="unavailable" class="muted" hidden>Some solar events are unavailable at this latitude. Check your local mosque’s timetable for those prayers.</p>
-      <details>
-        <summary>Seven-day timetable</summary>
+      <details id="prayer-tools" class="utility-panel">
+        <summary>Timetable &amp; calculation</summary>
+        <p id="prayer-method" class="muted"></p>
+        <h3>Next seven days</h3>
         <div class="table-wrap">
           <table id="week"><caption class="sr-only">Prayer start times for the next seven days</caption></table>
         </div>
-      </details>
       <details>
         <summary>Prayer reminders in your calendar</summary>
         <p class="muted">Download the next seven days and import them into a calendar that supports alerts. Export again if your location or prayer settings change.</p>
@@ -72,12 +72,13 @@
           <p id="calendar-status" class="muted" role="status"></p>
         </form>
       </details>
+      </details>
     </section>
     <nav class="home-shortcuts" data-page="home" aria-label="Daily tools">
-      <a class="small-button" href="#quran"><strong>Quran</strong><span>Read &amp; listen</span></a>
-      <a class="small-button" href="#dhikr"><strong>Dhikr</strong><span>A quiet moment</span></a>
-      <a class="small-button" href="#essentials/duas"><strong>Duas</strong><span>Words for your day</span></a>
-      <a class="small-button" href="#essentials/calendar"><strong>Calendar</strong><span>Dates &amp; reflections</span></a>
+      <a class="small-button" href="#quran"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v16M12 5C9 3 5 3 2 4v15c3-1 7-1 10 2 3-3 7-3 10-2V4c-3-1-7-1-10 1Z"/></svg><strong>Quran</strong><span>Read &amp; listen</span></a>
+      <a class="small-button" href="#dhikr"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="10" r="6"/><path d="M12 16v5m-3-2 3-3 3 3"/><circle cx="12" cy="10" r="2"/></svg><strong>Dhikr</strong><span>A quiet moment</span></a>
+      <a class="small-button" href="#essentials/duas"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 4v8l5 7h6l5-7V4M4 9l4 3 2 4m10-7-4 3-2 4M9 19v3m6-3v3"/></svg><strong>Duas</strong><span>Words for your day</span></a>
+      <a class="small-button" href="#essentials/calendar"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 2v6m10-6v6M3 11h18m-13 4h2m4 0h2"/></svg><strong>Calendar</strong><span>Dates &amp; reflections</span></a>
     </nav>
     <section class="card home-reading" id="home-reading" data-page="home" aria-labelledby="home-reading-title" hidden>
       <div><h2 id="home-reading-title">Continue reading</h2><p id="home-reading-reference" class="muted"></p></div>
@@ -113,7 +114,7 @@
     </section>
     <section id="learn" data-page="learn" class="card learning" aria-labelledby="learn-title" hidden>
       <div class="card-head"><div><h1 id="learn-title">Learn &amp; practise</h1><p>Small steps, with sources you can check.</p></div></div>
-      <p><a class="small-button" href="#essentials">Duas, six kalimat &amp; pillars</a></p><nav class="learn-nav" aria-label="Learning topics">
+      <nav class="topic-shortcuts" aria-label="More to explore"><a href="#essentials/duas">Duas</a><a href="#essentials/kalimat">Six kalimat</a><a href="#essentials/pillars">Pillars</a><a href="#essentials/calendar">Calendar</a></nav><nav class="learn-nav" aria-label="Learning topics">
         <a href="#learn/hadith" data-learn="hadith" aria-current="page">Hadith</a>
         <a href="#learn/practices" data-learn="practices">Daily practices</a>
         <a href="#learn/stories" data-learn="stories">Prophets</a>
@@ -124,8 +125,11 @@
         <div class="learning-filters">
           <label class="field">Find a hadith<input id="learn-query" type="search" maxlength="120" placeholder="Kindness, 6114, or a phrase" dir="auto"></label>
           <label class="field">Hadith translation<select id="hadith-language"><option value="en">English</option><option value="ur">Urdu · اردو</option></select></label>
-          <label class="field">Topic<select id="learn-topic"><option value="">All topics</option></select></label>
-          <label class="check-option"><input id="learn-saved-only" type="checkbox"> Saved hadiths only</label>
+          <details id="learn-filters" class="utility-panel">
+            <summary id="learn-filters-label">Filter by topic or saved</summary>
+            <label class="field">Topic<select id="learn-topic"><option value="">All topics</option></select></label>
+            <label class="check-option"><input id="learn-saved-only" type="checkbox"> Saved hadiths only</label>
+          </details>
         </div>
         <p id="learn-count" class="muted" role="status"></p>
         <div id="learn-empty" hidden><p>No matching hadiths. Try another phrase or clear your filters.</p><button id="learn-clear" type="button">Clear filters</button></div>
@@ -144,7 +148,7 @@
       </details>
     </section>
     <section id="essentials" data-page="essentials" class="card" hidden>
-<h1>Your daily companion</h1><p>A little learning, at your own pace.</p>
+<a class="back-link" href="#learn">← Learn &amp; practise</a><h1>Your daily companion</h1><p>A little learning, at your own pace.</p>
 <nav class="learn-nav" aria-label="Companion topics"><a href="#essentials/duas">Duas</a><a href="#essentials/kalimat">Six kalimat</a><a href="#essentials/pillars">Pillars</a><a href="#essentials/calendar">Calendar</a></nav>
 <div id="companion-content"></div><p id="companion-status" role="status"></p>
 </section>
@@ -156,40 +160,19 @@
       <div id="quran-tools" hidden>
         <div class="reader-controls">
           <label class="field">Surah<select id="quran-chapter"></select></label>
+        </div>
+        <details id="reader-tools" class="utility-panel">
+          <summary>Search, saved verses &amp; options</summary>
           <form id="quran-search" role="search">
             <label class="field">Find a verse<input id="quran-query" type="search" maxlength="120" placeholder="2:255 or a phrase" title="Search Arabic, English, or downloaded Urdu" dir="auto"></label>
             <button type="submit">Find</button>
           </form>
-        </div>
         <div id="quran-results" role="region" aria-label="Verse search results" hidden></div>
         <details id="quran-saved">
           <summary id="quran-saved-title">Saved verses</summary>
           <p id="quran-saved-empty" class="muted">Save a verse from the reader or Today to find it here.</p>
           <ul id="quran-saved-list"></ul>
         </details>
-        <p id="quran-save-status" class="muted" role="status"></p>
-        <div class="reader-presets" role="group" aria-label="Reading and listening presets">
-          <span class="muted">Read &amp; listen</span>
-          <button type="button" data-reader-preset="both">Arabic + English</button>
-          <button type="button" data-reader-preset="arabic-urdu">Arabic + <span lang="ur" dir="rtl">اردو</span></button>
-          <button type="button" data-reader-preset="arabic">Arabic only</button>
-        </div>
-        <div class="chapter-heading">
-          <div><h2 id="quran-chapter-name"></h2><p class="muted" id="quran-chapter-info"></p></div>
-          <div class="reader-listen">
-            <label class="field">Playback mode
-              <select id="quran-voice">
-                <option value="both">Arabic → English</option>
-                <option value="arabic-urdu">Arabic → Urdu</option>
-                <option value="urdu">Urdu only · اردو</option>
-                <option value="english">English only</option>
-                <option value="arabic">Arabic only</option>
-              </select>
-            </label>
-            <button id="quran-play" type="button" class="primary">Play from this verse</button>
-          </div>
-        </div>
-        <p id="quran-audio-credit" class="muted" hidden>Urdu voice: Shamshad Ali Khan via EveryAyah. The recording may use different wording from the displayed Junagarhi translation.</p>
         <details class="reader-preferences">
           <summary>Text, size &amp; playback options</summary>
           <div class="reader-display">
@@ -205,6 +188,15 @@
             </label>
           </div>
           <div class="reader-option-fields">
+            <label class="field">Playback mode
+              <select id="quran-voice">
+                <option value="both">Arabic → English</option>
+                <option value="arabic-urdu">Arabic → Urdu</option>
+                <option value="urdu">Urdu only · اردو</option>
+                <option value="english">English only</option>
+                <option value="arabic">Arabic only</option>
+              </select>
+            </label>
             <label class="field">Text size
               <select id="quran-size"><option value="standard">Standard</option><option value="large">Large</option><option value="extra">Extra large</option></select>
             </label>
@@ -226,6 +218,21 @@
           </div>
           <p id="native-download-status" class="muted" role="status"></p>
         </details>
+        </details>
+        <div class="reader-presets" role="group" aria-label="Reading and listening presets">
+          <span class="muted">Read &amp; listen verse by verse</span>
+          <button type="button" data-reader-preset="both">Arabic + English</button>
+          <button type="button" data-reader-preset="arabic-urdu">Arabic + <span lang="ur" dir="rtl">اردو</span></button>
+          <button type="button" data-reader-preset="arabic">Arabic only</button>
+        </div>
+        <div class="chapter-heading">
+          <div><h2 id="quran-chapter-name"></h2><p class="muted" id="quran-chapter-info"></p></div>
+          <div class="reader-listen">
+            <button id="quran-play" type="button" class="primary">Play from this verse</button><p id="reader-mode-label" class="muted"></p>
+          </div>
+        </div>
+        <p id="quran-audio-credit" class="muted" hidden>Urdu voice: Shamshad Ali Khan via EveryAyah. The recording may use different wording from the displayed Junagarhi translation.</p>
+        <p id="quran-save-status" class="muted" role="status"></p>
         <p id="quran-language-status" class="muted" role="status"></p>
         <button type="button" id="quran-urdu-retry" hidden>Retry Urdu download</button>
         <p id="quran-basmala" lang="ar" dir="rtl" class="quran-basmala" hidden></p>
@@ -300,7 +307,7 @@
           <div class="practice-save"><button type="submit" class="primary">Save reflection</button><span id="save-status" class="muted" role="status"></span></div>
         </form>
         <a class="small-button practice-link" href="#dhikr">Open dhikr counter</a>
-      <a class="small-button practice-link" href="#learn/practices">Explore sourced daily practices</a>
+      <a class="small-button practice-link" href="#learn/practices">Choose a daily routine</a>
         <details>
           <summary>Last seven days</summary>
           <p id="week-totals" class="muted"></p>
@@ -331,12 +338,14 @@
             <p id="dhikr-progress-text" class="muted"></p>
           </div>
         </div>
-        <p>Targets here are personal counters, not prescribed rewards. <a href="https://sunnah.com/muslim:597a">After-prayer remembrance</a> · <a href="https://sunnah.com/bukhari:6384">La hawla wa la quwwata illa billah</a> · <a href="https://sunnah.com/bukhari:6405">Subhan Allah wa bihamdih</a></p><div class="dhikr-actions">
+        <div class="dhikr-phrase"><p id="dhikr-arabic" lang="ar" dir="rtl"></p><p id="dhikr-transliteration" class="muted"></p></div>
+        <div class="dhikr-actions">
           <button id="dhikr-minus" type="button" aria-label="Subtract one">−</button>
           <button id="dhikr-add" type="button" class="primary"><strong id="dhikr-count">0</strong><span>Tap to count</span></button>
           <button id="dhikr-reset" type="button">Reset</button>
         </div>
       </div>
+      <details class="utility-panel"><summary>About counts &amp; sources</summary><p>Targets here are personal counters, not prescribed rewards. <a href="https://sunnah.com/muslim:597a">After-prayer remembrance</a> · <a href="https://sunnah.com/bukhari:6384">La hawla wa la quwwata illa billah</a> · <a href="https://sunnah.com/bukhari:6405">Subhan Allah wa bihamdih</a></p></details>
       <p id="dhikr-status" class="muted" role="status"></p>
       <dialog id="dhikr-reset-dialog" aria-labelledby="reset-title">
         <form method="dialog">
@@ -350,11 +359,11 @@
       </dialog>
     </section>
     <section id="settings" data-page="settings" hidden class="card" aria-labelledby="settings-title">
-      <div class="card-head"><div><h2 id="settings-title">Location &amp; settings</h2><p>Use location access and match your local mosque’s prayer method.</p></div></div>
+      <div class="card-head"><div><p class="eyebrow">Make it yours</p><h1 id="settings-title">Settings</h1><p>Location, prayer alerts and reading comfort.</p></div></div>
       <form id="settings-form">
         <div class="location-tools">
-          <input id="city" name="city" type="hidden"><p>Use your current location. No city selection is needed.</p>
-          <button type="button" id="gps" class="primary">Use my location</button>
+          <input id="city" name="city" type="hidden"><p>Prayer times &amp; Qibla use your saved location.</p>
+          <button type="button" id="gps" class="primary">Use current location</button>
         </div>
         <p class="muted">Location is optional. Your coordinates stay on this device and are used for prayer times and Qibla. If access is unavailable, you can enter coordinates below.</p>
         <details id="manual-location">
@@ -400,7 +409,7 @@
 <div id="alert-prayers" class="checks"></div><div class="reader-actions"><button type="button" id="alert-save">Save alerts</button><button type="button" id="alert-permission">Allow precise timing</button></div>
 <p id="alert-status" role="status"></p><p>Alerts are prepared for 90 days and refreshed when you open the app. Reopen after travelling or changing your clock. Android notification, sound, battery and Do Not Disturb settings can affect delivery. Force-stopping prevents alerts until reopening.</p>
 <p>The adhan is a 27-second spoken reading by Jarih, unchanged, <a href="https://commons.wikimedia.org/wiki/File:Adhan_wiki.oga">Wikimedia Commons</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>. It is not a melodic recording or a Fajr-specific version; Android may shorten notification sounds.</p><audio id="adhan-preview" controls preload="none" src="/adhan.oga"></audio>
-</details><details><summary>Reading comfort</summary><label class="field">App text size<select id="app-text-size"><option value="100">Standard · 100%</option><option value="125">Larger · 125%</option><option value="150">Large · 150%</option><option value="200">Extra large · 200%</option></select></label><p id="comfort-status" class="muted" role="status"></p><p class="muted">Quran text also has its own size controls. Your preference stays on this device.</p></details>
+</details><details id="reading-comfort"><summary>Reading comfort</summary><label class="field">Appearance<select id="app-theme"><option value="dark">Night · deep green</option><option value="light">Day · warm paper</option><option value="system">Follow phone setting</option></select></label><p id="theme-status" class="muted" role="status"></p><label class="field">App text size<select id="app-text-size"><option value="100">Standard · 100%</option><option value="125">Larger · 125%</option><option value="150">Large · 150%</option><option value="200">Extra large · 200%</option></select></label><p id="comfort-status" class="muted" role="status"></p><p class="muted">Quran text also has its own size controls. Your preference stays on this device.</p></details>
       <details>
         <summary>Back up your practice</summary>
         <p class="muted">The file includes your prayer log, dhikr counts and private reflections. Restoring fills missing days and keeps entries already on this device.</p>
@@ -446,11 +455,11 @@
     </div>
   </aside>
   <nav class="tab-bar" aria-label="Main">
-    <a href="#home" data-route="home" aria-current="page">Today</a>
-    <a href="#quran" data-route="quran">Quran</a>
-    <a href="#qibla" data-route="qibla">Qibla</a>
-    <a href="#practice" data-route="practice">Practice</a>
-    <a href="#learn" data-route="learn">Learn</a>
+    <a href="#home" data-route="home" aria-current="page"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg><span>Today</span></a>
+    <a href="#quran" data-route="quran"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v16M12 5C9 3 5 3 2 4v15c3-1 7-1 10 2 3-3 7-3 10-2V4c-3-1-7-1-10 1Z"/></svg><span>Quran</span></a>
+    <a href="#qibla" data-route="qibla"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m16 8-3 5-5 3 3-5Z"/></svg><span>Qibla</span></a>
+    <a href="#practice" data-route="practice"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="17" rx="3"/><path d="M8 2v4m8-4v4M8 12l3 3 5-5"/></svg><span>Practice</span></a>
+    <a href="#learn" data-route="learn"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m2 9 10-5 10 5-10 5Zm4 3v5c4 3 8 3 12 0v-5m4-3v8"/></svg><span>Learn</span></a>
   </nav>
   <footer><span>Your location, prayer log and reflections stay on this device.</span><span id="offline-status"></span></footer>
 </body>

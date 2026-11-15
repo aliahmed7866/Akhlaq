@@ -44,6 +44,7 @@ try:
         page.locator('[data-save-hadith="5351"]').click()
         page.reload()
         expect(page.locator('#hadith-language')).to_have_value('ur')
+        page.locator('#learn-filters > summary').click()
         page.locator('#learn-saved-only').check()
         expect(page.locator('#learn-count')).to_have_text('1 of 12 hadiths')
         page.locator('[data-save-hadith="5351"]').click()
@@ -83,23 +84,25 @@ try:
         expect(page.locator('#app-text-size')).to_have_value('200')
         # Check all main routes at narrow, typical phone and tablet widths, both text sizes.
         failures = []
-        for size in [100, 200]:
-            page.evaluate('(n) => document.documentElement.style.fontSize = (16*n/100) + "px"', size)
-            for width in [320, 390, 768]:
-                page.set_viewport_size({'width': width, 'height': 844})
-                for route in ['', 'quran/1:1', 'qibla', 'practice', 'dhikr', 'settings', 'learn/hadith/5351', 'learn/practices', 'learn/stories/yusuf', 'essentials/duas', 'essentials/kalimat', 'essentials/pillars', 'essentials/calendar']:
-                    page.evaluate('(r) => location.hash = r', route)
-                    if route == 'settings':
-                        page.locator('#settings details').evaluate_all('(items) => items.forEach(d => d.open = true)')
-                    page.wait_for_timeout(80)
-                    overflow = page.evaluate('''() => [...document.querySelectorAll('body *')].filter(e => {
-                      const r=e.getBoundingClientRect(); return e.checkVisibility() && r.width && r.height && (r.right>innerWidth+1 || r.left < -1) && !e.closest('.table-wrap') && !e.classList.contains('skip-link');
-                    }).map(e=>e.tagName+'#'+e.id+'.'+e.className).slice(0,12)''')
-                    if overflow: failures.append((size, width, route, overflow))
-                    small = page.evaluate('''() => [...document.querySelectorAll('button, .small-button, select, summary, .checks label, .check-option, .tab-bar a')].filter(e => {
-                      const r=e.getBoundingClientRect(); return e.checkVisibility() && r.width && r.height && (r.width<47.9 || r.height<47.9);
-                    }).map(e=>e.tagName+'#'+e.id)''')
-                    if small: failures.append(('small target', size, width, route, small))
+        for theme in ['dark', 'light']:
+            page.evaluate('(theme) => document.documentElement.dataset.theme = theme', theme)
+            for size in [100, 200]:
+                page.evaluate('(n) => document.documentElement.style.fontSize = (16*n/100) + "px"', size)
+                for width in [320, 390, 768]:
+                    page.set_viewport_size({'width': width, 'height': 844})
+                    for route in ['', 'quran/1:1', 'qibla', 'practice', 'dhikr', 'settings', 'learn/hadith/5351', 'learn/practices', 'learn/stories/yusuf', 'essentials/duas', 'essentials/kalimat', 'essentials/pillars', 'essentials/calendar']:
+                        page.evaluate('(r) => location.hash = r', route)
+                        if route == 'settings':
+                            page.locator('#settings details').evaluate_all('(items) => items.forEach(d => d.open = true)')
+                        page.wait_for_timeout(80)
+                        overflow = page.evaluate('''() => [...document.querySelectorAll('body *')].filter(e => {
+                          const r=e.getBoundingClientRect(); return e.checkVisibility() && r.width && r.height && (r.right>innerWidth+1 || r.left < -1) && !e.closest('.table-wrap') && !e.classList.contains('skip-link');
+                        }).map(e=>e.tagName+'#'+e.id+'.'+e.className).slice(0,12)''')
+                        if overflow: failures.append((theme, size, width, route, overflow))
+                        small = page.evaluate('''() => [...document.querySelectorAll('button, .small-button, select, summary, .checks label, .check-option, .tab-bar a')].filter(e => {
+                          const r=e.getBoundingClientRect(); return e.checkVisibility() && r.width && r.height && (r.width<47.9 || r.height<47.9);
+                        }).map(e=>e.tagName+'#'+e.id)''')
+                        if small: failures.append(('small target', theme, size, width, route, small))
         # Inspect the fixed player independently of live audio timing.
         page.evaluate('''() => {
           document.querySelector('#quran-player').hidden = false;
@@ -160,6 +163,6 @@ try:
         page.locator('[data-learn="stories"]').click()
         expect(page.locator('#prophet-stories > details')).to_have_count(8)
         browser.close()
-        print('Passed learning tasks, saved preferences, Urdu, references, and 78 route/width/text-size layouts.')
+        print('Passed learning tasks, saved preferences, Urdu, references, and 156 theme/route/width/text-size layouts.')
 finally:
     server.terminate(); server.wait(timeout=10)

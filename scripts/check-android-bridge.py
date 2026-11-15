@@ -72,6 +72,7 @@ try:
         assert page.evaluate('commands.at(-1).action') == 'resume'
         page.evaluate("nativeState.part='urdu';nativeState.seconds=12;dispatchEvent(new CustomEvent('akhlaq-native-state',{detail:nativeState}))")
         expect(page.locator('#quran-audio-status')).to_have_text('2 of 2 · Urdu translation')
+        page.locator('#reader-tools > summary').click()
         page.get_by_text('Text, size & playback options',exact=True).click()
         page.locator('#quran-autoplay').uncheck()
         assert page.evaluate('commands.at(-1).singleVerse') is True

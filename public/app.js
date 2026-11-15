@@ -7,8 +7,10 @@ import { setupQuran } from './quran.js';
 import { setupInstall } from './install.js';
 import { setupLearning } from './learning.js';
 import { setupCompanion } from './companion.js';
+import { setupInterface } from './interface.js';
 
 const byId = id => document.getElementById(id);
+setupInterface({ stored, save });
 document.querySelector('.skip-link').addEventListener('click', event => {
   event.preventDefault(); byId('main-content').focus();
 });
