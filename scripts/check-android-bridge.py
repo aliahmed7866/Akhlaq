@@ -20,8 +20,18 @@ try:
         page.route('**/urdu.json',lambda route:route.fulfill(body=gzip.decompress((repo/'data/urdu.json.gz').read_bytes()),content_type='application/json'))
         page.add_init_script('''
           window.nativeState = {ready:true}; window.commands = []; window.sensorCommands = [];
+          window.locationRequests = []; window.locationCancellations = []; window.locationMode = 'success'; window.browserLocationCalls = 0;
+          navigator.geolocation.getCurrentPosition = (ok,fail) => { browserLocationCalls++; fail({code:2}); };
           window.AkhlaqNative = {
             version: () => '2.0.0-test',
+            requestLocation: id => {
+              locationRequests.push(id); if(locationMode==='hold')return;
+              const errors={disabled:{code:'disabled',message:'Location is switched off on your phone.',action:'device'},permission:{code:'permission',message:'Location permission was not allowed.',action:'app'}};
+              const payload=errors[locationMode]?{error:errors[locationMode]}:{coords:{latitude:locationMode==='invalid'?999:53.4808,longitude:-2.2426,accuracy:20}};
+              queueMicrotask(()=>dispatchEvent(new CustomEvent('akhlaq-location',{detail:{id,...payload}})));
+            },
+            cancelLocation: id => locationCancellations.push(id),
+            locationSettings: target => { window.openedLocationSettings=target; },
             alerts: value => { window.alertPlan = JSON.parse(value); },
             alarmAccess: () => { window.alarmRequested = true; },
             narrate: value => { window.storyCommand = JSON.parse(value); },
@@ -77,6 +87,33 @@ try:
         page.context.set_geolocation({'latitude':53.4808,'longitude':-2.2426,'accuracy':20})
         page.locator('#qibla-gps').click()
         expect(page.locator('#compass')).to_be_enabled()
+        assert page.evaluate('locationRequests.length') == 1
+        assert page.evaluate('browserLocationCalls') == 0
+        saved_location=page.evaluate("localStorage.getItem('akhlaq.settings.v1')")
+        for mode,action,label in [('disabled','device','Open phone location'),('permission','app','Open app permissions')]:
+            page.evaluate('(mode)=>locationMode=mode',mode)
+            page.locator('#qibla-gps').click()
+            recovery=page.locator('#qibla .location-recovery')
+            expect(recovery).to_have_text(label)
+            recovery.click()
+            assert page.evaluate('openedLocationSettings') == action
+            assert page.evaluate("localStorage.getItem('akhlaq.settings.v1')") == saved_location
+            expect(page.locator('#qibla-gps')).to_be_enabled()
+        page.evaluate("locationMode='hold'")
+        page.locator('#qibla-gps').click()
+        expect(page.locator('#qibla-gps')).to_be_disabled()
+        page.locator('#qibla .location-cancel').click()
+        expect(page.locator('#qibla-gps')).to_be_enabled()
+        expect(page.locator('#qibla-location-status')).to_contain_text('cancelled')
+        assert page.evaluate('locationCancellations.length') > 0
+        page.evaluate("locationMode='invalid'")
+        page.locator('#qibla-gps').click()
+        expect(page.locator('#qibla-location-status')).to_contain_text('invalid location')
+        assert page.evaluate("localStorage.getItem('akhlaq.settings.v1')") == saved_location
+        page.evaluate("locationMode='success';document.querySelector('[name=offset-fajr]').value='999'")
+        page.locator('#qibla-gps').click()
+        expect(page.locator('#qibla-location-status')).to_contain_text('Location updated')
+        page.evaluate("document.querySelector('[name=offset-fajr]').value='0'")
         page.locator('#compass').click()
         assert page.evaluate('sensorCommands.at(-1)') is True
         page.evaluate("dispatchEvent(new CustomEvent('akhlaq-heading',{detail:{magneticHeading:100,headingAccuracy:5,accuracyStatus:3,beta:0,gamma:0}}))")
@@ -123,6 +160,8 @@ try:
         page.locator('#home-gps').click()
         expect(page.locator('#schedule-location')).to_contain_text('My location')
         page.get_by_role('link',name='Settings',exact=True).click()
+        page.locator('#gps').click()
+        expect(page.locator('#settings-status')).to_contain_text('Location updated')
         page.locator('#reminder-settings summary').click()
         page.locator('#alert-mode').select_option('adhan')
         page.locator('#alert-lead').select_option('10')
@@ -139,8 +178,9 @@ try:
         assert page.evaluate('storyCommand.action') == 'toggle'
         page.locator('#story-stop').click()
         assert page.evaluate('storyCommand.action') == 'stop'
+        assert page.evaluate('browserLocationCalls') == 0
         assert not errors,errors
-        print('Passed native bridge: offline Urdu, native-only audio, queue controls, in-place continuity changes, downloads, and compass data.')
+        print('Passed native bridge: offline Urdu, native-only audio, queue controls, in-place continuity changes, downloads, native location success/recovery/cancel, and compass data.')
         browser.close()
 finally:
     server.terminate();server.wait(timeout=5)

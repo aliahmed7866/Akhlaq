@@ -39,6 +39,8 @@ public class MainActivity extends Activity {
     private JSONObject pendingCommand;
     private long lastDownloads;
     private CompassSensors compassSensors;
+    private CurrentLocation currentLocation;
+    private String pendingLocation;
     private GeolocationPermissions.Callback geoCallback;
     private String geoOrigin;
     private ValueCallback<Uri[]> fileCallback;
@@ -51,12 +53,25 @@ public class MainActivity extends Activity {
         }
     };
     private static boolean local(Uri uri) { return "https".equals(uri.getScheme()) && "appassets.androidplatform.net".equals(uri.getHost()); }
+    private void sendLocation(JSONObject value) {
+        if (web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-location',{detail:" + value + "}))", null);
+    }
+    private void locationError(String id, String code, String message, String action) {
+        try { sendLocation(new JSONObject().put("id", id).put("error", new JSONObject().put("code", code).put("message", message).put("action", action))); } catch (JSONException ignored) { }
+    }
+    private void startPendingLocation() {
+        if (!visible || pendingLocation == null) return;
+        if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return;
+        String id = pendingLocation; pendingLocation = null; currentLocation.start(id);
+    }
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
         try {
             catalog = new QuranQueue(AssetText.read(this, "quran.json"));
         } catch (Exception error) { throw new IllegalStateException("Bundled Quran unavailable", error); }
         compassSensors = new CompassSensors(this, value -> { if (visible && web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-heading',{detail:" + value + "}))", null); });
+        currentLocation = new CurrentLocation(this, this::sendLocation);
         FrameLayout frame = new FrameLayout(this);
         web = new WebView(this);
         frame.addView(web, new FrameLayout.LayoutParams(-1, -1));
@@ -241,6 +256,27 @@ public class MainActivity extends Activity {
             if (json == null || json.length() > 4096) return;
             runOnUiThread(() -> { try { execute(new JSONObject(json)); } catch (JSONException ignored) { } });
         }
+        @JavascriptInterface public void requestLocation(String id) {
+            if (id == null || !id.matches("[a-zA-Z0-9-]{1,80}")) return;
+            runOnUiThread(() -> {
+                if (!visible) { locationError(id, "cancelled", "Open Akhlaq to request location.", ""); return; }
+                currentLocation.cancel();
+                if (pendingLocation != null) locationError(pendingLocation, "cancelled", "Location request replaced.", "");
+                pendingLocation = id;
+                if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                        || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) startPendingLocation();
+                else requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 14);
+            });
+        }
+        @JavascriptInterface public void cancelLocation(String id) {
+            runOnUiThread(() -> { if (Objects.equals(id, pendingLocation)) pendingLocation = null; currentLocation.cancel(id); });
+        }
+        @JavascriptInterface public void locationSettings(String target) {
+            runOnUiThread(() -> { try {
+                Intent intent = "app".equals(target) ? new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())) : new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivity(intent);
+            } catch (Exception ignored) { android.widget.Toast.makeText(MainActivity.this, "Open Android Settings → Location", android.widget.Toast.LENGTH_LONG).show(); } });
+        }
         @JavascriptInterface public void compass(boolean enabled) {
             runOnUiThread(() -> { if (enabled && visible) compassSensors.start(); else compassSensors.stop(); });
         }
@@ -258,6 +294,11 @@ public class MainActivity extends Activity {
     }
     @Override public void onRequestPermissionsResult(int request, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(request, permissions, results);
+        if (request == 14 && pendingLocation != null) {
+            if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) startPendingLocation();
+            else { String id = pendingLocation; pendingLocation = null; locationError(id, "permission", "Location permission was not allowed. You can allow it in app settings and retry.", "app"); }
+        }
         if (request == 12) web.evaluateJavascript("window.dispatchEvent(new Event('akhlaq-alert-refresh'))", null);
         if (request == 10 && geoCallback != null) {
             geoCallback.invoke(geoOrigin, checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED, false);
@@ -275,12 +316,12 @@ public class MainActivity extends Activity {
             });
         }
     }
-    @Override protected void onResume() { super.onResume(); visible = true; if (web != null) { web.onResume(); web.evaluateJavascript("window.dispatchEvent(new Event('akhlaq-alert-refresh'))", null); } handler.post(tick); }
-    @Override protected void onPause() { visible = false; handler.removeCallbacks(tick); compassSensors.stop(); if (web != null) web.onPause(); super.onPause(); }
+    @Override protected void onResume() { super.onResume(); visible = true; startPendingLocation(); if (web != null) { web.onResume(); web.evaluateJavascript("window.dispatchEvent(new Event('akhlaq-alert-refresh'))", null); } handler.post(tick); }
+    @Override protected void onPause() { visible = false; currentLocation.cancel(); handler.removeCallbacks(tick); compassSensors.stop(); if (web != null) web.onPause(); super.onPause(); }
     private void navigateBack() { if (web.canGoBack()) web.goBack(); else moveTaskToBack(true); }
     @Override public void onBackPressed() { navigateBack(); }
     @Override protected void onDestroy() {
-        visible = false; handler.removeCallbacksAndMessages(null); compassSensors.stop();
+        visible = false; pendingLocation = null; currentLocation.cancel(); handler.removeCallbacksAndMessages(null); compassSensors.stop();
         if (fileCallback != null) fileCallback.onReceiveValue(null);
         if (geoCallback != null) geoCallback.invoke(geoOrigin, false, false);
         MediaController.releaseFuture(controllerFuture);

@@ -1,4 +1,5 @@
 import { calculate } from './engine.js';
+import { findCurrentLocation } from './location.js';
 import { setupCompass } from './compass.js';
 import { setupPractice } from './practice.js';
 import { downloadFile, makeCalendar } from './calendar.js';
@@ -223,14 +224,6 @@ function dateInZoneFor(instant, zone) {
   return [parts.year, parts.month, parts.day].join('-');
 }
 
-function findLocation() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) return reject(new Error('Browser location unavailable'));
-    navigator.geolocation.getCurrentPosition(({ coords }) => resolve(coords), reject,
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
-  });
-}
-
 function readSettings() {
   return {
     city: byId('city').value, locatedAt: Number(byId('city').dataset.locatedAt || 0), locationAccuracy: Number(byId('city').dataset.accuracy || 0),
@@ -261,34 +254,61 @@ function applySettings() {
   }
 }
 
+let locationRequest;
+const locationButtons = ['gps', 'home-gps', 'qibla-gps'].map(byId);
+const cancelLocationButtons = locationButtons.map(button => {
+  const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'small-button location-cancel';
+  cancel.textContent = 'Cancel'; cancel.hidden = true; cancel.onclick = () => locationRequest?.abort(); button.after(cancel); return cancel;
+});
+const locationRecoveryButtons = locationButtons.map(button => {
+  const recovery = document.createElement('button'); recovery.type = 'button'; recovery.className = 'small-button location-recovery';
+  recovery.hidden = true; recovery.onclick = () => window.AkhlaqNative?.locationSettings?.(recovery.dataset.target);
+  button.after(recovery); return recovery;
+});
+function locationMessage(text) {
+  settingsStatus.textContent = byId('location-freshness').textContent = byId('qibla-location-status').textContent = text;
+}
 for (const id of ['home-gps', 'qibla-gps']) byId(id).addEventListener('click', () => byId('gps').click());
 byId('gps').addEventListener('click', async () => {
-  for (const id of ['gps', 'home-gps', 'qibla-gps']) byId(id).disabled = true;
-  settingsStatus.textContent = byId('location-freshness').textContent = byId('qibla-location-status').textContent = 'Getting your location…';
+  if (locationRequest) return;
+  locationRequest = new AbortController();
+  locationButtons.forEach(button => { button.disabled = true; });
+  cancelLocationButtons.forEach(button => { button.hidden = false; });
+  locationRecoveryButtons.forEach(button => { button.hidden = true; });
+  locationMessage('Getting your location… Allow access if prompted. This can take up to 30 seconds after permission.');
   try {
-    const { latitude, longitude, accuracy } = await findLocation().catch(async () => {
-      if (window.AkhlaqNative) throw new Error('Location unavailable. Allow location for Akhlaq in Android settings.');
-      try {
-        return await fetchJson('/api/gps', { method: 'POST', signal: AbortSignal.timeout(22000) });
-      } catch (error) {
-        if (error instanceof TypeError || error.name === 'TimeoutError') {
-          throw new Error('Browser GPS is unavailable. Start Termux for its GPS fallback.');
-        }
-        throw error;
-      }
+    const coords = await findCurrentLocation({
+      native: window.AkhlaqNative, geolocation: navigator.geolocation, events: window, signal: locationRequest.signal,
+      fetchGps: async signal => {
+        const controller = new AbortController(); const abort = () => controller.abort();
+        signal.addEventListener('abort', abort, {once:true});
+        const timeout = setTimeout(abort, 22000);
+        try { return await fetchJson('/api/gps', {method:'POST', signal:controller.signal}); }
+        catch (error) { if (error.name === 'AbortError' && !signal.aborted) throw new Error('Termux location timed out. Check phone location and retry near a window or outdoors.'); throw error; }
+        finally { clearTimeout(timeout); signal.removeEventListener('abort', abort); }
+      },
     });
-    byId('city').value = 'My location';
-    byId('city').dataset.locatedAt = String(Date.now());
-    byId('city').dataset.accuracy = String(Number.isFinite(accuracy) && accuracy >= 0 ? accuracy : 0);
-    form.elements.latitude.value = latitude;
-    form.elements.longitude.value = longitude;
-    form.elements.zone.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    applySettings();
+    // A location request saves only location. Invalid, unsaved calculation fields must not block it.
+    const selection = {...settings, ...coords, locationAccuracy:coords.accuracy, city:'My location', locatedAt:Date.now(), zone:Intl.DateTimeFormat().resolvedOptions().timeZone};
+    delete selection.accuracy;
+    const data = requestSchedule(selection);
+    settings = selection; const saved = save(settingsKey, settings);
+    byId('city').value = settings.city; byId('city').dataset.locatedAt = String(settings.locatedAt);
+    byId('city').dataset.accuracy = String(settings.locationAccuracy);
+    for (const name of ['latitude', 'longitude', 'zone']) form.elements[name].value = settings[name];
+    showSchedule(data);
+    const accuracy = settings.locationAccuracy > 0 ? ' · about ±' + (settings.locationAccuracy >= 1000 ? (settings.locationAccuracy/1000).toFixed(1)+' km' : Math.ceil(settings.locationAccuracy)+' m') : '';
+    locationMessage((saved ? 'Location updated' : 'Location updated for this session; could not save on this device') + accuracy + '. Refresh after travelling.');
   } catch (error) {
-    settingsStatus.textContent = error.message + ' You can retry location access or enter coordinates under Location details.';
+    const message = error.name === 'AbortError' ? 'Location request cancelled.' : error.message || 'Location is unavailable. Check phone location and retry.';
+    locationMessage(message);
+    if (['app','device'].includes(error.action) && window.AkhlaqNative?.locationSettings) {
+      locationRecoveryButtons.forEach(button => { button.dataset.target = error.action; button.textContent = error.action === 'app' ? 'Open app permissions' : 'Open phone location'; button.hidden = false; });
+    }
   } finally {
-    for (const id of ['gps', 'home-gps', 'qibla-gps']) byId(id).disabled = false;
-    byId('location-freshness').textContent = byId('qibla-location-status').textContent = settingsStatus.textContent;
+    locationRequest = null;
+    locationButtons.forEach(button => { button.disabled = false; });
+    cancelLocationButtons.forEach(button => { button.hidden = true; });
   }
 });
 

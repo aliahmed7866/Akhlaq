@@ -23,7 +23,7 @@ for forbidden in ['ACCESS_BACKGROUND_LOCATION', 'MANAGE_EXTERNAL_STORAGE', 'REQU
 with zipfile.ZipFile(sys.argv[1]) as bundle:
     names = set(bundle.namelist())
     assert 'base/manifest/AndroidManifest.xml' in names, 'Missing bundle manifest'
-    for asset in ['index.html', 'engine.js', 'privacy.html', 'licenses.html', 'quran.json', 'urdu.json', 'learning.js', 'hadith.json', 'learning-content.json', 'companion.js', 'devotional.json', 'adhan.oga']:
+    for asset in ['index.html', 'location.js', 'engine.js', 'privacy.html', 'licenses.html', 'quran.json', 'urdu.json', 'learning.js', 'hadith.json', 'learning-content.json', 'companion.js', 'devotional.json', 'adhan.oga']:
         assert 'base/assets/' + asset in names, 'Missing offline asset: ' + asset
     quran = json.loads(bundle.read('base/assets/quran.json'))
     urdu = json.loads(bundle.read('base/assets/urdu.json'))

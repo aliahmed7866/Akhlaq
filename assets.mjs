@@ -13,7 +13,7 @@ const types = {
   webmanifest: 'application/manifest+json; charset=utf-8',
 };
 const paths = [
-  'index.html', 'privacy.html', 'licenses.html', 'app.js', 'style.css', 'compass.js', 'practice.js', 'calendar.js', 'install.js',
+  'index.html', 'privacy.html', 'licenses.html', 'app.js', 'location.js', 'style.css', 'compass.js', 'practice.js', 'calendar.js', 'install.js',
   'quran.js', 'media-session.js', 'engine.js', 'manifest.webmanifest', 'icons/akhlaq.svg', 'icons/icon-192.png', 'icons/icon-512.png',
   'companion.js', 'devotional.json', 'adhan.oga', 'learning.js', 'hadith.json', 'learning-content.json',
 ];

@@ -83,3 +83,7 @@ Location-first setup without a city dropdown; optional Android prayer alerts and
 ### 2.3.0 refinement
 
 The compass now uses reported sensor accuracy, north-referenced fallbacks, fresh-sample confirmation and magnetic-interference checks. Today has simpler prayer logging and direct reminder access. See [compass and UI review](docs/COMPASS-REFINEMENT.md) for decisions, checks and physical-device limits.
+
+### 2.3.1 location repair
+
+Use current location now calls Android location providers directly in the APK. It supports approximate permission, bounded requests, cancellation, and distinct permission/service-off recovery actions. Location updates no longer depend on validating unrelated draft settings. See [location repair and tests](docs/LOCATION-FIX.md).

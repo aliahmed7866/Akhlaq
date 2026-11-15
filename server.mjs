@@ -39,15 +39,15 @@ const server = createServer(async (request, response) => {
         const { stdout } = await run('termux-location', ['-p', 'gps', '-r', 'once'], {
           timeout: 20000, maxBuffer: 8192,
         });
-        const { latitude, longitude } = JSON.parse(stdout);
+        const { latitude, longitude, accuracy } = JSON.parse(stdout);
         if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
             || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
           throw new Error('Invalid location');
         }
-        return json(response, 200, { latitude, longitude });
+        return json(response, 200, { latitude, longitude, accuracy: Number.isFinite(accuracy) && accuracy >= 0 ? accuracy : 0 });
       } catch {
         return json(response, 503, {
-          error: 'Termux GPS is unavailable. Enable Android location for Termux:API, or use a city or coordinates.',
+          error: 'Termux GPS is unavailable. Turn on phone location and allow location for Termux:API, then retry. Manual coordinates are also available in Settings.',
         });
       }
     }
