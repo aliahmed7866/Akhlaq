@@ -198,7 +198,7 @@ export function setupPractice({ salah, stored, save, todayForPractice, shiftDate
       }
       downloadFile('akhlaq-practice-' + todayForPractice() + '.json',
         JSON.stringify({ version: 1, entries }, null, 2), 'application/json');
-      backupStatus.textContent = 'Practice backup downloaded.';
+      backupStatus.textContent = window.AkhlaqNative ? 'Choose a location to save your practice backup.' : 'Backup download requested. Check your browser downloads.';
     } catch {
       backupStatus.textContent = 'Browser storage is unavailable.';
     }

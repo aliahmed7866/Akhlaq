@@ -1,112 +1,50 @@
-# Play submission guide
+# Google Play release guide — Akhlaq 2.7.0
 
-Status: release preparation, not a published or approved Play app. All work stays on `android-standalone`; `main` is unchanged.
+The app targets Android 16 / API 36, supports Android 8 / API 26+, and uses production package `uk.akhlaq.app`, version code **10**. A green inspection build does not mean the app is ready for production submission. Read the generated `store-readiness.json` artifact; outstanding requirements remain explicitly BLOCKED.
 
-## Build artifacts and signing
+## 1. Build and verify
 
-`Android preview APK` builds `uk.akhlaq.app.preview` for phone testing. `Android release bundle` builds `uk.akhlaq.app`, target API 36, minimum API 26. The production package is separate from the preview; use practice export/import to transfer records. An AAB is uploaded to Play Console, not installed directly on a phone.
+Use the `android-standalone` branch. Every push runs Android preview/unit/lint/browser checks, production bundle checks and an Android 15/16 emulator matrix. The emulator tests disable Wi-Fi/mobile data and exercise actual bundled Quran/Urdu, hadith, saved verses after recreation, large text, native export cancellation and renderer recovery. Captures are from the real app, not a simulated browser bridge. Inspect reports/screenshots for the exact commit being released.
 
-Every push to this branch runs both workflows. The release workflow tests the app, runs release lint, builds the AAB and inspects its bundled content. It does not publish anything to Play. Without signing credentials the artifact is named `Akhlaq-Play-unsigned-for-inspection`; do not upload that artifact. Partial credentials cause a clear build failure.
+`Android preview APK` creates an installable debug APK under `uk.akhlaq.app.preview`. This is a test package with separate data; it is not the production app and is not a Play upload. `Android release bundle` creates `app-release.aab`. Without signing secrets it is labelled **unsigned-for-inspection**. Never rename an unsigned bundle to imply it is upload-ready.
 
-Create a dedicated upload key if this is a new Play app. If this package already exists in your Play Console, use its existing upload key instead. Keep a private backup; never commit keys or passwords. Do not reuse the preview/debug key for production.
+The bundle inspection verifies the package/version/target API, non-debuggable release, disabled automatic backup/cleartext traffic, exact Android permission inventory, component exposure, complete offline text and notices, all 1,018 hadith records/chunk hashes, no included signing keys and no native `.so` libraries. If native libraries are added later, recheck 16 KB memory-page compatibility.
 
-```sh
-keytool -genkeypair -v -keystore akhlaq-upload.jks -alias akhlaq-upload \
-  -keyalg RSA -keysize 3072 -validity 10000
-```
+## 2. Configure the correct upload key
 
-Enter the real publisher details interactively. Add these repository Actions secrets in GitHub Settings → Secrets and variables → Actions:
+Confirm whether `uk.akhlaq.app` already exists in your Play Console. Use its registered upload key if it does. Do not replace a key or create a conflicting package identity. For a new app, create and securely back up an upload key locally and enrol in Play App Signing.
 
-| Secret | Value |
-| --- | --- |
-| `AKHLAQ_KEYSTORE_BASE64` | Base64-encoded upload keystore file |
-| `AKHLAQ_KEYSTORE_PASSWORD` | Keystore password |
-| `AKHLAQ_KEY_ALIAS` | Upload key alias, for example `akhlaq-upload` |
-| `AKHLAQ_KEY_PASSWORD` | Key password |
+Configure all four repository Actions secrets (never commit a key/password):
 
-Do not paste secret values into issues or build logs. The workflow decodes the keystore into a runner temporary file, signs the AAB, verifies its signature and removes the temporary key. The signed artifact is `Akhlaq-Play-upload-signed`.
+- `AKHLAQ_KEYSTORE_BASE64`: base64-encoded upload keystore.
+- `AKHLAQ_KEYSTORE_PASSWORD`
+- `AKHLAQ_KEY_ALIAS`
+- `AKHLAQ_KEY_PASSWORD`
 
-For local builds, set `AKHLAQ_KEYSTORE_PATH` to the absolute private key path and the other three signing environment variables. Run:
+CI uses a temporary owner-readable keystore, rejects partial configuration, verifies the signed bundle and removes the temporary key. The Play app-signing key and this upload key are different responsibilities. Production updates must use a version code above the highest one already uploaded; code 10 must be checked against your account history.
 
-```sh
-npm ci --include=dev --ignore-scripts
-npm test
-cd android
-./gradlew testReleaseUnitTest lintRelease bundleRelease
-```
+## 3. Publish privacy and choose support contact
 
-The output is `android/app/build/outputs/bundle/release/app-release.aab`. Enable Play App Signing in Play Console and use this upload key. Increment `versionCode` in `android/version.properties` for each new upload. Never replace an existing release signing identity casually. This release does not include native `.so` libraries; the archive check fails if that changes, requiring a 16 KB page-size review.
+Run `python3 scripts/build-policy-site.py`. The generated `android/app/build/policy-site/` contains a self-contained support page, the same privacy policy as the app, and CSS. It is included in the store-materials artifact. Deploy this directory to your chosen public HTTPS static host. No analytics or external font/script dependency is included.
 
-## Content and usability release checks
+A public policy URL has **not** been configured by this project. Check it without signing in, including on a phone. It must serve the policy directly as HTML, be accessible without geographic restrictions, and remain available. Do not use a repository source view, private preview, editable document or PDF as the policy URL. Enter the live URL and your chosen public support email in `store/readiness.json` and Play Console. Do not put private account verification documents in the repository.
 
-Read `content/PROVENANCE.md` and refresh the official HadeethEnc editions before a public release. Preserve source fields, edition transcripts and attribution. The library has 1,018 publisher-attributed narrations, including twelve everyday selections with checked numbered references; do not advertise a complete Bukhari library or 100% scholarly verification. Seek independent review of religious summaries and Urdu text.
+## 4. Finish rights, device and Play declarations
 
-Read `docs/USABILITY.md` for evidence, tested tasks and remaining user/device research. Run `scripts/check-learning-browser.py` alongside the existing audio and native-bridge browser regressions. The app's saved-hadith, chosen-routine and reading-comfort preferences remain local and are not included in the practice-export format.
+- Review current Quran text/translation permissions and **separate recording streaming, download and redistribution rights** with each provider. Availability at a free URL is not, by itself, permission. Existing attribution does not replace permission. Keep the exact notices and review `content/PROVENANCE.md` and in-app licences. Recheck HadeethEnc editions/terms; the last direct English edition check was rate-limited. Independent scholarly review is not claimed.
+- Review `DATA-SAFETY.md`, provider logs and the actual release. Complete Data safety, app access (no account), ads (none implemented), target audience and content rating. If the chosen audience includes children, assess the additional Families obligations before submitting.
+- Declare foreground **mediaPlayback** (Quran/background narration) and **dataSync** (requested audio downloads). Record short actual-device demonstrations starting, backgrounding and stopping these features, plus the visible notifications. Do not use a mockup as evidence.
+- Test the signed production package through internal testing. Verify approximate/precise location, denied permission recovery, native export save/cancel/failed destination, background paired audio with screen locked, phone-call/audio-focus interruptions, network loss, downloads, reboot/reminders, time-zone changes, text at 200%, TalkBack, cutouts and landscape. Check compass/haptic behaviour on actual sensor hardware and compare local prayer settings with a mosque timetable. Emulator layout tests do not establish sensor accuracy or manufacturer battery behaviour.
+- Use Play's pre-launch report and inspect crashes/ANRs/accessibility findings. Confirm developer-account verification and production access. New personal accounts covered by Google's rule need at least 12 continuously opted-in closed testers for 14 days before applying for production access; follow what your account actually requires. This cannot be replaced by automated tests or a generated report.
 
-## Store material
+Record dated evidence references for each item in `store/readiness.json`. Avoid storing sensitive console details in this public file.
 
-- Listing copy: `store/LISTING.md`.
-- Icon: `store/graphics/icon-512.png`.
-- Feature graphic: `store/graphics/feature-1024x500.png`, with editable SVG source.
-- UI preview screenshots, if present under `store/screenshots`, are browser captures of the shared interface. They are review drafts, not proof of Android behavior. Capture at least two screenshots from the final installed build and verify the visible features before publishing.
-- Privacy page: `public/privacy.html`, available offline in Settings. Host the same content on a public HTTPS page with no login, region restriction or PDF download. Set that URL in Play Console. No public policy URL has been deployed by this change. The CSS reference can be adapted by the hosting site without altering policy content.
-- Provide your chosen public support email and publisher/developer identity in Play Console. Add a private support channel to the policy if you want to accept private privacy enquiries. The current support link is a public GitHub issue tracker.
-- Review the text and audio providers' redistribution, caching and attribution terms before store distribution. Text transcripts/notices are retained, but this project does not represent a separate grant of audio licensing rights.
+## 5. Run the submission check and upload
 
-## App content declarations
+Manually run **Android release bundle** with `submission=true`. This fails for missing signing, policy URL, support email or review evidence and verifies the public policy page. The ordinary push workflow still builds inspectable artifacts while those requirements are unfinished. A passing project check is not Google approval.
 
-Use the code inventory below when completing the declarations. These are preparation notes, not a submitted or legally certified Data safety response. In particular, review the third-party providers' current logging/retention practices before deciding collection/sharing categories.
+Upload the verified signed `.aab` to the appropriate Play testing track, use `listing.json` and the store graphics, and review actual screenshots from the same final build. Complete the account's required testing and review before requesting production rollout. Nothing in these workflows uploads to Play or starts a public rollout.
 
-| Feature / data | Actual app behavior |
-| --- | --- |
-| Account / ads / analytics | No accounts, ads, advertising ID permission, analytics or crash-reporting SDK |
-| Location | Optional foreground fine/coarse permission; local prayer/Qibla calculation, coordinates not sent by Akhlaq to providers |
-| Prayer records, reflections, saved verses/hadiths, chosen routine | App-private local storage; no app-operated server; explicit backup export |
-| Audio | HTTPS requests to `cdn.islamic.network`, `d.quranenc.com`, `everyayah.com`; providers see IP, requested verse URL and request metadata |
-| Downloaded recordings | Private local cache, user-removable; no automatic stream caching |
-| App deletion | Settings → About → Erase my data clears local app data after a native confirmation; exported files remain separately |
-| External support | Opening GitHub or source links leaves the app; any issue the user submits is public |
+## Official requirements checked 15 November 2026
 
-Declare both foreground service types under App content:
-
-- `mediaPlayback`: user starts Quran audio; the media notification allows pause/resume; the native queue continues between verses and translations with screen off. Supply an actual screen recording showing this flow.
-- `dataSync`: user requests a surah download for offline use; the progress notification opens the app and the Offline audio panel can pause/remove downloads. The service pauses and stops on the Android background-time limit. Supply a recording of starting, monitoring and stopping a download.
-
-No background-location or full-screen-intent permission is requested. Optional prayer alerts request SCHEDULE_EXACT_ALARM access explicitly; they use approximate timing without it. Story narration is an additional mediaPlayback foreground-service use case. Calendar export does not grant exact alarm access. App access needs no login. Complete the audience, ads and IARC content-rating forms truthfully; do not invent ratings or tester results.
-
-## Test before submission
-
-Record device model, Android version, build version, date and result for every row. Automated Node/JUnit/lint/build checks do not cover these phone behaviors.
-
-| Scenario | Expected result | Status |
-| --- | --- | --- |
-| Clean install, airplane mode | Quran in all three languages, prayer times, search and practice work | Pending device test |
-| Arabic → English and Arabic → Urdu | Same verse is translated, then next verse; last verse completes | Pending device test |
-| Screen lock / Recents dismissal | Audio transitions continue, controls pause/resume; Stop stops audio | Pending device test |
-| Offline audio | Download a short surah, disable network, play every selected part | Pending device test |
-| Calls / headset disconnect | Audio focus and noisy-audio behavior are correct | Pending device test |
-| Location denied / approximate / granted | Location setup or manual-coordinate fallback works; correct coordinates and time zone are shown | Pending device test |
-| Qibla / missing sensors | Calibrated bearing sensible; unsupported sensor behavior explained | Pending device test |
-| Android 16 navigation / keyboard | Back works; keyboard and system bars do not cover controls | Pending device test |
-| Download timeout / no network / low storage | No crash or runaway service; retry/pause is usable | Pending device test |
-| Erase data | Confirm cancels or clears all app data; exported backups untouched | Pending device test |
-| TalkBack / large font / landscape / tablet | Controls labelled, text readable, focus and layout usable | Pending device test |
-| Signed release update | Play internal-test install and same-key update preserve records | Pending device test |
-
-Upload the signed AAB to an internal testing track, check Play's pre-launch report, resolve crashes/ANRs and verify data declarations. New personal developer accounts created after 13 November 2023 generally need a closed test with at least 12 opted-in testers for 14 continuous days before applying for production access. Follow the requirements shown for your account; do not claim testing that did not occur.
-
-## Official references checked 14 November 2026
-
-- [Target API requirements](https://support.google.com/googleplay/android-developer/answer/11926878)
-- [App signing](https://developer.android.com/studio/publish/app-signing)
-- [Data safety](https://support.google.com/googleplay/android-developer/answer/10787469)
-- [Privacy policy and app content](https://support.google.com/googleplay/android-developer/answer/9859455)
-- [Foreground service declarations](https://support.google.com/googleplay/android-developer/answer/13392821)
-- [Store graphics](https://support.google.com/googleplay/android-developer/answer/9866151)
-- [Personal account testing](https://support.google.com/googleplay/android-developer/answer/14151465)
-- [Data-sync time limits](https://developer.android.com/develop/background-work/services/fgs/timeout)
-
-
-## Version 2.2 additions
-
-Location-first setup without a city dropdown; optional Android prayer alerts and advance reminders; attributed spoken adhan; Quranic dua directory; seven dhikr counters; six traditional kalimat learning cards; five pillars; estimated Hijri calendar, upcoming readings and private date notes; offline-device English narration of original cited stories. See `docs/FEATURE-RESEARCH.md` and `content/PROVENANCE.md` for the comparison, sources, reuse terms and limitations. Calendar notes, practice marks and narration progress remain local and are not included in the existing practice-export format.
+[Target API](https://support.google.com/googleplay/android-developer/answer/11926878) · [Signing](https://developer.android.com/studio/publish/app-signing) · [Privacy/app content](https://support.google.com/googleplay/android-developer/answer/9859455) · [User data](https://support.google.com/googleplay/android-developer/answer/10144311) · [Data safety](https://support.google.com/googleplay/android-developer/answer/10787469) · [Foreground service declarations](https://support.google.com/googleplay/android-developer/answer/13392821) · [Graphics](https://support.google.com/googleplay/android-developer/answer/9866151) · [Testing](https://support.google.com/googleplay/android-developer/answer/14151465)

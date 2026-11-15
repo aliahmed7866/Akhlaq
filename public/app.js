@@ -10,6 +10,13 @@ import { setupCompanion } from './companion.js';
 import { setupInterface } from './interface.js';
 
 const byId = id => document.getElementById(id);
+window.addEventListener('akhlaq-export', event => {
+  const {name, status} = event.detail || {};
+  if (typeof name !== 'string') return;
+  const target = name.startsWith('akhlaq-practice-') ? byId('backup-status') : name.startsWith('akhlaq-prayers-') ? byId('calendar-status') : null;
+  if (!target) return;
+  target.textContent = ({saved:'File saved to your chosen location.',cancelled:'Save cancelled. Your records are unchanged.',busy:'Finish the open save dialog first.',error:'The file could not be saved. Try a different location or free some space.'})[status] || 'Check the selected file location.';
+});
 setupInterface({ stored, save });
 document.querySelector('.skip-link').addEventListener('click', event => {
   event.preventDefault(); byId('main-content').focus();
@@ -360,7 +367,7 @@ calendar.addEventListener('submit', event => {
     return;
   }
   downloadFile('akhlaq-prayers-' + schedule.today + '.ics', calendarFile, 'text/calendar;charset=utf-8');
-  status.textContent = 'Calendar downloaded. Open the file in your calendar app to import it.';
+  status.textContent = window.AkhlaqNative ? 'Choose a location to save the calendar, then import it into your calendar app.' : 'Calendar download requested. Import the downloaded file into your calendar app.';
 });
 
 let openPage;

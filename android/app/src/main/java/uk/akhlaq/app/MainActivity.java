@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
     private String geoOrigin;
     private ValueCallback<Uri[]> fileCallback;
     private byte[] exportBytes;
+    private String exportName;
     private final Runnable tick = new Runnable() {
         public void run() {
             if (!visible) return;
@@ -53,7 +54,14 @@ public class MainActivity extends Activity {
             handler.postDelayed(this, 500);
         }
     };
-    private static boolean local(Uri uri) { return "https".equals(uri.getScheme()) && "appassets.androidplatform.net".equals(uri.getHost()); }
+    static boolean local(Uri uri) { return "https".equals(uri.getScheme()) && "appassets.androidplatform.net".equals(uri.getHost()) && uri.getUserInfo() == null && (uri.getPort() == -1 || uri.getPort() == 443); }
+    private void exportResult(String name, String status) {
+        runOnUiThread(() -> {
+            if (web == null || isDestroyed()) return;
+            try { web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-export',{detail:" + new JSONObject().put("name", name).put("status", status) + "}))", null); }
+            catch (JSONException ignored) { }
+        });
+    }
     private void sendLocation(JSONObject value) {
         if (web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-location',{detail:" + value + "}))", null);
     }
@@ -96,10 +104,24 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true); // User-selected backup files through Android's picker.
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setMediaPlaybackRequiresUserGesture(true);
+        CookieManager.getInstance().setAcceptCookie(false);
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
         WebViewAssetLoader assets = new WebViewAssetLoader.Builder().addPathHandler("/", new WebViewAssetLoader.AssetsPathHandler(this)).build();
         web.addJavascriptInterface(new Bridge(), "AkhlaqNative");
         web.setWebViewClient(new WebViewClient() {
+            @Override public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                // A renderer killed under memory pressure must not crash the whole app.
+                frame.removeView(view);
+                if (web == view) web = null;
+                view.destroy();
+                currentLocation.cancel(); compassSensors.stop();
+                if (!isFinishing() && !isDestroyed()) new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Reopen Akhlaq?")
+                    .setMessage("The app view closed. Your saved records are still on this device. Reopen the view to continue.")
+                    .setPositiveButton("Reopen", (dialog, which) -> recreate())
+                    .setNegativeButton("Close", (dialog, which) -> finish()).setCancelable(false).show();
+                return true;
+            }
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 if (!local(request.getUrl())) return new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", Map.of(), new ByteArrayInputStream(new byte[0]));
                 Uri uri = request.getUrl().getPath().equals("/") ? Uri.parse(ORIGIN + "/index.html") : request.getUrl();
@@ -245,7 +267,7 @@ public class MainActivity extends Activity {
     private class Bridge {
         @JavascriptInterface public void alerts(String value) {
             if(value==null||value.length()>180000)return;
-            runOnUiThread(()->{try{JSONObject config=new JSONObject(value);if(config.optBoolean("explicit")&&!config.optString("mode").equals("off"))notifications();String result=PrayerAlerts.configure(MainActivity.this,value);web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-alert-status',{detail:"+JSONObject.quote(result)+"}))",null);}catch(Exception e){web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-alert-status',{detail:'Could not schedule alerts.'}))",null);}});
+            runOnUiThread(()->{if(web==null)return;try{JSONObject config=new JSONObject(value);if(config.optBoolean("explicit")&&!config.optString("mode").equals("off"))notifications();String result=PrayerAlerts.configure(MainActivity.this,value);web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-alert-status',{detail:"+JSONObject.quote(result)+"}))",null);}catch(Exception e){web.evaluateJavascript("window.dispatchEvent(new CustomEvent('akhlaq-alert-status',{detail:'Could not schedule alerts.'}))",null);}});
         }
         @JavascriptInterface public void alarmAccess(){runOnUiThread(()->{if(Build.VERSION.SDK_INT>=31&&!PrayerAlerts.precise(MainActivity.this))startActivity(new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,Uri.parse("package:"+getPackageName())));});}
         @JavascriptInterface public String narrationStatus(){return NarrationService.state;}
@@ -300,13 +322,15 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void exportFile(String name, String text, String mime) {
-            if (text == null || text.length() > 2000000 || !(mime.startsWith("application/json") || mime.startsWith("text/calendar"))) return;
+            if (name == null || mime == null || text == null || text.length() > 4000000 || !(mime.split(";")[0].equals("application/json") || mime.split(";")[0].equals("text/calendar"))) { exportResult(name, "error"); return; }
+            byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+            if (bytes.length > 4000000) { exportResult(name, "error"); return; }
             runOnUiThread(() -> {
-                if (exportBytes != null) return;
-                exportBytes = text.getBytes(StandardCharsets.UTF_8);
+                if (exportBytes != null) { exportResult(name, "busy"); return; }
+                exportBytes = bytes; exportName = name;
                 try { startActivityForResult(new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
                     .setType(mime.split(";")[0]).putExtra(Intent.EXTRA_TITLE, name.replaceAll("[^a-zA-Z0-9._-]", "_")), 13); }
-                catch (Exception ignored) { exportBytes = null; }
+                catch (Exception ignored) { exportBytes = null; exportName = null; exportResult(name, "error"); }
             });
         }
     }
@@ -317,7 +341,7 @@ public class MainActivity extends Activity {
                     || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) startPendingLocation();
             else { String id = pendingLocation; pendingLocation = null; locationError(id, "permission", "Location permission was not allowed. You can allow it in app settings and retry.", "app"); }
         }
-        if (request == 12) web.evaluateJavascript("window.dispatchEvent(new Event('akhlaq-alert-refresh'))", null);
+        if (request == 12 && web != null) web.evaluateJavascript("window.dispatchEvent(new Event('akhlaq-alert-refresh'))", null);
         if (request == 10 && geoCallback != null) {
             geoCallback.invoke(geoOrigin, checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED, false);
             geoCallback = null;
@@ -327,23 +351,28 @@ public class MainActivity extends Activity {
         super.onActivityResult(request, result, intent);
         if (request == 11 && fileCallback != null) { fileCallback.onReceiveValue(result == RESULT_OK && intent != null ? new Uri[]{intent.getData()} : null); fileCallback = null; }
         if (request == 13) {
-            byte[] bytes = exportBytes; exportBytes = null;
-            if (result == RESULT_OK && intent != null && bytes != null) worker.execute(() -> {
-                try (OutputStream output = getContentResolver().openOutputStream(intent.getData())) { output.write(bytes); }
-                catch (Exception error) { runOnUiThread(() -> android.widget.Toast.makeText(this, "Could not save file", android.widget.Toast.LENGTH_LONG).show()); }
+            byte[] bytes = exportBytes; String name = exportName; exportBytes = null; exportName = null;
+            if (bytes == null) return;
+            if (result != RESULT_OK || intent == null || intent.getData() == null) { exportResult(name, "cancelled"); return; }
+            worker.execute(() -> {
+                try {
+                    try (OutputStream output = getContentResolver().openOutputStream(intent.getData())) { if (output == null) throw new IOException("No output stream"); output.write(bytes); }
+                    exportResult(name, "saved");
+                } catch (Exception error) { exportResult(name, "error"); }
             });
         }
     }
     @Override protected void onResume() { super.onResume(); visible = true; startPendingLocation(); if (web != null) { web.onResume(); web.evaluateJavascript("window.dispatchEvent(new Event('akhlaq-alert-refresh'))", null); } handler.post(tick); }
     @Override protected void onPause() { visible = false; currentLocation.cancel(); handler.removeCallbacks(tick); compassSensors.stop(); if (web != null) web.onPause(); super.onPause(); }
-    private void navigateBack() { if (web.canGoBack()) web.goBack(); else moveTaskToBack(true); }
+    private void navigateBack() { if (web != null && web.canGoBack()) web.goBack(); else moveTaskToBack(true); }
     @Override public void onBackPressed() { navigateBack(); }
     @Override protected void onDestroy() {
         visible = false; pendingLocation = null; currentLocation.cancel(); handler.removeCallbacksAndMessages(null); compassSensors.stop();
         if (fileCallback != null) fileCallback.onReceiveValue(null);
         if (geoCallback != null) geoCallback.invoke(geoOrigin, false, false);
         MediaController.releaseFuture(controllerFuture);
-        web.removeJavascriptInterface("AkhlaqNative"); web.destroy(); worker.shutdown();
+        if (web != null) { web.removeJavascriptInterface("AkhlaqNative"); web.destroy(); web = null; }
+        worker.shutdown();
         super.onDestroy();
     }
 }

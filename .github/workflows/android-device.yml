@@ -1,0 +1,55 @@
+name: Android device checks
+on:
+  push:
+    branches: [android-standalone]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-device-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [35, 36]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --include=dev --ignore-scripts
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Enable hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Test offline on Android and capture actual screens
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -camera-back none
+          disable-animations: true
+          script: bash scripts/check-device.sh
+      - name: Preserve device evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Akhlaq-Android-${{ matrix.api }}-device-evidence
+          path: |
+            android/app/build/device-evidence/
+            android/app/build/reports/androidTests/
+            android/app/build/outputs/androidTest-results/
+          if-no-files-found: error

@@ -20,6 +20,18 @@ permissions = {p.get(android + 'name') for p in root.findall('uses-permission')}
 for forbidden in ['ACCESS_BACKGROUND_LOCATION', 'MANAGE_EXTERNAL_STORAGE', 'REQUEST_INSTALL_PACKAGES', 'USE_EXACT_ALARM']:
     assert 'android.permission.' + forbidden not in permissions, 'Unexpected sensitive permission: ' + forbidden
 
+expected_permissions = {'INTERNET','ACCESS_NETWORK_STATE','ACCESS_COARSE_LOCATION','ACCESS_FINE_LOCATION',
+    'FOREGROUND_SERVICE','FOREGROUND_SERVICE_MEDIA_PLAYBACK','FOREGROUND_SERVICE_DATA_SYNC',
+    'WAKE_LOCK','POST_NOTIFICATIONS','RECEIVE_BOOT_COMPLETED','SCHEDULE_EXACT_ALARM'}
+assert {p.removeprefix('android.permission.') for p in permissions if p.startswith('android.permission.')} == expected_permissions, 'Android permission inventory changed; review Data safety and declarations'
+for component in app:
+    if component.tag in ('service','receiver','provider') and component.get(android+'name') != 'uk.akhlaq.app.PlaybackService':
+        assert component.get(android+'exported','false') == 'false', 'Unexpected externally accessible component'
+version_file = Path(__file__).resolve().parents[1] / 'android/version.properties'
+version = dict(line.split('=',1) for line in version_file.read_text().splitlines() if '=' in line)
+assert root.get(android+'versionCode') == version['versionCode']
+assert root.get(android+'versionName') == version['versionName']
+
 with zipfile.ZipFile(sys.argv[1]) as bundle:
     names = set(bundle.namelist())
     assert 'base/manifest/AndroidManifest.xml' in names, 'Missing bundle manifest'

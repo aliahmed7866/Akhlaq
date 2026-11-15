@@ -3,6 +3,11 @@ on:
   push:
     branches: [android-standalone]
   workflow_dispatch:
+    inputs:
+      submission:
+        description: Require completed production submission evidence and an upload-signed bundle
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -54,6 +59,30 @@ jobs:
         run: ./gradlew --no-daemon testReleaseUnitTest lintRelease bundleRelease
       - name: Inspect release archive
         run: python3 scripts/check-release.py android/app/build/outputs/bundle/release/app-release.aab
+      - name: Prepare privacy site and store materials
+        run: python3 scripts/build-policy-site.py
+      - name: Check production submission readiness
+        env:
+          SUBMISSION: ${{ inputs.submission || 'false' }}
+        run: |
+          args=()
+          if [[ "$SUBMISSION" == "true" ]]; then args+=(--submission); fi
+          python3 scripts/check-store-readiness.py --bundle android/app/build/outputs/bundle/release/app-release.aab --output android/app/build/store-readiness.json "${args[@]}"
+      - name: Attach readiness and store materials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Akhlaq-Store-materials
+          path: |
+            android/app/build/store-readiness.json
+            android/app/build/policy-site/
+            store/graphics/*.png
+            store/listing.json
+            store/LISTING.md
+            store/RELEASE.md
+            store/DATA-SAFETY.md
+            docs/PLAY-READINESS-2.7.md
+          if-no-files-found: error
       - name: Verify signed bundle
         if: steps.signing.outputs.label == 'upload-signed'
         run: |

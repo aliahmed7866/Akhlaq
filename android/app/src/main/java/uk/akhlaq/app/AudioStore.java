@@ -13,7 +13,7 @@ public final class AudioStore {
     private static SimpleCache cache;
     private static DownloadManager downloads;
     private static DefaultHttpDataSource.Factory upstream() {
-        return new DefaultHttpDataSource.Factory().setUserAgent("Akhlaq Android/2.0")
+        return new DefaultHttpDataSource.Factory().setUserAgent("Akhlaq Android/" + BuildConfig.VERSION_NAME)
             .setConnectTimeoutMs(20000).setReadTimeoutMs(30000);
     }
     public static synchronized DownloadManager downloads(Context context) {

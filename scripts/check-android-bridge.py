@@ -180,6 +180,13 @@ try:
         assert page.evaluate('alertPlan.events.every(e => !e.title.includes("Sunrise"))')
         page.locator('#alert-permission').click()
         assert page.evaluate('alarmRequested')
+        page.goto(f'http://127.0.0.1:{port}/#settings')
+        page.get_by_text('Back up your practice',exact=True).click()
+        page.locator('#export-backup').click()
+        expect(page.locator('#backup-status')).to_contain_text('Choose a location')
+        for status,message in [('cancelled','Save cancelled'),('error','could not be saved'),('busy','Finish the open save dialog'),('saved','File saved to your chosen location')]:
+            page.evaluate('(status)=>dispatchEvent(new CustomEvent("akhlaq-export",{detail:{name:exported.name,status}}))',status)
+            expect(page.locator('#backup-status')).to_contain_text(message)
         page.goto(f'http://127.0.0.1:{port}/#learn/stories/musa')
         page.locator('#story-musa button').click()
         assert page.evaluate('storyCommand.id') == 'story-musa'

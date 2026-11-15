@@ -1,6 +1,8 @@
 # Akhlaq
 
-A private Android web app for prayer times, finding the Qibla, reading and listening to the Quran, and daily practice. Termux serves the app at a local address. Android Chrome can install it with its own icon.
+A standalone Android app for prayer times, Qibla, Quran reading and listening, and daily practice. This branch builds an independent APK and production App Bundle; no Termux server is needed for the Android app. An optional browser/Termux version is also included.
+
+Version 2.7.0 release preparation: [build and submission status](docs/PLAY-READINESS-2.7.md), [Play release guide](store/RELEASE.md) and [Android installation](android/README.md). An unsigned bundle is for inspection and cannot be submitted to Google Play.
 
 ## Set up in Termux
 
@@ -61,7 +63,7 @@ Press Play once, then press Home, switch apps or lock the screen. Supported brow
 
 Fully closing or force-stopping the app/browser can still end a web player. Akhlaq saves the verse, current language and playback position every five seconds, and on pause or backgrounding. Reopen and tap **Resume**; playback never restarts audibly without your action. **Stop** clears the listening session. Updates ask you to pause first, and pull-to-refresh is suppressed while the player is open in supported browsers.
 
-This is a web app, not an Android foreground media service. Lock-screen availability and background lifetime depend on the browser and Android device. No screen wake lock or unrelated Termux service is used.
+This paragraph describes the browser/Termux player. The standalone Android app uses a foreground media service. Lock-screen availability and background lifetime depend on the browser and Android device. No screen wake lock or unrelated Termux service is used.
 
 ## Practice and backup
 
